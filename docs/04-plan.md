@@ -72,9 +72,12 @@ it exists.
 
 ## M1 — Skeleton, profiles, targets (4 d)
 
-- [ ] Project setup: Gradle KTS, version catalog, Hilt, Compose theme, `:core`/`:data`/`:app` modules
+- [x] Project setup, partial: Gradle **9.8.2** wrapper committed, version catalog, `:core` as a pure
+      JVM module (Kotlin 2.4.21, JUnit 5.14.4). Hilt, Compose theme and the `:data`/`:app` modules are
+      still to come.
 - [ ] Room schema v1 + DAOs + migration test harness
-- [ ] `:core` energy module: Mifflin, PAL, deficit, floors/caps, day bucketing — with tests
+- [x] `:core` energy module: Mifflin–St Jeor and Harris–Benedict BMR, PAL seed, deficit cap, safety
+      floors, weekly clamp, DST-aware day bucketing — 27 tests green (`.\gradlew.bat :core:test`)
 - [ ] Universal profile model: create/edit, switch, archive; `band_enabled` enforced (one per device)
 - [ ] Profile create/edit, onboarding step 1–3 (profile, body data, goal rate)
 - [ ] Target calculation + `target_history` write

@@ -14,8 +14,9 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **planning only; toolchain ready.** `docs/` is complete through the plan. The Android
-SDK and Android Studio are installed at machine scope, but there is still no Gradle project.
+Current state: **M1 in progress.** `docs/` is complete through the plan, the toolchain is installed,
+and `:core` — the pure Kotlin energy maths — builds and tests green (27 tests). `:data` and `:app` do
+not exist yet.
 
 ## Toolchain (installed 2026-11-07, verified)
 
@@ -101,15 +102,15 @@ from machine-wide `ANDROID_HOME`.
 | Node.js | **v24.13.1** — available, not required by the app |
 | Android SDK | `C:\Program Files\Android\Sdk` — platform-tools **37.0.1**, `platforms;android-36`, `build-tools;36.0.0`, cmdline-tools **16111833**; `ANDROID_HOME`/`ANDROID_SDK_ROOT` set at machine scope, `platform-tools` and `cmdline-tools\latest\bin` on the machine `PATH` |
 | Android Studio | **2026.2.2.9** (`AI-262.10968.63.2622.16840690`) at `C:\Program Files\Android\Android Studio`, bundled JBR, Start Menu shortcut |
-| Gradle | **Not installed**; use the Gradle wrapper committed with the project |
+| Gradle | Wrapper **9.8.2** committed under `gradle/wrapper/`; no system Gradle. Kotlin **2.4.21** and JUnit **5.14.4** pinned in `gradle/libs.versions.toml` |
 | Phones | Honor X7c — Android 14, MagicOS 8.0, Huawei Band 9 · Redmi Note 8 Pro — Android 11, MIUI 12.5.3, Huawei Band 11 |
 
 ## Remaining setup (M1)
 
-1. Create the Gradle wrapper (`gradle wrapper --gradle-version <pin>`) and commit it, so no one needs
-   a system Gradle.
-2. Write `local.properties` with `sdk.dir` (escaped spaces) — untracked.
-3. Verify: `.\gradlew.bat :app:assembleDebug` and `.\gradlew.bat :core:test` on a clean checkout.
+1. Write `local.properties` with `sdk.dir` (escaped spaces) — untracked, needed once an Android module
+   exists.
+2. Create `:data` (Room, Health Connect, OpenFoodFacts) and `:app` (Compose, Hilt) and verify
+   `.\gradlew.bat :app:assembleDebug`.
 
 ## Build and test
 
@@ -125,6 +126,10 @@ from machine-wide `ANDROID_HOME`.
   must build in both before it is called done.
 - Instrumented tests that touch Health Connect or the camera run on a **real device**, not an
   emulator — an emulator has no Health Connect data source and no real sensor noise.
+- Under DSH `workspace-write`, Gradle cannot write `~/.gradle`: native extraction fails with
+  `Couldn't open current thread, error = 5`. Run builds with `GRADLE_USER_HOME` pointing at a writable
+  directory, and set `org.gradle.vfs.watch=false` there to silence the file-watcher. A normal shell
+  (no sandbox) needs neither workaround.
 
 ## Devices and how to test on them
 

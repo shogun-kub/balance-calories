@@ -1,0 +1,16 @@
+# Single source of truth for dependency versions (see AGENTS.md, hard rule 3).
+# No "+", no "latest.release", no "-SNAPSHOT" in anything that ships.
+#
+# Android/Compose/Health Connect versions will be added in M1 step 2, when :app and :data exist.
+# Pinning them before a module uses them would be an untested claim.
+
+[versions]
+kotlin = "2.4.21"
+junit = "5.14.4"
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+
+[libraries]
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
