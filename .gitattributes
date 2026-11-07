@@ -1,0 +1,17 @@
+# Repository-wide line endings: LF in the tree, whatever the platform.
+# core.autocrlf=false is set locally; this file makes the intent explicit
+# and protects clones that have a different global setting.
+* text=auto eol=lf
+
+# Windows scripts must stay CRLF or cmd.exe mis-parses them.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets: never touch.
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.keystore binary
+*.jks binary
