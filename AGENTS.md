@@ -14,8 +14,32 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **planning only**. `docs/` is complete through the plan; there is no Gradle project and
-no Android SDK on this host yet. Do not pretend otherwise in a report.
+Current state: **planning only; toolchain ready.** `docs/` is complete through the plan. The Android
+SDK and Android Studio are installed at machine scope, but there is still no Gradle project.
+
+## Toolchain (installed 2026-11-07, verified)
+
+| Item | Location / version |
+| --- | --- |
+| Android Studio | `C:\Program Files\Android\Android Studio` — 2026.2.2.9, bundled JBR, Start Menu shortcut |
+| Android SDK | `C:\Program Files\Android\Sdk` — platform-tools 37.0.1, platforms;android-36, build-tools;36.0.0, cmdline-tools 16111833 |
+| `adb` | `C:\Program Files\Android\Sdk\platform-tools\adb.exe`, on the machine `PATH` |
+| Licences | `C:\Program Files\Android\Sdk\licenses` — accepted; packages install without prompting |
+
+Two things to know before the next package install:
+
+1. **The SDK lives under `Program Files`, so it is read-only for this session.** Adding a platform, a
+   build-tools version or an emulator requires an **elevated** shell; `android sdk install` from a
+   normal shell fails with access denied. Budget one UAC prompt for any SDK change.
+2. **`sdkmanager` is deprecated.** The supported command is `android sdk install <package>` (new CLI,
+   replaces `sdkmanager`); `sdkmanager.bat` still exists but prints a deprecation warning and forwards
+   to the new tool. The first `android.exe` run unpacks a payload into `ANDROID_USER_HOME`
+   (default `%USERPROFILE%`), so under the DSH `workspace-write` sandbox it fails with
+   `Failed to create bin dir: Access is denied` — run it unconfined, or point `ANDROID_USER_HOME` at a
+   writable directory.
+
+`local.properties` (with `sdk.dir`) is written in M1 and stays untracked; Gradle also resolves the SDK
+from machine-wide `ANDROID_HOME`.
 
 ## Directory contract
 
@@ -72,25 +96,20 @@ no Android SDK on this host yet. Do not pretend otherwise in a report.
 | Host | Windows, PowerShell (`pwsh`), NTFS; workspace `E:\Projects\BalanceCalories`, ~420 GB free |
 | File policy | DSH `workspace-write`: writes outside the repository need approval |
 | Java | Liberica JDK **21.0.11** LTS, `JAVA_HOME=C:\Program Files\BellSoft\LibericaJDK-21-Full\` |
-| Git | **2.49.0.windows.1**; the repository is not initialised yet (do it in M1, `core.autocrlf=false`) |
+| Git | **2.49.0.windows.1**; repository initialised on `main` (`core.autocrlf=false`), first commit `d195f3a` |
 | Python | **3.14.2** — used for `tools/` generators, not in the app |
 | Node.js | **v24.13.1** — available, not required by the app |
-| Android SDK | **Not installed.** No `adb`, no `sdkmanager`, no Android Studio on this host |
+| Android SDK | `C:\Program Files\Android\Sdk` — platform-tools **37.0.1**, `platforms;android-36`, `build-tools;36.0.0`, cmdline-tools **16111833**; `ANDROID_HOME`/`ANDROID_SDK_ROOT` set at machine scope, `platform-tools` and `cmdline-tools\latest\bin` on the machine `PATH` |
+| Android Studio | **2026.2.2.9** (`AI-262.10968.63.2622.16840690`) at `C:\Program Files\Android\Android Studio`, bundled JBR, Start Menu shortcut |
 | Gradle | **Not installed**; use the Gradle wrapper committed with the project |
 | Phones | Honor X7c — Android 14, MagicOS 8.0, Huawei Band 9 · Redmi Note 8 Pro — Android 11, MIUI 12.5.3, Huawei Band 11 |
 
-## Toolchain setup (M1, before the first build)
+## Remaining setup (M1)
 
-1. Install Android Studio (or command-line tools) and the platform matching `compileSdk`; accept SDK
-   licences.
-2. `adb` must be on `PATH`, or referenced by absolute path in scripts.
-3. Create the Gradle wrapper (`gradle wrapper --gradle-version <pin>`) and commit it, so no one needs
+1. Create the Gradle wrapper (`gradle wrapper --gradle-version <pin>`) and commit it, so no one needs
    a system Gradle.
-4. `local.properties` (SDK path) is written by Studio and stays untracked.
-5. Verify: `.\gradlew.bat :app:assembleDebug` and `.\gradlew.bat :core:test` on a clean checkout.
-
-Record the installed versions in this table once they exist — the current values are what was observed,
-not what is required.
+2. Write `local.properties` with `sdk.dir` (escaped spaces) — untracked.
+3. Verify: `.\gradlew.bat :app:assembleDebug` and `.\gradlew.bat :core:test` on a clean checkout.
 
 ## Build and test
 
