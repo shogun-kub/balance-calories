@@ -107,6 +107,41 @@ interface TargetHistoryDao {
             "AND effective_from <= :localDate ORDER BY effective_from DESC LIMIT 1",
     )
     suspend fun effectiveOn(profileId: Long, localDate: String): TargetHistoryEntity?
+
+    @Query(
+        "SELECT * FROM target_history WHERE profile_id = :profileId " +
+            "ORDER BY effective_from DESC LIMIT 1",
+    )
+    suspend fun latest(profileId: Long): TargetHistoryEntity?
+}
+
+/** Read-only counts for the debug screen, so a wrong-looking number can be traced to a table. */
+@Dao
+interface DebugDao {
+
+    @Query("SELECT COUNT(*) FROM profile")
+    suspend fun profileCount(): Int
+
+    @Query("SELECT COUNT(*) FROM body_measurement")
+    suspend fun bodyMeasurementCount(): Int
+
+    @Query("SELECT COUNT(*) FROM daily_activity")
+    suspend fun dailyActivityCount(): Int
+
+    @Query("SELECT COUNT(*) FROM food_entry WHERE deleted_at IS NULL")
+    suspend fun foodEntryCount(): Int
+
+    @Query("SELECT COUNT(*) FROM target_history")
+    suspend fun targetHistoryCount(): Int
+
+    @Query("SELECT COUNT(*) FROM product")
+    suspend fun productCount(): Int
+
+    @Query("SELECT COUNT(*) FROM recipe")
+    suspend fun recipeCount(): Int
+
+    @Query("SELECT COUNT(*) FROM app_setting")
+    suspend fun appSettingCount(): Int
 }
 
 /** App-level key-value state (schema v2), such as which profile is currently shown. */

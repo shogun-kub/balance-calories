@@ -14,6 +14,8 @@
     <string name="field_birth_date">Дата рождения</string>
     <string name="field_birth_date_empty">Выберите дату</string>
     <string name="field_height">Рост, см</string>
+    <string name="field_height_imperial">Рост, дюймы</string>
+    <string name="field_weight_imperial">Вес, фунты</string>
     <string name="field_weight">Вес, кг</string>
     <string name="field_activity">Уровень активности</string>
     <string name="activity_sedentary">Сидячий — офис, мало ходьбы</string>
@@ -34,7 +36,9 @@
     <string name="error_name">Введите имя</string>
     <string name="error_birth_date">Выберите дату рождения между 1900 и 14 лет назад</string>
     <string name="error_height">Рост должен быть 100–250 см</string>
+    <string name="error_height_imperial">Рост должен быть 39–98 дюймов</string>
     <string name="error_weight">Вес должен быть 30–300 кг</string>
+    <string name="error_weight_imperial">Вес должен быть 66–661 фунт</string>
     <string name="error_save">Не удалось сохранить профиль: %1$s</string>
     <string name="label_sex_male_short">М</string>
     <string name="label_sex_female_short">Ж</string>
@@ -51,6 +55,41 @@
     <string name="current_badge">текущий</string>
     <string name="action_edit">Изменить</string>
     <string name="profile_edit_title">Изменить профиль</string>
+
+    <string name="settings_title">Настройки</string>
+    <string name="settings_units">Единицы</string>
+    <string name="units_metric">Метрические (см, кг)</string>
+    <string name="units_imperial">Имперские (дюймы, фунты)</string>
+    <string name="settings_units_note">Используются при вводе роста и веса. Хранятся значения всё равно в метрических единицах.</string>
+    <string name="settings_day_start">День начинается в</string>
+    <string name="settings_day_start_note">Определяет, к какому дню относится поздний перекус. На баланс начнёт влиять, когда появятся данные активности.</string>
+    <string name="settings_language">Язык</string>
+    <string name="language_system">Системный</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+    <string name="settings_language_unsupported">Язык приложения требует Android 13 или новее, поэтому этот телефон использует системный язык.</string>
+    <string name="hour_pattern">%1$d:00</string>
+    <string name="action_settings">Настройки</string>
+    <string name="action_debug">Отладка</string>
+
+    <string name="debug_title">Отладка</string>
+    <string name="debug_app">Приложение</string>
+    <string name="debug_device">Устройство</string>
+    <string name="debug_schema">Версия схемы</string>
+    <string name="debug_database">Строк в базе</string>
+    <string name="debug_profile">Текущий профиль</string>
+    <string name="debug_weight">Последний вес</string>
+    <string name="debug_target">Последняя сохранённая цель</string>
+    <string name="debug_health_connect">Health Connect</string>
+    <string name="debug_none">—</string>
+    <string name="row_profile">профили</string>
+    <string name="row_body">вес</string>
+    <string name="row_activity">дни активности</string>
+    <string name="row_food">записи еды</string>
+    <string name="row_target">цели</string>
+    <string name="row_product">продукты</string>
+    <string name="row_recipe">рецепты</string>
+    <string name="row_setting">настройки приложения</string>
 
     <string name="target_title">Цель по калориям</string>
     <string name="target_note">Рассчитано по вашему профилю и последнему весу. Ничего не покидает телефон.</string>

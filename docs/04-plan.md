@@ -85,8 +85,10 @@ it exists.
       Honor: a typed profile wrote `profile`, `body_measurement` and `target_history` rows and survived
       a restart
 - [x] Target calculation + `target_history` write (seed mode; adaptive and pinned arrive in M5)
-- [ ] Settings: units, day-start hour, language
-- [ ] Debug screen: show computed BMR/TDEE/target inputs and outputs
+- [x] Settings: units (metric/imperial, applied to data entry), day-start hour, language (per-app locale
+      on Android 13+; below that the phone follows the system language and the screen says so)
+- [x] Debug screen: BMR/TDEE/target inputs and outputs, schema version, database row counts, stored
+      target row and device/Health Connect state
 
 Exit criteria: I can create two profiles and see a defensible daily target with a visible explanation.
 

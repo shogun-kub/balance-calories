@@ -14,6 +14,8 @@
     <string name="field_birth_date">Date of birth</string>
     <string name="field_birth_date_empty">Choose a date</string>
     <string name="field_height">Height, cm</string>
+    <string name="field_height_imperial">Height, in</string>
+    <string name="field_weight_imperial">Weight, lb</string>
     <string name="field_weight">Weight, kg</string>
     <string name="field_activity">Activity level</string>
     <string name="activity_sedentary">Sedentary — desk work, little walking</string>
@@ -34,7 +36,9 @@
     <string name="error_name">Enter a name</string>
     <string name="error_birth_date">Choose a date of birth between 1900 and 14 years ago</string>
     <string name="error_height">Height must be 100–250 cm</string>
+    <string name="error_height_imperial">Height must be 39–98 in</string>
     <string name="error_weight">Weight must be 30–300 kg</string>
+    <string name="error_weight_imperial">Weight must be 66–661 lb</string>
     <string name="error_save">Could not save the profile: %1$s</string>
     <string name="label_sex_male_short">M</string>
     <string name="label_sex_female_short">F</string>
@@ -51,6 +55,41 @@
     <string name="current_badge">current</string>
     <string name="action_edit">Edit</string>
     <string name="profile_edit_title">Edit profile</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_units">Units</string>
+    <string name="units_metric">Metric (cm, kg)</string>
+    <string name="units_imperial">Imperial (in, lb)</string>
+    <string name="settings_units_note">Used when entering height and weight. Values are stored in metric either way.</string>
+    <string name="settings_day_start">Day starts at</string>
+    <string name="settings_day_start_note">Decides which day a late snack belongs to. It starts changing the balance once activity data arrives.</string>
+    <string name="settings_language">Language</string>
+    <string name="language_system">System</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+    <string name="settings_language_unsupported">Per-app language needs Android 13 or newer, so this phone follows the system language.</string>
+    <string name="hour_pattern">%1$d:00</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_debug">Debug</string>
+
+    <string name="debug_title">Debug</string>
+    <string name="debug_app">App</string>
+    <string name="debug_device">Device</string>
+    <string name="debug_schema">Schema version</string>
+    <string name="debug_database">Database rows</string>
+    <string name="debug_profile">Active profile</string>
+    <string name="debug_weight">Latest weight</string>
+    <string name="debug_target">Latest stored target</string>
+    <string name="debug_health_connect">Health Connect</string>
+    <string name="debug_none">—</string>
+    <string name="row_profile">profiles</string>
+    <string name="row_body">weights</string>
+    <string name="row_activity">activity days</string>
+    <string name="row_food">food entries</string>
+    <string name="row_target">targets</string>
+    <string name="row_product">products</string>
+    <string name="row_recipe">recipes</string>
+    <string name="row_setting">app settings</string>
 
     <string name="target_title">Energy target</string>
     <string name="target_note">Computed from your profile and latest weight. Nothing leaves the phone.</string>

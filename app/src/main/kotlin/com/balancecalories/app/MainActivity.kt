@@ -2,6 +2,7 @@ package com.balancecalories.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,8 +25,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.balancecalories.app.debug.DebugScreen
 import com.balancecalories.app.profile.ProfileFormScreen
 import com.balancecalories.app.profiles.ProfilesScreen
+import com.balancecalories.app.settings.SettingsScreen
 import com.balancecalories.core.energy.TargetCalculator
 import com.balancecalories.core.energy.TargetLimit
 import com.balancecalories.core.profile.Profile
@@ -34,7 +37,7 @@ import com.balancecalories.data.health.HealthConnectSupport
 import java.time.LocalDate
 import kotlinx.coroutines.launch
 
-private enum class Screen { TODAY, PROFILES, FORM }
+private enum class Screen { TODAY, PROFILES, FORM, SETTINGS, DEBUG }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +72,12 @@ private fun Root() {
 
     var screen by remember { mutableStateOf(Screen.TODAY) }
     var editing by remember { mutableStateOf<Profile?>(null) }
+
+    // System back from any sub-screen returns to Today instead of closing the app.
+    BackHandler(enabled = screen != Screen.TODAY) {
+        editing = null
+        screen = Screen.TODAY
+    }
 
     LaunchedEffect(profiles, activeId) {
         if (profiles.isNotEmpty() && profiles.none { it.id == activeId }) {
@@ -113,6 +122,19 @@ private fun Root() {
             },
         )
 
+        screen == Screen.SETTINGS && active != null -> SettingsScreen(
+            container = container,
+            profile = active,
+            onBack = { screen = Screen.TODAY },
+            onOpenDebug = { screen = Screen.DEBUG },
+        )
+
+        screen == Screen.DEBUG && active != null -> DebugScreen(
+            container = container,
+            profile = active,
+            onBack = { screen = Screen.SETTINGS },
+        )
+
         active == null -> ProfileFormScreen(
             container = container,
             existing = null,
@@ -123,6 +145,7 @@ private fun Root() {
             profile = active,
             container = container,
             onOpenProfiles = { screen = Screen.PROFILES },
+            onOpenSettings = { screen = Screen.SETTINGS },
         )
     }
 }
@@ -132,7 +155,12 @@ private fun Root() {
  * target enters `target_history` at onboarding, at an explicit edit, or when the user recalculates.
  */
 @Composable
-private fun ProfileTarget(profile: Profile, container: AppContainer, onOpenProfiles: () -> Unit) {
+private fun ProfileTarget(
+    profile: Profile,
+    container: AppContainer,
+    onOpenProfiles: () -> Unit,
+    onOpenSettings: () -> Unit,
+) {
     val today = remember { LocalDate.now() }
     var weightKg by remember(profile.id) { mutableStateOf<Double?>(null) }
     var loaded by remember(profile.id) { mutableStateOf(false) }
@@ -185,8 +213,13 @@ private fun ProfileTarget(profile: Profile, container: AppContainer, onOpenProfi
         MetricRow(stringResource(R.string.label_limit), target.limit.localized())
         MetricRow(stringResource(R.string.label_health_connect), hcState.localized())
 
-        TextButton(onClick = onOpenProfiles) {
-            Text(stringResource(R.string.profiles_title))
+        Row {
+            TextButton(onClick = onOpenProfiles) {
+                Text(stringResource(R.string.profiles_title))
+            }
+            TextButton(onClick = onOpenSettings) {
+                Text(stringResource(R.string.action_settings))
+            }
         }
     }
 }

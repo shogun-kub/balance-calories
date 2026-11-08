@@ -8,6 +8,7 @@ import com.balancecalories.data.health.HealthConnectState
 import com.balancecalories.data.health.HealthConnectSupport
 import com.balancecalories.data.repo.AppSettingsRepository
 import com.balancecalories.data.repo.BodyMeasurementRepository
+import com.balancecalories.data.repo.DebugRepository
 import com.balancecalories.data.repo.ProfileRepository
 import com.balancecalories.data.repo.TargetRepository
 
@@ -23,6 +24,7 @@ class AppContainer(context: Context) {
     val body: BodyMeasurementRepository = BodyMeasurementRepository(database)
     val targets: TargetRepository = TargetRepository(database)
     val settings: AppSettingsRepository = AppSettingsRepository(database)
+    val debug: DebugRepository = DebugRepository(database)
 
     /**
      * Whether this phone can supply band data at all. The first profile claims the band when it can;

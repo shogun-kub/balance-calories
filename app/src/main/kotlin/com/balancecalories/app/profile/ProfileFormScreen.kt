@@ -41,12 +41,15 @@ import com.balancecalories.core.energy.EnergyProfile
 import com.balancecalories.core.energy.Sex
 import com.balancecalories.core.energy.TargetCalculator
 import com.balancecalories.core.profile.Profile
+import com.balancecalories.core.profile.UnitSystem
+import com.balancecalories.core.profile.Units
 import com.balancecalories.data.repo.BodyMeasurementRepository
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.Locale
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -87,12 +90,14 @@ fun ProfileFormScreen(
     val today = remember { LocalDate.now() }
     val oldestAllowed = remember(today) { today.minusYears(14) }
     val isEditing = existing != null
+    // Units are a profile preference; a new profile starts metric and can be switched in settings.
+    val unitSystem = existing?.unitSystem ?: UnitSystem.METRIC
 
     var name by remember(existing?.id) { mutableStateOf(existing?.name ?: "") }
     var sex by remember(existing?.id) { mutableStateOf(existing?.sex ?: Sex.MALE) }
     var birthDate by remember(existing?.id) { mutableStateOf(existing?.birthDate) }
     var heightText by remember(existing?.id) {
-        mutableStateOf(existing?.heightCm?.roundToInt()?.toString() ?: "")
+        mutableStateOf(existing?.heightCm?.let { formatHeight(it, unitSystem) } ?: "")
     }
     var weightText by remember(existing?.id) { mutableStateOf("") }
     var activity by remember(existing?.id) {
@@ -115,19 +120,22 @@ fun ProfileFormScreen(
         val id = existing?.id ?: return@LaunchedEffect
         val latest = container.body.latestWeightKg(id)
         originalWeight = latest
-        if (weightText.isEmpty()) weightText = latest?.roundToInt()?.toString() ?: ""
+        if (weightText.isEmpty()) weightText = latest?.let { formatWeight(it, unitSystem) } ?: ""
     }
 
-    val height = heightText.toDoubleOrNull()
-    val weight = weightText.toDoubleOrNull()
+    // What the user typed, in their units.
+    val heightEntered = parseDecimal(heightText)
+    val weightEntered = parseDecimal(weightText)
+    val metricHeight = heightEntered?.let { Units.heightToCm(it, unitSystem) }
+    val metricWeight = weightEntered?.let { Units.weightToKg(it, unitSystem) }
     val dob = birthDate
 
-    val preview = remember(sex, dob, height, weight, activity, goal, today, oldestAllowed) {
-        if (dob != null && dob.isBefore(oldestAllowed) && height != null && weight != null &&
-            height in HEIGHT_RANGE && weight in WEIGHT_RANGE
+    val preview = remember(sex, dob, metricHeight, metricWeight, activity, goal, today, oldestAllowed) {
+        if (dob != null && dob.isBefore(oldestAllowed) && metricHeight != null && metricWeight != null &&
+            metricHeight in HEIGHT_RANGE_CM && metricWeight in WEIGHT_RANGE_KG
         ) {
             TargetCalculator.seed(
-                profile = EnergyProfile(sex, dob, height, weight, activity),
+                profile = EnergyProfile(sex, dob, metricHeight, metricWeight, activity),
                 goalRateKgPerWeek = goal.rateKgPerWeek,
                 on = today,
             ).kcal
@@ -138,16 +146,22 @@ fun ProfileFormScreen(
 
     fun save() {
         saveError = null
+        val metricHeight = heightEntered?.let { Units.heightToCm(it, unitSystem) }
+        val metricWeight = weightEntered?.let { Units.weightToKg(it, unitSystem) }
         validationError = when {
             name.isBlank() -> R.string.error_name
             dob == null || !dob.isBefore(oldestAllowed) || dob.isBefore(LocalDate.of(1900, 1, 1)) ->
                 R.string.error_birth_date
-            height == null || height !in HEIGHT_RANGE -> R.string.error_height
-            weight == null || weight !in WEIGHT_RANGE -> R.string.error_weight
+            metricHeight == null || metricHeight !in HEIGHT_RANGE_CM ->
+                if (unitSystem == UnitSystem.IMPERIAL) R.string.error_height_imperial else R.string.error_height
+            metricWeight == null || metricWeight !in WEIGHT_RANGE_KG ->
+                if (unitSystem == UnitSystem.IMPERIAL) R.string.error_weight_imperial else R.string.error_weight
             else -> null
         }
-        if (validationError != null || dob == null || height == null || weight == null) return
+        if (validationError != null || dob == null || metricHeight == null || metricWeight == null) return
 
+        val height = metricHeight
+        val weight = metricWeight
         saving = true
         scope.launch {
             try {
@@ -249,18 +263,32 @@ fun ProfileFormScreen(
 
         OutlinedTextField(
             value = heightText,
-            onValueChange = { heightText = it.filter(Char::isDigit) },
-            label = { Text(stringResource(R.string.field_height)) },
+            onValueChange = { heightText = filterDecimal(it) },
+            label = {
+                Text(
+                    stringResource(
+                        if (unitSystem == UnitSystem.IMPERIAL) R.string.field_height_imperial
+                        else R.string.field_height,
+                    ),
+                )
+            },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
             value = weightText,
-            onValueChange = { weightText = it.filter(Char::isDigit) },
-            label = { Text(stringResource(R.string.field_weight)) },
+            onValueChange = { weightText = filterDecimal(it) },
+            label = {
+                Text(
+                    stringResource(
+                        if (unitSystem == UnitSystem.IMPERIAL) R.string.field_weight_imperial
+                        else R.string.field_weight,
+                    ),
+                )
+            },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -359,5 +387,33 @@ fun ProfileFormScreen(
     }
 }
 
-private val HEIGHT_RANGE = 100.0..250.0
-private val WEIGHT_RANGE = 30.0..300.0
+private val HEIGHT_RANGE_CM = 100.0..250.0
+private val WEIGHT_RANGE_KG = 30.0..300.0
+
+/** Accepts digits plus one decimal separator, because imperial entry needs 68.9 inches, not 68. */
+private fun filterDecimal(text: String): String {
+    val builder = StringBuilder()
+    var separatorSeen = false
+    for (char in text) {
+        when {
+            char.isDigit() -> builder.append(char)
+            (char == '.' || char == ',') && !separatorSeen && builder.isNotEmpty() -> {
+                builder.append('.')
+                separatorSeen = true
+            }
+        }
+    }
+    return builder.toString()
+}
+
+private fun parseDecimal(text: String): Double? = text.toDoubleOrNull()
+
+private fun formatHeight(cm: Double, system: UnitSystem): String = when (system) {
+    UnitSystem.METRIC -> cm.roundToInt().toString()
+    UnitSystem.IMPERIAL -> String.format(Locale.US, "%.1f", Units.heightFromCm(cm, system))
+}
+
+private fun formatWeight(kg: Double, system: UnitSystem): String = when (system) {
+    UnitSystem.METRIC -> kg.roundToInt().toString()
+    UnitSystem.IMPERIAL -> String.format(Locale.US, "%.1f", Units.weightFromKg(kg, system))
+}

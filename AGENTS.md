@@ -14,15 +14,14 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1 nearly done.** `docs/` is complete through the plan, the toolchain is installed,
-`:core` — the pure Kotlin energy maths — builds and tests green (27 tests), and the modules exist:
-`:data` (Health Connect status probe, Room schema **v2** with 12 tables and 5 DAOs, Profile /
-BodyMeasurement / Target / AppSettings repositories behind domain mappers) and `:app` (Application
-container, create/edit/delete/switch profiles, target screen reading the database). `assembleDebug`
-succeeds and the APK installs and runs on the Honor X7c, where the v1 → v2 migration ran against a real
-database; 16 instrumentation tests pass there and the profile flows were exercised by hand through the
-UI. What is still missing from M1: settings (units, day start, language), the debug screen, and an
-archive action.
+Current state: **M1 done except the archive action.** `docs/` is complete through the plan, the
+toolchain is installed, `:core` — the pure Kotlin energy maths plus unit conversions — builds and tests
+green (30 tests), and the modules exist: `:data` (Health Connect status probe, Room schema **v2** with 12
+tables and 6 DAOs, Profile / BodyMeasurement / Target / AppSettings / Debug repositories) and `:app`
+(create/edit/delete/switch profiles, settings, debug screen). `assembleDebug` succeeds and the APK runs on
+the Honor X7c, where the v1 → v2 migration ran against a real database; 16 instrumentation tests pass
+there and every screen was exercised by hand. What is left before M2: an archive action with a way to
+restore archived profiles.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -91,8 +90,16 @@ archive action.
    and tapping a profile card switches to it. Edit verified on device: goal −0.25 → −0.5 made the target
    2130 → 1924, where the safety floor (1.1 × BMR = 1923.6) engaged and the screen said so.
 8. Archive has no UI yet (`archived_at` and `ProfileRepository.archive` exist); deletion is the
-   user-facing destructive action for now.
-9. Settings (units, day start, language); debug screen.
+   user-facing destructive action for now. Archiving needs a "show archived" path first, otherwise the
+   action would hide a profile with no way back.
+9. ~~Settings~~ — units (metric/imperial, applied to height/weight entry and converted back to metric
+   before storage), day-start hour, and language. Language uses Android's per-app locale
+   (`LocaleManager`) on Android 13+; below that the screen says the phone follows the system language
+   instead of offering a control that does nothing. Two traps worth remembering: clearing the override
+   needs `LocaleList.getEmptyLocaleList()` (a list built from `""` is silently ignored), and changing it
+   recreates the activity, which resets in-memory navigation to Today.
+10. ~~Debug screen~~ — app version, device, schema version, Health Connect state, the active profile's
+   inputs, the latest stored target row, and per-table row counts. Read-only by design.
 
 
 ## Toolchain (installed 2026-11-07, verified)

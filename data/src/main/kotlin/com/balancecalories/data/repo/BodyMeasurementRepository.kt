@@ -63,8 +63,7 @@ class BodyMeasurementRepository(
  * Writes the calorie target into history, so a later profile edit cannot silently rewrite what the app
  * told the user last week. Only the seed mode exists today; adaptive and pinned arrive with M2/M3.
  */
-class TargetRepository(
-    private val database: BalanceCaloriesDatabase,
+class TargetRepository(    private val database: BalanceCaloriesDatabase,
 ) {
 
     private val dao = database.targetHistoryDao()
@@ -91,6 +90,11 @@ class TargetRepository(
     suspend fun effectiveOn(profileId: Long, on: LocalDate): TargetHistoryEntity? =
         dao.effectiveOn(profileId, on.toString())
 
+    /** The most recent stored target, for the debug screen. */
+    suspend fun latest(profileId: Long): StoredTarget? = dao.latest(profileId)?.let {
+        StoredTarget(kcal = it.kcal, effectiveFrom = it.effectiveFrom, mode = it.mode)
+    }
+
     companion object {
         const val MODE_SEED = "seed"
         const val MODE_ADAPTIVE = "adaptive"
@@ -98,3 +102,10 @@ class TargetRepository(
         const val CONFIDENCE_NONE = "none"
     }
 }
+
+/** A target as it was stored, without exposing the Room entity to `:app`. */
+data class StoredTarget(
+    val kcal: Int,
+    val effectiveFrom: String,
+    val mode: String,
+)
