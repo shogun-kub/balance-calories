@@ -57,6 +57,7 @@ fun TodayScreen(
     profile: Profile,
     container: AppContainer,
     onOpenFood: () -> Unit,
+    onOpenRecipes: () -> Unit,
     onOpenProfiles: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
@@ -192,6 +193,7 @@ fun TodayScreen(
         Button(onClick = onOpenFood, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.today_add_food))
         }
+        TextButton(onClick = onOpenRecipes) { Text(stringResource(R.string.recipes_title)) }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onOpenProfiles) { Text(stringResource(R.string.profiles_title)) }

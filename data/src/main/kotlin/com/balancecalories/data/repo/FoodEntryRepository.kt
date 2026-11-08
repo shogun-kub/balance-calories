@@ -4,6 +4,8 @@ import com.balancecalories.core.food.DailyIntake
 import com.balancecalories.core.food.FoodMath
 import com.balancecalories.core.food.LoggedEntry
 import com.balancecalories.core.food.Meal
+import com.balancecalories.core.food.Recipe
+import com.balancecalories.core.food.RecipeMath
 import com.balancecalories.core.food.RecentlyEaten
 import com.balancecalories.core.food.Product
 import androidx.room.withTransaction
@@ -61,6 +63,55 @@ class FoodEntryRepository(
             sugarG = portion.sugarG,
             saltG = portion.saltG,
             wasEstimated = product.energyEstimated,
+        )
+        val id = entries.insert(entity)
+        return entity.copy(id = id).toDomain()
+    }
+
+    /**
+     * Logs [grams] of a finished [recipe] — the plate as served.
+     *
+     * The dish's energy is worked out here, once, from the same [RecipeMath] the recipe screen previews with, so
+     * the preview and the stored row cannot drift apart. The entry keeps a snapshot of the derived numbers
+     * (ADR-005) and only a link to the recipe: correcting an ingredient tomorrow must not rewrite today's
+     * lunch, and deleting the recipe must not delete what was eaten.
+     *
+     * [wasEstimated] is true because recipe nutrition is always derived from other products' labels, never
+     * measured on the dish itself.
+     */
+    suspend fun logRecipe(
+        profileId: Long,
+        recipe: Recipe,
+        grams: Double,
+        meal: Meal,
+        on: LocalDate = LocalDate.now(),
+    ): LoggedEntry {
+        require(grams > 0.0) { "a portion must be positive, was $grams" }
+        val totals = RecipeMath.totals(recipe.items)
+        val basis = RecipeMath.weightBasis(totals, recipe.cookedWeightG)
+        val portion = RecipeMath.portion(totals, basis, grams)
+            ?: throw IllegalArgumentException("recipe ${recipe.id} has no weight to log")
+        val kcal = portion.kcal
+            ?: throw IllegalArgumentException("recipe ${recipe.id} has no energy to log")
+
+        val entity = FoodEntryEntity(
+            profileId = profileId,
+            consumedAt = clock(),
+            localDate = on.toString(),
+            meal = Meal.toStorage(meal),
+            productId = null,
+            productName = recipe.name,
+            productNameRu = null,
+            recipeId = recipe.id.takeIf { it != Recipe.NEW },
+            grams = grams,
+            kcal = kcal,
+            proteinG = portion.proteinG,
+            fatG = portion.fatG,
+            carbsG = portion.carbsG,
+            fiberG = portion.fiberG,
+            sugarG = portion.sugarG,
+            saltG = portion.saltG,
+            wasEstimated = true,
         )
         val id = entries.insert(entity)
         return entity.copy(id = id).toDomain()

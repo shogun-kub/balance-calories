@@ -10,6 +10,7 @@ import com.balancecalories.data.db.dao.FoodEntryDao
 import com.balancecalories.data.db.dao.PendingLookupDao
 import com.balancecalories.data.db.dao.ProductDao
 import com.balancecalories.data.db.dao.ProfileDao
+import com.balancecalories.data.db.dao.RecipeDao
 import com.balancecalories.data.db.dao.SettingsDao
 import com.balancecalories.data.db.dao.TargetHistoryDao
 import com.balancecalories.data.db.entity.AppSettingEntity
@@ -67,6 +68,8 @@ abstract class BalanceCaloriesDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
     abstract fun pendingLookupDao(): PendingLookupDao
     abstract fun foodEntryDao(): FoodEntryDao
+
+    abstract fun recipeDao(): RecipeDao
 
     companion object {
         const val NAME = "balancecalories.db"

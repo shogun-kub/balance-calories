@@ -14,12 +14,12 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1 complete, M2 complete.** `:core` (46 JVM tests) and `:data` (schema **v4**, 9 DAOs,
-7 repositories, OFF client, product persistence, food logging) build green, and `:app` has the full food
-loop: Today with target/eaten/remaining/macros/meal sections, product list and search, product screen with
-portion preview, manual product form, entry edit, repeat-yesterday, and a working **barcode scanner**
-(CameraX 1.6.2 + zxing-cpp 3.1.1, single FOSS build). 46 :core + 42 :data + 10 :app JVM tests and **56 device tests**
-(52 :data, 4 :app) pass. Next: M3 recipes.
+Current state: **M1, M2 and M3 complete.** `:core` (57 JVM tests) and `:data` (schema **v4**, 10 DAOs,
+8 repositories: OFF client, product persistence, food logging, recipes) build green, and `:app` has the
+full food loop: Today with target/eaten/remaining/macros/meal sections, product list and search, a product
+screen with portion preview, manual product form, entry edit, repeat-yesterday, recipes, and a working
+**barcode scanner** (CameraX 1.6.2 + zxing-cpp 3.1.1, single FOSS build). 57 :core + 42 :data + 10 :app JVM
+tests and **65 device tests** (61 :data, 4 :app) pass. Next: M4 band data and the daily balance.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -155,7 +155,28 @@ portion preview, manual product form, entry edit, repeat-yesterday, and a workin
 9. ~~Recents in the food list~~ — an empty query lists **Recently eaten** (newest first, `2×` when logged more
    than once) above the browse list. One query serves recency and habit; soft-deleted entries are excluded
    and a row whose product vanished is dropped. Tapping opens the product, not a logged portion.
-10. Next: **M3 recipes.** M2 is complete: products, search, scanning, logging, Today, editing.
+10. ~~M2 complete~~ — products, search, scanning, logging, Today and editing.
+
+## M3 progress (recipes)
+
+1. ~~Recipe model~~ — `recipe`, `recipe_item` and `food_entry.recipe_id` have existed since **schema v1**, so M3
+   needed no migration: a DAO, a repository, `RecipeMath` and three screens. `RecipeMath` (in `:core`) turns raw
+   components into a dish and applies the cooking semantics from docs/02-research.md §3.5: per-100 g is
+   computed against the **measured cooked weight**, the raw sum is only a flagged fallback, and a dish with an
+   ingredient that has no calorie data reports **no total** rather than the sum of the others (ADR-020).
+2. ~~Recipe screens~~ — `RecipesScreen` (list), `RecipeEditorScreen` (name, servings, cooked weight, ingredient
+   search over local products, grams per ingredient, live preview) and `RecipeScreen` (components, totals,
+   per-100 g, per-serving, portion by grams defaulting to one serving, meal chips, log, edit, delete). The
+   editor's preview and the detail screen call the same maths, so a typed change cannot show one number and
+   store another.
+3. ~~Logging a portion~~ — `FoodEntryRepository.logRecipe` snapshots the derived nutrition into the entry with
+   `product_id = NULL`, `recipe_id` set and `was_estimated = 1`. Editing the recipe afterwards does not move a
+   logged meal, and deleting the recipe leaves the meal on the day with only the link cleared.
+4. ~~Tests~~ — 11 `RecipeMathTest` cases including the property the plan asked for (doubling every ingredient
+   doubles energy and weight and leaves the density unchanged, over 200 seeded random dishes), and 9 device
+   tests for `RecipeRepository` (ingredients replaced as a set, id survives an edit, per-profile scoping,
+   deletion keeps the logged meal, an ingredient-less recipe refused).
+5. Next: **M4** — band data through Health Connect and the real daily balance.
 
 
 ## Toolchain (installed 2026-11-07, verified)
@@ -305,7 +326,7 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (52 tests) — database behaviour, migrations, repositories, starter pack, products, food entries
+# OK (61 tests) — database behaviour, migrations, repositories, starter pack, products, food entries, recipes
 ```
 
 ### The scanner: two traps that cost an hour each (2026-11-08)
@@ -334,9 +355,12 @@ Learned the hard way, several times:
 - **An open keyboard moves everything.** Compose dialogs and fields push buttons upward, so a tap aimed at
   a button lands on the IME (an avocado became 1503 g). Type into the field, dump again, then tap the
   button by its new bounds.
-- **`input keyevent 4` is "navigate back", not "hide the keyboard".** With no IME open it pops the screen —
-  and a following fixed-coordinate tap lands on whatever was underneath (observed: a bell pepper product
-  screen opened instead of a log action).
+- **`input keyevent 4` closes the IME when a field has focus, and navigates back when it does not.** Both
+  halves were observed. With no IME open it pops the screen, and a following fixed-coordinate tap lands on
+  whatever is underneath (a bell pepper product screen opened instead of a log action). With the keyboard open
+  it closes the keyboard and stays on the screen — the reliable way to get the layout back before dumping
+  coordinates, because while the keyboard is up a tap aimed at a form row hits a key instead (observed: a tap at
+  a list row typed a space into the query, and a later tap on "Save" typed a digit into the last field).
 - Text entry is ASCII only: Cyrillic cannot be typed with `input text`, so pick a row by what is visible
   instead of searching for it.
 

@@ -161,10 +161,25 @@ Exit criteria: a full day of eating can be logged faster than with a notes app, 
 
 ## M3 — Recipes (3 d)
 
-- [ ] Recipe editor: components (from product search/recent), grams, cooked weight, servings
-- [ ] Derived per-100 g / per-serving preview, estimated-component warning
-- [ ] Log a portion by grams or fraction; recipe detail screen
-- [ ] Recipe scaling tests (property-based: doubling grams doubles kcal)
+- [x] Recipe editor: components from product search, grams per ingredient, cooked weight, servings. The live
+      preview uses the same `RecipeMath` the detail screen uses, so what is typed is what is stored.
+- [x] Derived per-100 g / per-serving preview, with the two warnings that matter: the total is **unknown** when
+      an ingredient has no calorie data (never the sum of the others), and per-100 g is flagged when it falls
+      back to the raw weight because the cooked weight was not measured (ADR-020).
+- [x] Log a portion by grams, defaulting to one serving; recipe detail screen with edit and delete. The entry
+      snapshots the derived numbers and keeps only a link to the recipe, so editing or deleting the recipe
+      cannot rewrite what was eaten.
+- [x] Recipe scaling tests, property-based over a fixed seed: doubling every ingredient doubles the energy and
+      the weight and leaves the per-100 g density unchanged (200 random dishes), plus 10 targeted tests for the
+      unknown-value, zero-basis and empty-recipe rules.
+
+      **No schema change was needed**: `recipe`, `recipe_item` and `food_entry.recipe_id` have existed since
+      schema v1 — M3 was DAO, maths and UI, which is why it did not touch the migration chain.
+
+      Verified on the Honor X7c: chicken breast 200 g + white rice 150 g, cooked weight 350 g, 2 servings
+      previewed **788 kcal total / 225 per 100 g / 394 per serving**; logging the 175 g default wrote
+      `393.75 kcal` with `recipe_id = 1` and `product_id = NULL`, and Today read 407 eaten (394 + 13 from a
+      pepper) against the 1924 target. Device tests 61 in `:data` (9 new for recipes).
 
 ## M4 — Band data + daily balance (6 d)
 

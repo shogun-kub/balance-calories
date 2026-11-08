@@ -8,6 +8,8 @@ import androidx.room.Upsert
 import com.balancecalories.data.db.entity.BodyMeasurementEntity
 import com.balancecalories.data.db.entity.DailyActivityEntity
 import com.balancecalories.data.db.entity.ProfileEntity
+import com.balancecalories.data.db.entity.RecipeEntity
+import com.balancecalories.data.db.entity.RecipeItemEntity
 import com.balancecalories.data.db.entity.TargetHistoryEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -302,4 +304,45 @@ interface SettingsDao {
 
     @Query("DELETE FROM app_setting WHERE `key` = :key")
     suspend fun remove(key: String)
+}
+
+/**
+ * Recipes and their ingredients.
+ *
+ * `recipe_item` uses `(recipe_id, position)` as its primary key, and position is assigned by
+ * [RecipeRepository] on save: rewriting a recipe's ingredients means replacing the whole list in one
+ * transaction, so a renumbering bug cannot leave two items claiming the same slot.
+ */
+@Dao
+interface RecipeDao {
+
+    @Query("SELECT * FROM recipe WHERE profile_id = :profileId ORDER BY updated_at DESC, id DESC")
+    suspend fun forProfile(profileId: Long): List<RecipeEntity>
+
+    @Query("SELECT * FROM recipe WHERE id = :id")
+    suspend fun byId(id: Long): RecipeEntity?
+
+    @Query("SELECT * FROM recipe_item WHERE recipe_id = :recipeId ORDER BY position")
+    suspend fun itemsFor(recipeId: Long): List<RecipeItemEntity>
+
+    @Insert
+    suspend fun insert(recipe: RecipeEntity): Long
+
+    @Update
+    suspend fun update(recipe: RecipeEntity)
+
+    @Query("DELETE FROM recipe WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("DELETE FROM recipe_item WHERE recipe_id = :recipeId")
+    suspend fun deleteItems(recipeId: Long)
+
+    @Insert
+    suspend fun insertItems(items: List<RecipeItemEntity>)
+
+    @Query("SELECT COUNT(*) FROM recipe")
+    suspend fun count(): Int
+
+    @Query("SELECT COUNT(*) FROM recipe_item WHERE recipe_id = :recipeId")
+    suspend fun itemCount(recipeId: Long): Int
 }

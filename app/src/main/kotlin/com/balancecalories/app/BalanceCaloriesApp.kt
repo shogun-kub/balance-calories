@@ -13,6 +13,7 @@ import com.balancecalories.data.repo.BarcodeResolver
 import com.balancecalories.data.repo.BodyMeasurementRepository
 import com.balancecalories.data.repo.DebugRepository
 import com.balancecalories.data.repo.FoodEntryRepository
+import com.balancecalories.data.repo.RecipeRepository
 import com.balancecalories.data.repo.ProductRepository
 import com.balancecalories.data.repo.ProfileRepository
 import com.balancecalories.data.repo.StarterPackImporter
@@ -36,6 +37,7 @@ class AppContainer(context: Context) {
     val debug: DebugRepository = DebugRepository(database)
     val products: ProductRepository = ProductRepository(database)
     val food: FoodEntryRepository = FoodEntryRepository(database)
+    val recipes: RecipeRepository = RecipeRepository(database)
 
     /** One client for the whole process, so its throttle paces every screen together, not per screen. */
     val offClient: OpenFoodFactsClient = OpenFoodFactsClient(HttpUrlOffTransport())

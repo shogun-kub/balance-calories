@@ -571,6 +571,27 @@ Cooking semantics that the recipe model has to encode (this is where calorie app
   from.
 - Frying oil must be a component (or the user will under-count 100–200 kcal per dish).
 
+### 3.5.1 What the shipped model does with those semantics — 2026-11-08
+
+Implemented in `core/.../food/RecipeMath.kt` (57 tests, 11 of them for recipes) and exercised on the Honor
+X7c end to end. The decisions that follow from the semantics above, stated as behaviour:
+
+| Situation | What the app reports | Why not the obvious alternative |
+| --- | --- | --- |
+| One ingredient has no calorie data | The dish total is **unknown**, with a count of the ingredients that lack it | Summing the known ones understates the plate by an amount nothing on screen would reveal |
+| Cooked weight recorded | Per-100 g against the **cooked** weight (`BasisKind.COOKED`) | Raw weight is what went into the pan, not what is served |
+| Cooked weight missing | Per-100 g against the raw sum, with a visible warning (`RAW_FALLBACK`) | Refusing to compute would leave the dish unusable; silently using raw weight for a stew reads ~30% low without saying so |
+| Cooked weight is `0` | Treated as "not measured", so the raw fallback applies | A zero basis divides into infinite kcal/100 g |
+| Recipe has no ingredients | No total at all (`null`), not `0.0` | `0.0` looks like a loggable zero-calorie dish |
+| Recipe edited after a meal was logged | The logged entry keeps its own numbers | The entry is a snapshot (ADR-005); history must not move |
+| Recipe deleted | The meal stays on the day, only the link is cleared | Deleting a definition is not un-eating a dinner |
+
+Verified on the device with numbers that can be checked by hand: chicken breast 200 g (240 kcal) + white rice
+150 g (547.5 kcal) at a measured cooked weight of 350 g and 2 servings produced **788 kcal total, 225 kcal per
+100 g, 394 kcal per serving**; logging the default 175 g portion wrote `393.75 kcal` with `recipe_id = 1`,
+`product_id = NULL` and `was_estimated = 1`, and the Today screen read 407 eaten (394 + the 13 kcal of pepper
+already there) against a 1924 target.
+
 ## 4. Barcode scanning
 
 | Option | Facts | Fit |
