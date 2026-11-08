@@ -303,20 +303,19 @@ makes the app's central number arrive sooner and refuse less often.
 - [ ] The app has **no icon at all** today: `AndroidManifest.xml` declares no `android:icon`, so it shows the
       platform's default robot. Any icon is an improvement; this one is *the* improvement, because it is the
       only part of the app seen on the home screen.
-- [x] **Decided (owner, 2026-11-08): a balance scale, cake on one side, dumbbell on the other.** One glyph for
-      the whole product: what you eat weighed against what you spend.
-- [x] **Also decided: the cake is bare** — a slice standing directly on its side of the balance, with **no plate
-      or dish under it**. A dish would be a third shape at the same scale as the slice and would read as a
-      plated dessert rather than as the energy side of a balance.
-- [ ] Silhouette rule, because a balance plus two objects is four shapes inside 48 dp: the **beam and the two
+- [x] **Decided (owner, 2026-11-08, restated in Russian): a balance scale with two pans — a piece of pie in one
+      pan, a dumbbell in the other.** `Кусок пирога в одной чаше весов, и гантеля — в другой.` The pans are the
+      balance's own, and the pie sits *inside* its pan; there is no separate plate, no hand, no third object.
+      One glyph for the whole product: what you eat weighed against what you spend.
+- [ ] Silhouette rule, because two pans plus two objects is four shapes inside 48 dp: the **beam and the two
       pans** carry the meaning, so they are drawn as flat two-tone shapes with **negative space** between the
-      beam and each object's supporting edge, not as outlines. The slice and the dumbbell must differ in
-      **outline**, not in detail — a triangle-ish wedge against a horizontal bar with two square ends — so they
-      stay distinguishable in greyscale and at 24 dp.
-- [ ] Three sketches before the final one: beam + pans + objects; a reduced beam with the two objects hanging
-      directly; and beam + objects with no pans at all. The owner picks from images at 24, 48 and 108 dp, because
-      the choice is legibility, not taste — and if the pans do not survive 24 dp, dropping them is the agreed
-      fallback rather than redrawing them smaller.### M7.5 — Dark theme and contrast (0.5 d)
+      beam and each pan, not as outlines. The pie and the dumbbell must differ in **outline** — a wedge sitting
+      low in its pan against a bar with two square ends — so they stay distinguishable in greyscale and at 24 dp.
+- [ ] Three sketches before the final one: full balance with objects inside the pans; a reduced beam with the
+      objects hanging directly (no pan outlines); and a front-on balance with pans drawn as straight lines. The
+      owner picks from images at 24, 48 and 108 dp, because the choice is legibility, not taste — objects inside
+      pans is the target, and if pans do not survive 24 dp the agreed fallback is the hanging version, which
+      keeps the pie and the dumbbell as the two readable masses.### M7.5 — Dark theme and contrast (0.5 d)
 
 - [ ] `MaterialTheme {}` currently resolves to a **light-only** scheme; there is no `darkColorScheme`. The
       macro colours make this urgent: green, yellow and red chosen for a white background are not the same
