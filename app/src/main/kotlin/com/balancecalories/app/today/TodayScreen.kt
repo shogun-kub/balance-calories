@@ -8,7 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.balancecalories.app.AppContainer
 import com.balancecalories.app.R
@@ -60,9 +66,12 @@ fun TodayScreen(
 
     var weightKg by remember(profile.id) { mutableStateOf<Double?>(null) }
     var intake by remember(profile.id) { mutableStateOf<DailyIntake?>(null) }
-    var reload by remember { mutableIntStateOf(0) }
+    var refresh by remember { mutableIntStateOf(0) }
+    var yesterdayCount by remember { mutableIntStateOf(0) }
+    var editingEntry by remember { mutableStateOf<LoggedEntry?>(null) }
+    var editGrams by remember { mutableStateOf("") }
 
-    LaunchedEffect(profile.id, reload) {
+    LaunchedEffect(profile.id, refresh) {
         val weight = container.body.latestWeightKg(profile.id)
         weightKg = weight
         if (weight != null) {
@@ -72,6 +81,7 @@ fun TodayScreen(
                 on = today,
             )
             intake = container.food.day(profile.id, today, target.kcal)
+            yesterdayCount = container.food.countForDay(profile.id, today.minusDays(1))
         }
     }
 
@@ -141,6 +151,19 @@ fun TodayScreen(
 
         if (loadedIntake.meals.isEmpty()) {
             Text(text = stringResource(R.string.today_empty), style = MaterialTheme.typography.bodyMedium)
+            if (yesterdayCount > 0) {
+                OutlinedButton(
+                    onClick = {
+                        scope.launch {
+                            container.food.copyDay(profile.id, today.minusDays(1), today)
+                            refresh++
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.action_copy_yesterday, yesterdayCount))
+                }
+            }
         }
 
         for (meal in Meal.entries) {
@@ -151,10 +174,14 @@ fun TodayScreen(
                 EntryRow(
                     entry = entry,
                     languageTag = languageTag,
+                    onEdit = {
+                        editingEntry = entry
+                        editGrams = trimGrams(entry.grams)
+                    },
                     onDelete = {
                         scope.launch {
                             container.food.delete(entry.id)
-                            reload++
+                            refresh++
                         }
                     },
                 )
@@ -179,15 +206,90 @@ fun TodayScreen(
         MetricRow(stringResource(R.string.label_limit), target.limit.localized())
         MetricRow(stringResource(R.string.label_health_connect), hcState.localized())
     }
+
+    val entryBeingEdited = editingEntry
+    if (entryBeingEdited != null) {
+        EditPortionDialog(
+            entry = entryBeingEdited,
+            grams = editGrams,
+            onGramsChange = { editGrams = it },
+            onDismiss = { editingEntry = null },
+            onConfirm = {
+                val grams = editGrams.replace(',', '.').toDoubleOrNull()
+                if (grams != null && grams > 0.0) {
+                    scope.launch {
+                        runCatching { container.food.updateGrams(entryBeingEdited.id, grams) }
+                        editingEntry = null
+                        refresh++
+                    }
+                }
+            },
+        )
+    }
 }
 
+/**
+ * Changing the weight rescales the entry's own snapshot, so the preview here uses the same ratio the
+ * repository will apply — no re-read of the product, which may have changed since.
+ */
 @Composable
-private fun EntryRow(entry: LoggedEntry, languageTag: String?, onDelete: () -> Unit) {
+private fun EditPortionDialog(
+    entry: LoggedEntry,
+    grams: String,
+    onGramsChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    val newGrams = grams.replace(',', '.').toDoubleOrNull()
+    val previewKcal = if (newGrams != null && entry.grams > 0.0) {
+        entry.kcal * (newGrams / entry.grams)
+    } else {
+        null
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.entry_edit_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = grams,
+                    onValueChange = onGramsChange,
+                    label = { Text(stringResource(R.string.product_portion)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                )
+                if (previewKcal != null) {
+                    Text(text = stringResource(R.string.entry_edit_kcal, previewKcal))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = (newGrams ?: 0.0) > 0.0) {
+                Text(stringResource(R.string.action_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
+}
+
+/** 150.0 → "150" in a field a human will edit. */
+private fun trimGrams(grams: Double): String =
+    if (grams % 1.0 == 0.0) grams.toLong().toString() else grams.toString()
+
+@Composable
+private fun EntryRow(entry: LoggedEntry, languageTag: String?, onEdit: () -> Unit, onDelete: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .clickable(onClick = onEdit),
+        ) {
             Text(text = entry.displayName(languageTag), style = MaterialTheme.typography.bodyMedium)
             Text(
                 text = stringResource(R.string.today_entry_line, entry.grams, entry.kcal),

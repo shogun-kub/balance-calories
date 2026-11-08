@@ -161,4 +161,8 @@
     <string name="today_add_food">Добавить еду</string>
     <string name="today_entry_line">%1$.0f г · %2$.0f ккал</string>
     <string name="macro_line">Б %1$.0f · Ж %2$.0f · У %3$.0f</string>
-    <string name="loading">Загрузка…</string></resources>
+    <string name="loading">Загрузка…</string>
+    <string name="entry_edit_title">Изменить порцию</string>
+    <string name="entry_edit_kcal">%1$.0f ккал после изменения</string>
+    <string name="action_copy_yesterday">Повторить вчерашнее (%1$d)</string>
+    <string name="copy_result">Скопировано: %1$d</string></resources>

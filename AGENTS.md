@@ -19,8 +19,8 @@ Current state: **M1 complete, M2 in progress.** `:core` (46 JVM tests) and `:dat
 food flow: profiles end to end (create, edit, switch, delete, archive/restore), settings, debug, plus Today
 with target/eaten/remaining/macros/meal sections, a local product list, a product screen with portion
 preview and logging, and a manual product form. The starter pack (69 bilingual items) imports on first run;
-the OFF client follows the **measured** v3 contract. 44 instrumentation tests pass on the Honor X7c.
-Next in M2: edit and copy entries, the barcode scanner, product search over OFF, then M3 recipes.
+the OFF client follows the **measured** v3 contract. 49 instrumentation tests pass on the Honor X7c.
+Next in M2: the barcode scanner, product search over OFF, then M3 recipes.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -135,7 +135,14 @@ Next in M2: edit and copy entries, the barcode scanner, product search over OFF,
    Verified on the Honor X7c: schema 3 → 4 migrated in place with 69 products intact; 150 g of avocado
    previewed 240 kcal and stored `150.0 g / 240.0 kcal / P 3.0 / F 22.05` with the name snapshot; Today read
    240 eaten, 1684 remaining; deleting the row set `deleted_at` and the day went back to 0.
-5. Next: edit/copy-yesterday entries, the scanner, then product search over OFF and M3 recipes.
+5. ~~Edit a portion and copy yesterday~~ — `FoodEntryRepository.updateGrams` rescales the entry's **own
+   snapshot** by the weight ratio, deliberately not re-reading the product, so history does not absorb a
+   later product correction. `copyDay` duplicates only visible rows with fresh timestamps and leaves the
+   source day alone. UI: tapping an entry row opens a portion dialog with a live preview; the Today screen
+   offers "Repeat yesterday (n)" when today is empty and yesterday is not.
+   Verified on the Honor X7c: 100 g → 50 g of bell pepper previewed 13 kcal and stored 13; copying moved
+   yesterday's row to today as a new row (id 3) while the deleted avocado entry stayed deleted.
+6. Next: the barcode scanner, product search over OFF, then M3 recipes.
 
 
 ## Toolchain (installed 2026-11-07, verified)
@@ -284,8 +291,23 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (44 tests) — database behaviour, migrations, repositories, starter pack, products, food entries
+# OK (49 tests) — database behaviour, migrations, repositories, starter pack, products, food entries
 ```
+
+### Driving the UI with adb without lying to yourself
+
+Learned the hard way, several times:
+
+- **Dump before every tap.** `uiautomator dump` then read the bounds; hardcoded coordinates go stale the
+  moment a section grows or a row appears.
+- **An open keyboard moves everything.** Compose dialogs and fields push buttons upward, so a tap aimed at
+  a button lands on the IME (an avocado became 1503 g). Type into the field, dump again, then tap the
+  button by its new bounds.
+- **`input keyevent 4` is "navigate back", not "hide the keyboard".** With no IME open it pops the screen —
+  and a following fixed-coordinate tap lands on whatever was underneath (observed: a bell pepper product
+  screen opened instead of a log action).
+- Text entry is ASCII only: Cyrillic cannot be typed with `input text`, so pick a row by what is visible
+  instead of searching for it.
 
 ## Devices and how to test on them
 

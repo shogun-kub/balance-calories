@@ -156,6 +156,65 @@ class FoodEntryRepositoryTest {
     }
 
     @Test
+    fun editingTheWeightRescalesTheEntriesOwnSnapshot() = runBlocking {
+        val product = oats()
+        val entry = food.log(1L, product, 100.0, Meal.BREAKFAST, today)
+
+        val edited = food.updateGrams(entry.id, 50.0)
+
+        assertEquals(50.0, edited.grams, 1e-9)
+        assertEquals(194.5, edited.kcal, 1e-9)
+        assertEquals(8.45, edited.proteinG!!, 1e-9)
+        assertEquals(194.5, food.day(1L, today, 2000).eatenKcal, 1e-9)
+    }
+
+    @Test
+    fun anEditScalesTheSnapshotNotTheCurrentProduct() = runBlocking {
+        val product = oats()
+        val entry = food.log(1L, product, 100.0, Meal.BREAKFAST, today)
+        // The product is corrected afterwards: the logged entry is history and must not absorb it.
+        products.saveUserProduct(product.copy(kcal100g = 1000.0))
+
+        val edited = food.updateGrams(entry.id, 200.0)
+
+        assertEquals("same snapshot, doubled", 778.0, edited.kcal, 1e-9)
+    }
+
+    @Test
+    fun editingToAnImpossibleWeightIsRefused() = runBlocking {
+        val entry = food.log(1L, oats(), 100.0, Meal.LUNCH, today)
+
+        assertTrue(runCatching { food.updateGrams(entry.id, 0.0) }.isFailure)
+        assertTrue(runCatching { food.updateGrams(entry.id, -5.0) }.isFailure)
+        assertEquals(389.0, food.day(1L, today, 2000).eatenKcal, 1e-9)
+    }
+
+    @Test
+    fun copyingADayDuplicatesTheVisibleEntriesAndLeavesTheOriginalAlone() = runBlocking {
+        val product = oats()
+        val kept = food.log(1L, product, 100.0, Meal.BREAKFAST, today)
+        val removed = food.log(1L, product, 50.0, Meal.LUNCH, today)
+        food.delete(removed.id)
+        val tomorrow = today.plusDays(1)
+
+        val copied = food.copyDay(1L, from = today, to = tomorrow)
+
+        assertEquals("a deleted entry must not be resurrected", 1, copied)
+        val tomorrowIntake = food.day(1L, tomorrow, 2000)
+        assertEquals(389.0, tomorrowIntake.eatenKcal, 1e-9)
+        assertEquals("the snapshot travels with the copy", "Oats, dry", tomorrowIntake.meals.single().name)
+        assertEquals(Meal.BREAKFAST, tomorrowIntake.meals.single().meal)
+        assertEquals(389.0, food.day(1L, today, 2000).eatenKcal, 1e-9)
+        assertEquals(1, food.countForDay(1L, tomorrow))
+    }
+
+    @Test
+    fun copyingAnEmptyDayDoesNothing() = runBlocking {
+        assertEquals(0, food.copyDay(1L, from = today.minusDays(3), to = today))
+        assertEquals(0, food.countForDay(1L, today))
+    }
+
+    @Test
     fun aProductWithNoEnergyIsRefused() = runBlocking {
         val unknown = products.saveUserProduct(
             Product(name = "Mystery", source = ProductSource.USER, kcal100g = null),

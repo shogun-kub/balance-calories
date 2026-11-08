@@ -117,7 +117,9 @@ Exit criteria: I can create two profiles and see a defensible daily target with 
 - [ ] Scanner screen: CameraX + zxing-cpp, overlay, torch, haptics, manual entry, debounce
 - [x] Food entries: create and soft delete, with the product name and nutrition snapshotted at log time
       (schema v4). The row survives a delete for history; the day ignores it.
-- [ ] Food entries: edit, copy yesterday, quick kcal
+- [x] Food entries: **edit** a portion (rescales the entry's own snapshot by the weight ratio, not the
+      current product) and **copy yesterday** (visible rows only, fresh timestamps, original day untouched).
+- [ ] Food entries: partial edit (meal change), quick kcal without a product
 - [x] Today screen v1: target, eaten, remaining, macro row, meal sections, per-entry delete, and the target's
       inputs (BMR, TDEE, safety rule) kept visible underneath.
 - [ ] Product search (explicit, debounced) + recents/frequents

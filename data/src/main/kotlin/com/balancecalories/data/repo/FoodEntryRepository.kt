@@ -5,6 +5,7 @@ import com.balancecalories.core.food.FoodMath
 import com.balancecalories.core.food.LoggedEntry
 import com.balancecalories.core.food.Meal
 import com.balancecalories.core.food.Product
+import androidx.room.withTransaction
 import com.balancecalories.data.db.BalanceCaloriesDatabase
 import com.balancecalories.data.db.entity.FoodEntryEntity
 import java.time.LocalDate
@@ -73,6 +74,63 @@ class FoodEntryRepository(
 
     suspend fun eatenKcal(profileId: Long, on: LocalDate): Double =
         entries.kcalForDay(profileId, on.toString())
+
+    suspend fun countForDay(profileId: Long, on: LocalDate): Int =
+        entries.countForDay(profileId, on.toString())
+
+    /**
+     * Changes how much was eaten, scaling the entry's own snapshot.
+     *
+     * The stored per-portion numbers are rescaled by the ratio of the two weights rather than re-read from
+     * the product: the entry is a snapshot (ADR-005/016), so editing it must stay inside that snapshot. If
+     * the product was corrected afterwards, the old entry keeps the numbers it was logged with — the user
+     * can delete and re-log if they want the new ones.
+     */
+    suspend fun updateGrams(entryId: Long, grams: Double): LoggedEntry {
+        require(grams > 0.0) { "a portion must be positive, was $grams" }
+        val current = entries.byId(entryId) ?: throw IllegalArgumentException("no entry $entryId")
+        val ratio = if (current.grams > 0.0) grams / current.grams else 1.0
+        val updated = current.copy(
+            grams = grams,
+            kcal = current.kcal * ratio,
+            proteinG = current.proteinG?.times(ratio),
+            fatG = current.fatG?.times(ratio),
+            carbsG = current.carbsG?.times(ratio),
+            fiberG = current.fiberG?.times(ratio),
+            sugarG = current.sugarG?.times(ratio),
+            saltG = current.saltG?.times(ratio),
+        )
+        entries.update(updated)
+        return updated.toDomain()
+    }
+
+    /**
+     * Copies everything visible from one day to another, keeping the snapshot.
+     *
+     * Yesterday's breakfast is today's breakfast. The copies are new rows with a fresh `consumed_at`, so
+     * the original day stays untouched and either can be edited or deleted independently.
+     */
+    suspend fun copyDay(profileId: Long, from: LocalDate, to: LocalDate): Int {
+        val source = entries.forDay(profileId, from.toString())
+        if (source.isEmpty()) return 0
+        val now = clock()
+        var copied = 0
+        database.withTransaction {
+            for (row in source) {
+                entries.insert(
+                    row.copy(
+                        id = 0L,
+                        profileId = profileId,
+                        consumedAt = now,
+                        localDate = to.toString(),
+                        deletedAt = null,
+                    ),
+                )
+                copied++
+            }
+        }
+        return copied
+    }
 
     /** Soft delete: the row stays, so "what did I eat last Tuesday" stays answerable. */
     suspend fun delete(entryId: Long) = entries.softDelete(entryId, clock())

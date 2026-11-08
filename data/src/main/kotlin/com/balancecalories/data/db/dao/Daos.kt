@@ -214,6 +214,12 @@ interface FoodEntryDao {
     @Query("SELECT * FROM food_entry WHERE id = :id")
     suspend fun byId(id: Long): com.balancecalories.data.db.entity.FoodEntryEntity?
 
+    @Query("SELECT COUNT(*) FROM food_entry WHERE profile_id = :profileId AND local_date = :localDate AND deleted_at IS NULL")
+    suspend fun countForDay(profileId: Long, localDate: String): Int
+
+    @Update
+    suspend fun update(entry: com.balancecalories.data.db.entity.FoodEntryEntity)
+
     /** Soft delete: history stays answerable, and a purge can happen later. */
     @Query("UPDATE food_entry SET deleted_at = :at WHERE id = :id")
     suspend fun softDelete(id: Long, at: Long)
