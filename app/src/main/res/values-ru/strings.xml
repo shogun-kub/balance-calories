@@ -283,4 +283,31 @@
     <string name="history_auto_apply">Применять измеренную цель автоматически</string>
     <string name="history_auto_apply_help">только если данных достаточно; иначе приложение ждёт вашего нажатия</string>
     <string name="history_applied_auto">цель обновлена автоматически: %1$d ккал</string>
+
+    <!-- M6: резервная копия, восстановление и отчёт для таблиц. -->
+    <string name="backup_title">Данные</string>
+    <string name="backup_json_title">Резервная копия</string>
+    <string name="backup_json_note">Один файл со всем: профили, вес, еда, рецепты и дни с браслета. Базовые ингредиенты не входят — они поставляются с приложением. Файл не зашифрован, храните его в надёжном месте.</string>
+    <string name="backup_export_json">Сохранить копию (JSON)</string>
+    <string name="backup_saved">копия сохранена: символов — %1$d</string>
+    <string name="backup_csv_title">Таблица</string>
+    <string name="backup_csv_note">Одна строка в день: съедено, сожжено, баланс, шаги и вес. Для Excel или Таблиц, а не для восстановления.</string>
+    <string name="backup_export_csv">Экспорт дней (CSV)</string>
+    <string name="backup_csv_saved">отчёт сохранён</string>
+    <string name="backup_restore_title">Восстановление</string>
+    <string name="backup_restore_note">Заменяет всё, что сейчас есть в приложении, содержимым файла. Отменить это будет нельзя.</string>
+    <string name="backup_import_json">Восстановить из копии</string>
+    <string name="backup_confirm_title">Заменить все данные?</string>
+    <string name="backup_confirm_text">Всё в приложении будет заменено содержимым файла. Текущие данные будут потеряны.</string>
+    <string name="backup_confirm_action">Заменить</string>
+    <string name="backup_restored">восстановлено строк: %1$d, копия схемы %2$d</string>
+    <string name="backup_restored_partial">восстановлено строк: %1$d, копия схемы %2$d; пропущено полей, неизвестных этой версии: %3$d</string>
+    <string name="backup_refused_not_a_backup">это не резервная копия Баланса Калорий</string>
+    <string name="backup_refused_newer">копия сделана более новой версией приложения, эта её прочитать не может</string>
+    <string name="backup_refused_damaged">файл повреждён или неполон, поэтому ничего не изменено</string>
+    <string name="backup_failed">не получилось: %1$s</string>
+
+    <!-- M6: экран данных (копия, восстановление, CSV). -->
+    <string name="settings_data">Данные</string>
+    <string name="settings_data_note">Резервная копия, восстановление и таблица по дням.</string>
 </resources>

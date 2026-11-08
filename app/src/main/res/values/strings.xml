@@ -283,4 +283,31 @@
     <string name="history_auto_apply">Apply the measured target automatically</string>
     <string name="history_auto_apply_help">only when the evidence is at least medium; otherwise it waits for your tap</string>
     <string name="history_applied_auto">target updated automatically to %1$d kcal</string>
+
+    <!-- M6: backup, restore and the spreadsheet report. -->
+    <string name="backup_title">Data</string>
+    <string name="backup_json_title">Backup</string>
+    <string name="backup_json_note">One file with everything: profiles, weights, food, recipes and band days. Starter ingredients are not included — they ship with the app. The file is not encrypted, so keep it somewhere you trust.</string>
+    <string name="backup_export_json">Save a backup (JSON)</string>
+    <string name="backup_saved">backup saved: %1$d characters</string>
+    <string name="backup_csv_title">Spreadsheet</string>
+    <string name="backup_csv_note">One row per day: eaten, burned, balance, steps and weight. For opening in Excel or Sheets, not for restoring.</string>
+    <string name="backup_export_csv">Export days (CSV)</string>
+    <string name="backup_csv_saved">report saved</string>
+    <string name="backup_restore_title">Restore</string>
+    <string name="backup_restore_note">Replaces everything currently in the app with what is in the file. There is no undo.</string>
+    <string name="backup_import_json">Restore from a backup</string>
+    <string name="backup_confirm_title">Replace all data?</string>
+    <string name="backup_confirm_text">Everything in the app will be replaced by the contents of the file. Your current data will be gone.</string>
+    <string name="backup_confirm_action">Replace</string>
+    <string name="backup_restored">restored %1$d rows from a schema %2$d backup</string>
+    <string name="backup_restored_partial">restored %1$d rows from a schema %2$d backup; %3$d fields this version does not know were skipped</string>
+    <string name="backup_refused_not_a_backup">this is not a Balance Calories backup</string>
+    <string name="backup_refused_newer">this backup comes from a newer version of the app, so this one cannot read it</string>
+    <string name="backup_refused_damaged">the file is damaged or incomplete, so nothing was changed</string>
+    <string name="backup_failed">failed: %1$s</string>
+
+    <!-- M6: the data screen (backup, restore, CSV). -->
+    <string name="settings_data">Data</string>
+    <string name="settings_data_note">Backup, restore, and a spreadsheet of your days.</string>
 </resources>

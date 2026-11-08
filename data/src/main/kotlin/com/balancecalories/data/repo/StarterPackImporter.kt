@@ -28,6 +28,16 @@ class StarterPackImporter(
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
 
+    /**
+     * Records the bundled pack as present **without importing it**.
+     *
+     * Used after restoring a backup, which carries the starter products itself: importing again would leave two of
+     * every ingredient in the list. The marker is the same one [ensureImported] checks, so the two agree.
+     */
+    suspend fun markImported() {
+        AppSettingsRepository(database).setStarterPackVersion(readVersion())
+    }
+
     suspend fun ensureImported(): StarterPackImport {
         val settings = AppSettingsRepository(database)
         val installed = settings.starterPackVersion()

@@ -14,11 +14,11 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1-M5 complete.** `:core` (107 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
+Current state: **M1-M5 complete, M6 half done.** `:core` (107 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
 repositories) build green, and `:app` has the whole loop: Today with burned/balance/quality, the food side
 (products, search, scanning, logging, recipes) and **History** with the adaptive TDEE, the weekly recap,
-a weight trend line and a projection. 107 :core + 42 :data + 10 :app JVM tests and **92 device tests**
-(88 :data, 4 :app) pass. Next: M6 hardening, export and release.
+a weight trend line and a projection, plus a backup screen. 107 :core + 42 :data + 10 :app JVM tests and
+**113 device tests** (109 :data, 4 :app) pass. Next: the rest of M6 — device matrix, accessibility, release.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -262,6 +262,31 @@ a weight trend line and a projection. 107 :core + 42 :data + 10 :app JVM tests a
    10 :app JVM; 88 :data, 4 :app device. Strings 257/257.
 9. Next: **M6** — hardening, export, release.
 
+
+## M6 progress (hardening, export, release)
+
+1. ~~Backup, restore and the CSV report~~ — `:data/backup` holds four pieces: `BackupTables` (what travels and in
+   what order), `BackupWriter` (rows to JSON through raw cursors, so a column no repository reads is still included),
+   `BackupReader` (validates the header, then **replaces** everything in one transaction with foreign keys **on**),
+   and `DaysCsv` (the report). `BackupService` is the three-call surface the app uses, because `:app` still never
+   sees Room. Reached from Settings → Данные.
+2. **The trap this milestone cost an hour**: the first export skipped the 69 starter products to save space, and the
+   first real restore refused its own file — a food entry from the starter pack pointed at a product the file did not
+   contain, so it failed its own foreign key. A backup must be self-consistent; 69 rows is nothing. Restoring also
+   has to tell the starter importer which world it is in (`markImported` vs `ensureImported`), otherwise a fresh
+   install ends up with two of every ingredient.
+3. **Second trap**: the product index is external-content FTS4. Rows written straight into `product` are invisible
+   to search until `INSERT INTO product_fts(product_fts) VALUES('rebuild')`, and nothing fails — the user just stops
+   finding products. The restore does it, and a test asserts search works afterwards.
+4. **Third trap**: `ImportOutcome.Refused` used to carry only a reason, so "файл повреждён" was a dead end. It now
+   carries the underlying message, which is what turned the first mystery into a one-line diagnosis.
+5. Verified on the Honor X7c: a 61 395-character backup written through the system document picker to Downloads, a
+   CSV of the same days, and a restore of that backup back onto the live database — **112 rows restored, schema 6**,
+   69 starter products and no duplicates, FTS finding "Avocado", no orphaned entries, today's intake still 406.75.
+6. Tests: 21 new device cases (11 backup round-trip, 10 CSV). Totals: 107 :core, 42 :data, 10 :app JVM; 109 :data,
+   4 :app device. Strings 280/280.
+7. Next: the rest of M6 — device matrix on both phones, accessibility and font scaling, release signing, README.
+
 ## Toolchain (installed 2026-11-07, verified)
 
 | Item | Location / version |
@@ -409,7 +434,7 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (88 tests) — database behaviour, migrations, repositories, starter pack, products, food, recipes, band activity, adaptive TDEE
+# OK (109 tests) — database behaviour, migrations, repositories, starter pack, products, food, recipes, band activity, adaptive TDEE
 ```
 
 ### The scanner: two traps that cost an hour each (2026-11-08)

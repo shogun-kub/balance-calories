@@ -15,6 +15,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -49,6 +50,7 @@ fun SettingsScreen(
     profile: Profile,
     onBack: () -> Unit,
     onOpenDebug: () -> Unit,
+    onOpenData: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
@@ -107,6 +109,13 @@ fun SettingsScreen(
 
         Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleMedium)
         LanguageSetting()
+
+        HorizontalDivider()
+        Text(stringResource(R.string.settings_data), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.settings_data_note), style = MaterialTheme.typography.bodySmall)
+        OutlinedButton(onClick = onOpenData, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.backup_title))
+        }
 
         TextButton(onClick = onOpenDebug) { Text(stringResource(R.string.action_debug)) }
         TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {

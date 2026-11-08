@@ -22,6 +22,7 @@ import com.balancecalories.data.repo.FoodEntryRepository
 import com.balancecalories.data.repo.RecipeRepository
 import com.balancecalories.data.repo.ProductRepository
 import com.balancecalories.data.repo.ProfileRepository
+import com.balancecalories.data.backup.BackupService
 import com.balancecalories.data.repo.StarterPackImporter
 import com.balancecalories.data.repo.TargetRepository
 import kotlinx.coroutines.CoroutineScope
@@ -45,6 +46,8 @@ class AppContainer(context: Context) {
     val food: FoodEntryRepository = FoodEntryRepository(database)
     val recipes: RecipeRepository = RecipeRepository(database)
     val history: HistoryRepository = HistoryRepository(database)
+    /** JSON backup, restore and the CSV report. Blocking calls; run them on the IO dispatcher. */
+    val backup: BackupService = BackupService(database)
     /** Applies an adaptive target when the profile has opted into automation. */
     val adaptiveUpdater: AdaptiveTargetUpdater by lazy { AdaptiveTargetUpdater(this) }
     val adaptiveTdee: AdaptiveTdeeRepository = AdaptiveTdeeRepository(database)

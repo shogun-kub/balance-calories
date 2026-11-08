@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.balancecalories.app.backup.BackupScreen
 import com.balancecalories.app.debug.DebugScreen
 import com.balancecalories.app.food.ProductFormScreen
 import com.balancecalories.app.food.ProductScreen
@@ -35,7 +36,7 @@ import com.balancecalories.core.food.Recipe
 import com.balancecalories.core.profile.Profile
 import kotlinx.coroutines.launch
 
-private enum class Screen { TODAY, PROFILES, FORM, SETTINGS, DEBUG, FOOD, PRODUCT, PRODUCT_FORM, SCAN, RECIPES, RECIPE, RECIPE_FORM, HISTORY }
+private enum class Screen { TODAY, PROFILES, FORM, SETTINGS, BACKUP, DEBUG, FOOD, PRODUCT, PRODUCT_FORM, SCAN, RECIPES, RECIPE, RECIPE_FORM, HISTORY }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -143,11 +144,18 @@ private fun Root() {
             onBack = { screen = Screen.TODAY },
         )
 
-        screen == Screen.SETTINGS && active != null -> SettingsScreen(
+        screen == Screen.BACKUP && active != null -> BackupScreen(
+        container = container,
+        profile = active,
+        onBack = { screen = Screen.SETTINGS },
+    )
+
+    screen == Screen.SETTINGS && active != null -> SettingsScreen(
             container = container,
             profile = active,
             onBack = { screen = Screen.TODAY },
             onOpenDebug = { screen = Screen.DEBUG },
+        onOpenData = { screen = Screen.BACKUP },
         )
 
         screen == Screen.DEBUG && active != null -> DebugScreen(

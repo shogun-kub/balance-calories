@@ -223,12 +223,12 @@ at 21:00 and a day where the band stayed home.
 
 - [ ] Device matrix pass on both real phones: HC permission flows (system UI vs HC app), camera and
       torch, background sync under MIUI battery management, low-storage behaviour, font scaling
-- [ ] JSON export/import (schema-versioned) + CSV export; round-trip test
+- [x] JSON export/import (schema-versioned) + CSV export; round-trip test — `:data/backup`, ADR-025
 - [ ] Full i18n pass (en/ru), plurals, RTL-safe layouts (cheap insurance)
 - [ ] Accessibility pass: TalkBack, contrast, 48 dp targets, font scaling to 200%
 - [ ] Empty/error/offline states everywhere; no dead ends
 - [ ] Performance: cold start < 1.5 s, day render < 100 ms, DB size after 1 year < 50 MB
-- [ ] ProGuard rules, release signing, `foss` and `google` flavours built
+- [ ] ProGuard rules and release signing (no flavours: ADR-017 dropped the split)
 - [ ] README for the household: how to install GB, pair, enable HC, pair the second phone
 
 ## M7 — Optional v1.1 (post-release)
