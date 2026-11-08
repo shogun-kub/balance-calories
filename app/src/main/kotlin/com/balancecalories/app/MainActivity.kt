@@ -21,6 +21,7 @@ import com.balancecalories.app.debug.DebugScreen
 import com.balancecalories.app.food.ProductFormScreen
 import com.balancecalories.app.food.ProductScreen
 import com.balancecalories.app.food.ProductsScreen
+import com.balancecalories.app.history.HistoryScreen
 import com.balancecalories.app.recipes.RecipeEditorScreen
 import com.balancecalories.app.recipes.RecipeScreen
 import com.balancecalories.app.recipes.RecipesScreen
@@ -34,7 +35,7 @@ import com.balancecalories.core.food.Recipe
 import com.balancecalories.core.profile.Profile
 import kotlinx.coroutines.launch
 
-private enum class Screen { TODAY, PROFILES, FORM, SETTINGS, DEBUG, FOOD, PRODUCT, PRODUCT_FORM, SCAN, RECIPES, RECIPE, RECIPE_FORM }
+private enum class Screen { TODAY, PROFILES, FORM, SETTINGS, DEBUG, FOOD, PRODUCT, PRODUCT_FORM, SCAN, RECIPES, RECIPE, RECIPE_FORM, HISTORY }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -134,6 +135,12 @@ private fun Root() {
                 editing = null
                 screen = Screen.TODAY
             },
+        )
+
+        screen == Screen.HISTORY && active != null -> HistoryScreen(
+            profile = active,
+            container = container,
+            onBack = { screen = Screen.TODAY },
         )
 
         screen == Screen.SETTINGS && active != null -> SettingsScreen(
@@ -291,6 +298,7 @@ private fun Root() {
             onOpenRecipes = { screen = Screen.RECIPES },
             onOpenFood = { screen = Screen.FOOD },
             onOpenProfiles = { screen = Screen.PROFILES },
+            onOpenHistory = { screen = Screen.HISTORY },
             onOpenSettings = { screen = Screen.SETTINGS },
         )
     }

@@ -90,6 +90,31 @@ class TargetRepository(    private val database: BalanceCaloriesDatabase,
     suspend fun effectiveOn(profileId: Long, on: LocalDate): TargetHistoryEntity? =
         dao.effectiveOn(profileId, on.toString())
 
+    /**
+     * Records a target that came from measured data rather than a formula.
+     *
+     * Upserts on the day, so running the update twice in one day cannot stack two rows that disagree about how
+     * much should be eaten today.
+     */
+    suspend fun recordAdaptive(
+        profileId: Long,
+        on: LocalDate,
+        kcal: Int,
+        tdeeKcal: Double?,
+        confidence: String,
+    ) {
+        dao.upsert(
+            TargetHistoryEntity(
+                profileId = profileId,
+                effectiveFrom = on.toString(),
+                kcal = kcal,
+                tdeeKcal = tdeeKcal,
+                tdeeConfidence = confidence,
+                mode = MODE_ADAPTIVE,
+            ),
+        )
+    }
+
     /** The most recent stored target, for the debug screen. */
     suspend fun latest(profileId: Long): StoredTarget? = dao.latest(profileId)?.let {
         StoredTarget(kcal = it.kcal, effectiveFrom = it.effectiveFrom, mode = it.mode)

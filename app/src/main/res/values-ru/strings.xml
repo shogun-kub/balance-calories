@@ -241,4 +241,27 @@
     <string name="sync_result_no_permission">Доступ к Health Connect не предоставлен</string>
     <string name="sync_result_unavailable">На этом телефоне нет хранилища Health Connect</string>
     <string name="sync_result_failed">Синхронизация не удалась: %1$s</string>
+
+    <!-- M5: история, измеренный расход и итоги недели. -->
+    <string name="history_title">История</string>
+    <string name="history_adaptive">Измеренный расход</string>
+    <string name="history_confidence">уверенность: %1$s</string>
+    <string name="history_confidence_none">нет</string>
+    <string name="history_confidence_low">низкая</string>
+    <string name="history_confidence_medium">средняя</string>
+    <string name="history_confidence_high">высокая</string>
+    <string name="history_adaptive_detail">средний приход %1$s, вес %2$s за %3$d дн.</string>
+    <string name="history_need_more">нужно %1$d дней с записями, есть %2$d</string>
+    <string name="history_apply_target">Поставить цель %1$d ккал</string>
+    <string name="history_target_applied">Цель обновлена: %1$d ккал</string>
+    <string name="history_recent">Последние дни</string>
+    <string name="history_no_days">Записей пока нет</string>
+    <string name="history_no_entries">нет записей</string>
+    <string name="history_burn_estimate">оценка</string>
+    <string name="history_day_intake">съедено %1$s</string>
+    <string name="history_day_burn">сожжено %1$s</string>
+    <string name="history_week">Последние 7 дней: съедено минус сожжено</string>
+    <string name="history_week_empty">за 7 дней ничего не записано</string>
+    <string name="history_weight">вес %1$s кг</string>
+    <string name="history_surplus">+%1$s</string>
 </resources>

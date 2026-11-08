@@ -71,6 +71,7 @@ fun TodayScreen(
     onOpenRecipes: () -> Unit,
     onOpenProfiles: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenHistory: () -> Unit,
 ) {
     val today = remember { LocalDate.now() }
     val scope = rememberCoroutineScope()
@@ -313,6 +314,7 @@ fun TodayScreen(
         TextButton(onClick = onOpenRecipes) { Text(stringResource(R.string.recipes_title)) }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = onOpenHistory) { Text(stringResource(R.string.history_title)) }
             TextButton(onClick = onOpenProfiles) { Text(stringResource(R.string.profiles_title)) }
             TextButton(onClick = onOpenSettings) { Text(stringResource(R.string.action_settings)) }
         }

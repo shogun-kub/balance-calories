@@ -78,6 +78,13 @@ interface BodyMeasurementDao {
     )
     fun observeBetween(profileId: Long, from: String, to: String): Flow<List<BodyMeasurementEntity>>
 
+    /** One-shot read for the adaptive TDEE window; ordered so "latest of the day" is the last one seen. */
+    @Query(
+        "SELECT * FROM body_measurement WHERE profile_id = :profileId " +
+            "AND local_date BETWEEN :from AND :to ORDER BY local_date, measured_at",
+    )
+    suspend fun weightsBetween(profileId: Long, from: String, to: String): List<BodyMeasurementEntity>
+
     @Query(
         "SELECT weight_kg FROM body_measurement WHERE profile_id = :profileId " +
             "AND weight_kg IS NOT NULL ORDER BY measured_at DESC LIMIT 1",

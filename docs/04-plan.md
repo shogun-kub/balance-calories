@@ -210,14 +210,14 @@ at 21:00 and a day where the band stayed home.
 
 ## M5 — History, trends, adaptive TDEE (6 d)
 
-- [ ] History list (per-day: balance, intake, burn, weight, quality)
-- [ ] Charts: 7/30-day balance bars + weight EWMA line
-- [ ] Weight entry + `body_measurement` merge (manual vs HC vs scale, one canonical point per day)
-- [ ] Adaptive TDEE: window, guards, confidence, clamped change, `target_history` update
-- [ ] "Target updated" explanation sheet with the two numbers that produced it
+- [x] History list (per-day: balance, intake, burn, weight, quality)
+- [ ] Charts: 7/30-day balance bars + weight EWMA line (7-day bars done; 30-day view and the EWMA line are not)
+- [x] Weight entry + `body_measurement` merge (manual vs HC vs scale, one canonical point per day — preference order manual > scale > GB > HC)
+- [x] Adaptive TDEE: window, guards, confidence, clamped change, `target_history` update
+- [x] "Target updated" explanation with the two numbers that produced it (inline card, not a sheet)
 - [ ] Weekly recap card: predicted vs actual weight change, streak of logged days
 - [ ] Projection to goal weight (with "estimate, not a promise" framing)
-- [ ] Math tests for TDEE guards and clamps
+- [x] Math tests for TDEE guards and clamps (13 :core cases + 7 device cases)
 
 ## M6 — Hardening, export, release (6 d)
 

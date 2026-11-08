@@ -14,14 +14,10 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1-M4 complete**, except Onboarding steps 4-5. `:core` (75 JVM tests) and `:data` (schema
-**v5**, 10 DAOs, 9 repositories: OFF client, product persistence, food logging, recipes, band activity)
-build green, and `:app` has the whole loop: Today with target/eaten/remaining/macros/meal sections plus
-**burned, balance and a quality line**, product list and search, a product screen with portion preview,
-manual product form, entry edit, repeat-yesterday, recipes, a working **barcode scanner** (CameraX 1.6.2 +
-zxing-cpp 3.1.1, single FOSS build), and **band activity from Health Connect** with a WorkManager sync.
-75 :core + 42 :data + 10 :app JVM tests and **79 device tests** (75 :data, 4 :app) pass.
-Next: M5 history, trends and adaptive TDEE.
+Current state: **M1-M4 complete, M5 partly**. `:core` (89 JVM tests) and `:data` (schema **v5**, 10 DAOs, 11
+repositories) build green, and `:app` shows Today with burned/balance/quality, the full food loop (products,
+search, scanning, logging, recipes) and a **History** screen with the adaptive TDEE. 89 :core + 42 :data + 10 :app
+JVM tests and **87 device tests** (83 :data, 4 :app) pass. Next: finish M5 (30-day chart, EWMA, recap), or M6.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -230,6 +226,25 @@ Next: M5 history, trends and adaptive TDEE.
    (`Space characters in SimpleName … not allowed prior to DEX version 040`) because `minSdk` is 28; the
    module's convention is camelCase test names.
 
+## M5 progress (history and adaptive TDEE)
+
+1. ~~Adaptive TDEE~~ — `AdaptiveTdee` in `:core` fits `tdee = average intake − weight change × 7700 / days` over a
+   14-day window that **ends yesterday**, and refuses with a named reason when the evidence is thin: fewer than
+   10 logged days, fewer than 3 weigh-ins, weigh-ins closer than 7 days apart, a weight rate above 2 kg/week, or an
+   implied TDEE outside 1.0–2.5 × BMR (ADR-022). 13 `:core` cases pin the arithmetic and every guard.
+2. ~~Collecting the evidence~~ — `AdaptiveTdeeRepository` reads the window from Room. Two rules matter: a day
+   with no entries is **missing**, not 0 kcal, and several weigh-ins on one day collapse to one point with a fixed
+   source preference (manual > scale > Gadgetbridge > Health Connect). 7 device cases.
+3. ~~Applying it~~ — `TargetRepository.recordAdaptive` writes `mode = adaptive` with the TDEE and its confidence,
+   upserted per day so two runs cannot leave two contradictory targets. A `LOW` estimate is displayed and **not**
+   applied; an estimate that would land on the current target writes nothing and says so.
+4. ~~History screen~~ — `HistoryScreen` (reached from Today) shows the measured expenditure with its confidence and
+   the numbers behind it, a 7-day balance bar row, and the last 30 days with eaten/burned/balance/weight. A day with
+   no food log says "нет записей" and prints **no balance** — "eaten 0" would be a claim about a person, not a
+   missing entry.
+5. Tests: 13 new `:core` cases, 7 new device cases. Totals: 89 :core, 42 :data, 10 :app JVM; 83 :data, 4 :app device.
+6. Still open in M5: the 30-day chart and the weight EWMA line, the weekly recap card, and the projection to goal.
+
 ## Toolchain (installed 2026-11-07, verified)
 
 | Item | Location / version |
@@ -377,7 +392,7 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (75 tests) — database behaviour, migrations, repositories, starter pack, products, food, recipes, band activity
+# OK (83 tests) — database behaviour, migrations, repositories, starter pack, products, food, recipes, band activity, adaptive TDEE
 ```
 
 ### The scanner: two traps that cost an hour each (2026-11-08)

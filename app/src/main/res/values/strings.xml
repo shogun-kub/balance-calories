@@ -241,4 +241,27 @@
     <string name="sync_result_no_permission">Health Connect access was not granted</string>
     <string name="sync_result_unavailable">This phone has no Health Connect store</string>
     <string name="sync_result_failed">Sync failed: %1$s</string>
+
+    <!-- M5: history, the measured expenditure and the weekly recap. -->
+    <string name="history_title">History</string>
+    <string name="history_adaptive">Measured expenditure</string>
+    <string name="history_confidence">confidence: %1$s</string>
+    <string name="history_confidence_none">none</string>
+    <string name="history_confidence_low">low</string>
+    <string name="history_confidence_medium">medium</string>
+    <string name="history_confidence_high">high</string>
+    <string name="history_adaptive_detail">average intake %1$s, weight %2$s over %3$d days</string>
+    <string name="history_need_more">needs %1$d logged days, has %2$d</string>
+    <string name="history_apply_target">Set target to %1$d kcal</string>
+    <string name="history_target_applied">Target updated to %1$d kcal</string>
+    <string name="history_recent">Recent days</string>
+    <string name="history_no_days">No days logged yet</string>
+    <string name="history_no_entries">no entries</string>
+    <string name="history_burn_estimate">estimate</string>
+    <string name="history_day_intake">eaten %1$s</string>
+    <string name="history_day_burn">burned %1$s</string>
+    <string name="history_week">Last 7 days, eaten minus burned</string>
+    <string name="history_week_empty">last 7 days: nothing logged</string>
+    <string name="history_weight">weight %1$s kg</string>
+    <string name="history_surplus">+%1$s</string>
 </resources>

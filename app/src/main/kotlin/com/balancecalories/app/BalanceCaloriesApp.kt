@@ -13,7 +13,9 @@ import com.balancecalories.app.sync.ActivitySyncWorker
 import com.balancecalories.data.repo.AppSettingsRepository
 import com.balancecalories.data.repo.BarcodeResolver
 import com.balancecalories.data.repo.BodyMeasurementRepository
+import com.balancecalories.data.repo.AdaptiveTdeeRepository
 import com.balancecalories.data.repo.DailyActivityRepository
+import com.balancecalories.data.repo.HistoryRepository
 import com.balancecalories.data.repo.DebugRepository
 import com.balancecalories.data.repo.FoodEntryRepository
 import com.balancecalories.data.repo.RecipeRepository
@@ -41,6 +43,8 @@ class AppContainer(context: Context) {
     val products: ProductRepository = ProductRepository(database)
     val food: FoodEntryRepository = FoodEntryRepository(database)
     val recipes: RecipeRepository = RecipeRepository(database)
+    val history: HistoryRepository = HistoryRepository(database)
+    val adaptiveTdee: AdaptiveTdeeRepository = AdaptiveTdeeRepository(database)
 
     /** One client for the whole process, so its throttle paces every screen together, not per screen. */
     val offClient: OpenFoodFactsClient = OpenFoodFactsClient(HttpUrlOffTransport())
