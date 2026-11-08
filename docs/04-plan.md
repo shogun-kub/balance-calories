@@ -114,7 +114,11 @@ Exit criteria: I can create two profiles and see a defensible daily target with 
       toggle. Saving a correction to a scanned product marks it `is_override`.
 - [ ] Editing an existing product from the UI: `ProductFormScreen` already accepts an `existing` product,
       but no screen opens it yet.
-- [ ] Scanner screen: CameraX + zxing-cpp, overlay, torch, haptics, manual entry, debounce
+- [ ] Scanner screen: CameraX + zxing-cpp, overlay, torch, haptics, manual entry, debounce. **Prerequisites
+      measured 2026-11-08** (docs/02-research.md §4.1): zxing-cpp 3.1.1 is Apache-2.0, 2.9 MB, `minSdk 21`,
+      built on Kotlin 2.3.20, reads `ImageProxy` directly, and its `.so` files are 16 KB-page aligned;
+      CameraX **1.6.2** is the newest family that stays within `compileSdk 36`. **The `foss`/`google`
+      flavours do not exist yet** — `app/build.gradle.kts` has none, so creating them is part of this item.
 - [x] Food entries: create and soft delete, with the product name and nutrition snapshotted at log time
       (schema v4). The row survives a delete for history; the day ignores it.
 - [x] Food entries: **edit** a portion (rescales the entry's own snapshot by the weight ratio, not the

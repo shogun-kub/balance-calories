@@ -535,16 +535,36 @@ Cooking semantics that the recipe model has to encode (this is where calorie app
 
 ## 4. Barcode scanning
 
-| Option | Facts (checked 2026-11-07) | Fit |
+| Option | Facts | Fit |
 | --- | --- | --- |
-| **ML Kit** `com.google.mlkit:barcode-scanning` | Latest **17.3.0**, published **2024-08-07** (no release in ~2 years). Bundled model, runs on-device, needs Google Play services for the unbundled variant. Proprietary. | Best raw accuracy, but proprietary + stale + Play-services dependency |
-| **zxing-cpp** `io.github.zxing-cpp:android` | **3.1.1** on Maven Central, Apache-2.0, C++ core with JNI, accepts `ImageProxy` directly (`BarcodeReader().read(image)`) | ✅ **Chosen default**: FOSS, fast, offline, no Play deps |
-| **ZXing Android Embedded** `com.journeyapps:zxing-android-embedded` | 4.3.0, Apache-2.0, Java, brings its own activity | Fine fallback, but slower on low-end sensors and less accurate in poor light than zxing-cpp |
-| **Google Code Scanner** | No camera permission needed, Play-services backed, UI is Google's | Rejected: no custom overlay, requires Play services |
+| **ML Kit** `com.google.mlkit:barcode-scanning` | Latest **17.3.0**, Maven metadata `lastUpdated=2024-08-07` — no release in two years. The "bundled" AAR is **9.9 MB** and still depends on `play-services-basement:18.4.0` and `play-services-mlkit-barcode-scanning:18.3.1`, so it is not Play-free. Proprietary. | Best raw accuracy, but proprietary, stale, GMS-dependent and the largest APK cost |
+| **zxing-cpp** `io.github.zxing-cpp:android` | **3.1.1** on Maven Central, Apache-2.0, AAR **2.9 MB**, four ABIs, `read(ImageProxy)` directly | ✅ **Chosen default**: FOSS, offline, no Play deps, smallest addition |
+| **ZXing Android Embedded** `com.journeyapps:zxing-android-embedded` | 4.3.0, Apache-2.0, Java, brings its own activity | Fallback; slower on low-end sensors than the C++ core |
+| **Google Code Scanner** | No camera permission, Play-services backed, Google's UI | Rejected: no custom overlay, requires Play services |
 | **Scandit** | Commercial, best-in-class | Rejected: cost |
 
-CameraX: stable **1.6.2**, **1.7.0-rc02** published 2026-11-04. Use CameraX `ImageAnalysis` +
-`BarcodeScanner` interface, so the engine is swappable via a build flavour.
+### 4.1 zxing-cpp measured, not recalled — 2026-11-08
+
+Inspected the published AAR (`io.github.zxing-cpp:android:3.1.1`, downloaded from Maven Central) rather
+than trusting the README:
+
+| Fact | Value | Why it matters |
+| --- | --- | --- |
+| Licence | Apache-2.0 (from the POM) | Compatible with this repository; no copyleft |
+| `minCompileSdk` | 1 | No compileSdk pressure |
+| `minSdk` | **21** (from the wrapper's `libs.versions.toml` at tag `v3.1.1`) | Our 28 is above it |
+| Built against | `compileSdk 36`, `targetSdk 36`, **Kotlin 2.3.20** | Exactly this project's Kotlin — no metadata mismatch |
+| Dependencies | `androidx.camera:camera-core:1.5.2`, `kotlin-stdlib:2.3.20` | CameraX only; no Play services, no serialization |
+| ABIs in the AAR | arm64-v8a, armeabi-v7a, x86, x86_64 | Covers both phones; x86 only matters for emulators |
+| Native size | 1.2 MB (v7a) – 1.8 MB (x86_64) per ABI | Two ARM ABIs ≈ 2.9 MB uncompressed in the APK |
+| **16 KB page alignment** | `PT_LOAD p_align = 0x4000` in all three checked `.so` files | Ready for Android 15+ 16 KB-page devices and Play's requirement; would have been a silent future breakage |
+| API | `BarcodeReader(Options).read(ImageProxy): List<Result>`, also `read(Bitmap, Rect, Int)` | Fits CameraX `ImageAnalysis` with no bitmap conversion |
+| `Format` enum | includes `EAN_UPC`, `EAN_13`, `EAN_8`, `UPC_A`, `UPC_E`, and dozens more | Restrict to the four retail formats so QR codes on packaging are ignored |
+
+CameraX family: **1.6.2** is the newest stable, and every artifact (`camera-core`, `camera-camera2`,
+`camera-lifecycle`, `camera-view`) declares **`minCompileSdk=36`**, which is exactly our ceiling — 1.6.2 is
+usable today, anything that needs 37 is not. zxing-cpp asks for `camera-core:1.5.2`; Gradle resolves up to
+1.6.2, and the `ImageProxy` API it uses is unchanged between them.
 
 Formats to enable: EAN-13, EAN-8, UPC-A, UPC-E (Russian consumer goods are EAN-13 with 460–469
 prefix, which is plain EAN-13). Do not enable QR/DataMatrix in the scanning screen — food packs have
