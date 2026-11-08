@@ -88,6 +88,7 @@ class DailyActivityRepository(
                 hasMeasuredData = totals?.hasEnergy == true,
                 isToday = date == today,
                 syncedAfterWindowEnd = now >= windowEnd,
+                hasAttributedOrigin = totals?.hasAttributedOrigin ?: true,
             )
             if (quality == ActivityQuality.COMPLETE || quality == ActivityQuality.PARTIAL) withEnergy++
 
@@ -132,6 +133,11 @@ class DailyActivityRepository(
         val quality = activityQualityFromStorage(row.quality)
         val hasEnergy = row.totalKcal != null || row.activeKcal != null
         if (!hasEnergy) return DailyBurn.estimated(bmrKcal, palKcal)
+
+        // Energy that no app claims is Health Connect's own platform baseline (observed on the Honor: a constant
+        // 1858.25 kcal/day with no steps). It is not a measurement of this person, so the formula stands in and
+        // the screen says so, rather than lending a baseline the authority of a band reading.
+        if (row.dataOrigins.isNullOrBlank()) return DailyBurn.estimated(bmrKcal, palKcal)
 
         return DailyBurn(
             quality = quality,

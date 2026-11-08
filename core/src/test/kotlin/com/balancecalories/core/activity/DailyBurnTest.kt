@@ -135,6 +135,26 @@ class ActivityQualityRulesTest {
     }
 
     @Test
+    fun `energy no app claims is not a complete day`() {
+        // Health Connect's platform layer writes a constant daily total with an empty origin set.
+        val baseline = ActivityQualityRules.classify(
+            hasMeasuredData = true,
+            isToday = false,
+            syncedAfterWindowEnd = true,
+            hasAttributedOrigin = false,
+        )
+        assertEquals(ActivityQuality.PARTIAL, baseline)
+
+        val band = ActivityQualityRules.classify(
+            hasMeasuredData = true,
+            isToday = false,
+            syncedAfterWindowEnd = true,
+            hasAttributedOrigin = true,
+        )
+        assertEquals(ActivityQuality.COMPLETE, band)
+    }
+
+    @Test
     fun `the estimate is a separate state from having no data`() {
         // NO_BAND says "we have nothing"; ESTIMATED says "we have nothing and the formula stood in".
         assertEquals(ActivityQuality.NO_BAND, ActivityQualityRules.classify(false, false, true))

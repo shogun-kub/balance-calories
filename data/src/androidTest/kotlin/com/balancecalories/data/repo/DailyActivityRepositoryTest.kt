@@ -55,6 +55,8 @@ class DailyActivityRepositoryTest {
 
     private lateinit var profile: Profile
 
+    private val BAND = "nodomain.freeyourgadget.gadgetbridge"
+
     private val buckets = mutableListOf<ActivityBucket>()
     private var canned: ActivityRead? = null
 
@@ -103,8 +105,8 @@ class DailyActivityRepositoryTest {
         db.close()
     }
 
-    private fun bucket(metric: ActivityMetric, iso: String, value: Double) {
-        buckets += ActivityBucket(metric, Instant.parse(iso), value)
+    private fun bucket(metric: ActivityMetric, iso: String, value: Double, origin: String? = BAND) {
+        buckets += ActivityBucket(metric, Instant.parse(iso), value, origin)
     }
 
     private suspend fun row(date: LocalDate): DailyActivityEntity? =
@@ -113,8 +115,8 @@ class DailyActivityRepositoryTest {
     @Test
     fun aBucketAfterMidnightLandsOnThePreviousLocalDay() = runBlocking {
         // 01:30 Moscow on the 8th is inside the 7th's window when the day starts at 04:00.
-        bucket(ActivityMetric.STEPS, "2026-11-07T22:30:00Z", 800.0)
-        bucket(ActivityMetric.ACTIVE_KCAL, "2026-11-07T22:30:00Z", 30.0)
+        bucket(ActivityMetric.STEPS, "2026-11-07T22:30:00Z", 800.0, origin = "nodomain.freeyourgadget.gadgetbridge")
+        bucket(ActivityMetric.ACTIVE_KCAL, "2026-11-07T22:30:00Z", 30.0, origin = "nodomain.freeyourgadget.gadgetbridge")
 
         repository().sync(profile, days = 2, zone = zone)
 
@@ -138,8 +140,8 @@ class DailyActivityRepositoryTest {
 
     @Test
     fun todayIsPartialAndYesterdayIsCompleteOnceSyncedAfterClosing() = runBlocking {
-        bucket(ActivityMetric.TOTAL_KCAL, "2026-11-07T10:00:00Z", 2400.0)
-        bucket(ActivityMetric.TOTAL_KCAL, "2026-11-08T07:00:00Z", 900.0)
+        bucket(ActivityMetric.TOTAL_KCAL, "2026-11-07T10:00:00Z", 2400.0, origin = "nodomain.freeyourgadget.gadgetbridge")
+        bucket(ActivityMetric.TOTAL_KCAL, "2026-11-08T07:00:00Z", 900.0, origin = "nodomain.freeyourgadget.gadgetbridge")
 
         repository().sync(profile, days = 2, zone = zone)
 
@@ -151,7 +153,7 @@ class DailyActivityRepositoryTest {
     fun aPastDaySyncedMidDayStaysPartial() = runBlocking {
         // Now is noon on the 8th; the window for the 7th ended at 04:00 on the 8th, which is in the past, so
         // this sync did look at it after it closed. The interesting case is the opposite: sync during the day.
-        bucket(ActivityMetric.TOTAL_KCAL, "2026-11-07T10:00:00Z", 2400.0)
+        bucket(ActivityMetric.TOTAL_KCAL, "2026-11-07T10:00:00Z", 2400.0, origin = "nodomain.freeyourgadget.gadgetbridge")
         now = Instant.parse("2026-11-07T15:00:00Z").toEpochMilli() // 18:00 on the 7th, window still open
 
         repository().sync(profile, days = 1, zone = zone)
@@ -161,11 +163,11 @@ class DailyActivityRepositoryTest {
 
     @Test
     fun aResyncCorrectsTheRowInsteadOfAddingAnother() = runBlocking {
-        bucket(ActivityMetric.STEPS, "2026-11-07T10:00:00Z", 1000.0)
+        bucket(ActivityMetric.STEPS, "2026-11-07T10:00:00Z", 1000.0, origin = "nodomain.freeyourgadget.gadgetbridge")
         repository().sync(profile, days = 2, zone = zone)
 
         buckets.clear()
-        bucket(ActivityMetric.STEPS, "2026-11-07T10:00:00Z", 4000.0)
+        bucket(ActivityMetric.STEPS, "2026-11-07T10:00:00Z", 4000.0, origin = "nodomain.freeyourgadget.gadgetbridge")
         repository().sync(profile, days = 2, zone = zone)
 
         val seventh = row(LocalDate.of(2026, 11, 7))!!
@@ -185,9 +187,9 @@ class DailyActivityRepositoryTest {
 
     @Test
     fun aMeasuredTotalIsReportedAsMeasuredAndCarriesSteps() = runBlocking {
-        bucket(ActivityMetric.TOTAL_KCAL, "2026-11-08T06:00:00Z", 1500.0)
-        bucket(ActivityMetric.STEPS, "2026-11-08T06:00:00Z", 3200.0)
-        bucket(ActivityMetric.RESTING_HR, "2026-11-08T06:00:00Z", 61.0)
+        bucket(ActivityMetric.TOTAL_KCAL, "2026-11-08T06:00:00Z", 1500.0, origin = "nodomain.freeyourgadget.gadgetbridge")
+        bucket(ActivityMetric.STEPS, "2026-11-08T06:00:00Z", 3200.0, origin = "nodomain.freeyourgadget.gadgetbridge")
+        bucket(ActivityMetric.RESTING_HR, "2026-11-08T06:00:00Z", 61.0, origin = "nodomain.freeyourgadget.gadgetbridge")
         repository().sync(profile, days = 1, zone = zone)
 
         val burn = repository().burn(profile.id, LocalDate.of(2026, 11, 8), bmrKcal = 1749.0, palKcal = 2405.0)
@@ -202,7 +204,7 @@ class DailyActivityRepositoryTest {
 
     @Test
     fun activeCaloriesAloneAreCombinedWithTheSuppliedBmr() = runBlocking {
-        bucket(ActivityMetric.ACTIVE_KCAL, "2026-11-08T06:00:00Z", 700.0)
+        bucket(ActivityMetric.ACTIVE_KCAL, "2026-11-08T06:00:00Z", 700.0, origin = "nodomain.freeyourgadget.gadgetbridge")
         repository().sync(profile, days = 1, zone = zone)
 
         val burn = repository().burn(profile.id, LocalDate.of(2026, 11, 8), bmrKcal = 1749.0, palKcal = 2405.0)
@@ -221,6 +223,25 @@ class DailyActivityRepositoryTest {
         assertEquals(2405.0, burn.burnedKcal, 1e-9)
         assertFalse(burn.burnedIsMeasured)
         assertEquals(ActivityQuality.ESTIMATED, burn.quality)
+    }
+
+    @Test
+    fun aPlatformBaselineIsReportedAsAnEstimateNotAsAMeasurement() = runBlocking {
+        // The Honor writes a constant daily total with no origin; 1858.25 kcal is not a measurement of a person.
+        buckets += ActivityBucket(
+            ActivityMetric.TOTAL_KCAL,
+            Instant.parse("2026-11-08T06:00:00Z"),
+            1858.25,
+            origin = null,
+        )
+        repository().sync(profile, days = 1, zone = zone)
+
+        val burn = repository().burn(profile.id, LocalDate.of(2026, 11, 8), bmrKcal = 1749.0, palKcal = 2405.0)
+
+        assertEquals(2405.0, burn.burnedKcal, 1e-9)
+        assertFalse("a baseline must not pass as a band measurement", burn.burnedIsMeasured)
+        assertEquals(ActivityQuality.ESTIMATED, burn.quality)
+        assertEquals("partial", row(LocalDate.of(2026, 11, 8))!!.quality)
     }
 
     @Test
@@ -261,8 +282,8 @@ class DailyActivityRepositoryTest {
 
     @Test
     fun theSyncReportsHowManyDaysHadBandEnergy() = runBlocking {
-        bucket(ActivityMetric.TOTAL_KCAL, "2026-11-07T10:00:00Z", 2400.0)
-        bucket(ActivityMetric.TOTAL_KCAL, "2026-11-08T06:00:00Z", 900.0)
+        bucket(ActivityMetric.TOTAL_KCAL, "2026-11-07T10:00:00Z", 2400.0, origin = "nodomain.freeyourgadget.gadgetbridge")
+        bucket(ActivityMetric.TOTAL_KCAL, "2026-11-08T06:00:00Z", 900.0, origin = "nodomain.freeyourgadget.gadgetbridge")
 
         val result = repository().sync(profile, days = 3, zone = zone) as DailyActivityRepository.SyncResult.Synced
 

@@ -55,6 +55,16 @@ data class DayActivityTotals(
     /** Whether the day has any band-derived energy at all. Steps alone are not a burn figure. */
     val hasEnergy: Boolean get() = activeKcal != null || totalKcal != null
 
+    /**
+     * Whether an installed app wrote this day's data, as opposed to Health Connect's own platform layer.
+     *
+     * Observed on the Honor X7c: the platform layer contributes a **constant 1858.25 kcal/day** with no steps
+     * and an **empty** origin set — a device baseline, not a measurement of the person wearing it. Requiring an
+     * attributed writer is therefore the difference between "the band recorded a quiet day" and "nothing was
+     * ever measured, but a number appeared anyway".
+     */
+    val hasAttributedOrigin: Boolean get() = origins.isNotEmpty()
+
     val hasAnyData: Boolean get() = steps != null || hasEnergy
 }
 

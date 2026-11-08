@@ -15,7 +15,10 @@ enum class ActivityQuality {
     /** A finished day, with band data, checked after the day closed. */
     COMPLETE,
 
-    /** Band data exists, but the day is still running or nobody looked at it since it closed. */
+    /**
+     * Data exists, but not enough to call the day measured: it is still running, nobody looked at it since it
+     * closed, or the numbers carry no app origin (a platform baseline rather than a band reading).
+     */
     PARTIAL,
 
     /** No band data for this day at all. */
@@ -40,10 +43,17 @@ object ActivityQualityRules {
         hasMeasuredData: Boolean,
         isToday: Boolean,
         syncedAfterWindowEnd: Boolean,
+        /**
+         * False when the day holds energy that **no app claims** — Health Connect's own platform layer writes a
+         * constant daily total on some phones, and a baseline must not be presented as a measurement.
+         * Defaults to true so callers that cannot know stay unchanged.
+         */
+        hasAttributedOrigin: Boolean = true,
     ): ActivityQuality = when {
         !hasMeasuredData -> ActivityQuality.NO_BAND
         isToday -> ActivityQuality.PARTIAL
         !syncedAfterWindowEnd -> ActivityQuality.PARTIAL
+        !hasAttributedOrigin -> ActivityQuality.PARTIAL
         else -> ActivityQuality.COMPLETE
     }
 }
