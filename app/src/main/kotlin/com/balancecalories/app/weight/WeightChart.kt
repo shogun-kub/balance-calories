@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -104,8 +105,9 @@ fun WeightChart(
 
     val firstDay = today.minusDays((rangeDays - 1).toLong())
     val label = { value: Double -> trimNumber(value) + " " + unitLabel }
-    val description = stringResource(
-        R.string.weight_chart_description,
+    val description = pluralStringResource(
+        R.plurals.weight_chart_description,
+        rangeDays,
         points.size,
         rangeDays,
         points.firstOrNull()?.let { label(display(it.second)) } ?: "-",

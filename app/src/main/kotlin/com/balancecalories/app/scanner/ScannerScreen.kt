@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -259,7 +260,7 @@ private fun CameraPreview(
     val executor = remember { Executors.newSingleThreadExecutor() }
     val scanner = remember { ZxingBarcodeScanner() }
     var lastCode by remember { mutableStateOf<String?>(null) }
-    var lastAt by remember { mutableStateOf(0L) }
+    var lastAt by remember { mutableLongStateOf(0L) }
 
     DisposableEffect(Unit) {
         onDispose {

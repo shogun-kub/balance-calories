@@ -468,12 +468,38 @@ Three things this milestone taught:
 
 ### M7.6 — Strings, verification, and what this breaks
 
-- [ ] New strings in both files in the same commit (`nav_today`, `nav_food`, `nav_history`, `nav_weight`,
-      chart legend and range labels, weight entry labels): 20–25 keys, parity test covers them.
-- [ ] Verified on the Honor at 100% and 200% font scale, in Russian and English: four tabs at 200% must
-      still fit or wrap without a per-character column (ADR-026).
-- [ ] Gallery: the Today tab, the History chart with a real week, the weight chart with the goal line, and
-      the icon at three sizes.
+- [x] Every count whose noun inflects is a `<plurals>` in both languages: **10 strings** became plurals
+      (`sync_result_synced`, `history_adaptive_detail`, `history_need_*`, `history_recap_streak`,
+      `history_projection`, `backup_saved`, `backup_restored*`, `weight_chart_description`,
+      `history_weigh_ins_too_close`); the 13 where the number is followed by an invariant unit (`kcal`,
+      `kg`) or a count-last phrase keep `tools:ignore="PluralsCandidate"` and a reason.
+- [x] An adaptive-TDEE refusal names its own noun: six reasons, six sentences, arguments built from the
+      same constants the rule uses. The weigh-in shortfall used to say "needs 3 logged days". ADR-034.
+- [x] `StringResourceParityTest` reads `<plurals>` too (3 new cases): same names in both files, every
+      quantity of a block agrees on its format arguments, and each language declares the quantities its
+      grammar needs (en `one`/`other`, ru `one`/`few`/`many`/`other`).
+- [x] Six unused strings deleted; `history_need_more` split into `history_need_days`,
+      `history_need_window` and `history_need_weigh_ins`; `history_no_estimate`,
+      `history_impossible_change`, `history_impossible_tdee` added. Both files still 1:1.
+- [x] `android:dataExtractionRules` with everything excluded, plus `fullBackupContent="false"` for
+      API 28–30: the rule AGENTS.md already states, implemented for API 31+ as well as below it.
+- [x] **Lint, first run: 37 findings.** Second run: **5**, and each of the five is a decision, not debt —
+      see the table below.
+- [x] Verified on the Honor at **100% and 200%**, Russian and English: all four tabs pass the squeezed-text
+      check (a `uiautomator` pass that flags any text node taller than 2.5× its width, anything under the tab
+      bar, anything off-screen), and the plurals render with the right Russian form on screen
+      ("Синхронизировано 30 дней", "записей подряд: 2 дня", "нужно 10 дней с записями, есть 1").
+- [x] Gallery: the four tabs, the History chart with a real month, the weight chart with the goal named in
+      its legend, and the icon at three sizes. Screenshots stay in `tmp/` and out of git (hard rule 1).
+
+#### The five warnings lint keeps, and why
+
+| Warning | Kept because |
+| --- | --- |
+| `VectorPath` ×2 | The launcher icon's largest path is 3363 characters — about 130 line segments. A launcher icon is inflated **once**, by the launcher, at 48 dp; the check exists for vectors redrawn on screen. Re-cutting the geometry to shorten it would change a picture the owner approved, for no runtime gain |
+| `ObsoleteSdkInt` | Lint says `mipmap-anydpi-v26` can be merged into `mipmap-anydpi` since `minSdk` is 28. **Tried it:** AAPT2 then fails resource linking with `resource mipmap/ic_launcher not found` — an `<adaptive-icon>` outside a `-v26` folder is not resolved at all. Reverted, and the reason recorded |
+| `OldTargetApi` | `targetSdk` 36 while platform 37 exists. Platform 37 is not installed and the SDK lives under `Program Files`, so adding it needs an elevated shell — one deliberate UAC prompt, not a code change |
+| `GradleDependency` | `compileSdk` 37, same reason as above |
 
 ### What it costs and what it buys
 

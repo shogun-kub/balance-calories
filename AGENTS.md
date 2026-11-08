@@ -14,11 +14,11 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1-M5, M7.1-M7.5 complete, M6 half done.** `:core` (140 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
+Current state: **M1-M5, M7.1-M7.6 complete, M6 half done.** `:core` (140 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
 repositories) build green, and `:app` has the whole loop: Today with burned/balance/quality, the food side
 (products, search, scanning, logging, recipes) and **History** with the adaptive TDEE, the weekly recap,
-a weight trend line and a projection, plus a backup screen. 140 :core + 42 :data + 16 :app JVM tests and
-**119 device tests** (115 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split and `Вес` carries the **weight chart** (dots, trend, dashed goal). The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie on one side and a steel-blue dumbbell on the other. The app now **follows the phone's dark setting** — Material 3 baseline schemes plus a chart palette per surface. Next: M7.6 the strings and verification sweep, then the rest of M6 and the release; see docs/04-plan.md.
+a weight trend line and a projection, plus a backup screen. 140 :core + 42 :data + 19 :app JVM tests and
+**119 device tests** (115 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split and `Вес` carries the **weight chart** (dots, trend, dashed goal). The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie on one side and a steel-blue dumbbell on the other. The app **follows the phone's dark setting** — Material 3 baseline schemes plus a chart palette per surface — and every count that inflects is a **`<plurals>`** in both languages, with lint down to five reviewed warnings. Next: the rest of M6 (device matrix, TalkBack, release signing) and the release; see docs/04-plan.md.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -407,7 +407,7 @@ a weight trend line and a projection, plus a backup screen. 140 :core + 42 :data
     pair, and `values-night/themes.xml` keeps the cold-start window dark. The milestone's real finding was the
     palette: measuring it for the first time showed the light theme's six chart tones at **1.4–2.9 : 1** on
     cream, below the 3 : 1 graphic floor, with the fat tone effectively invisible. `Contrast` in `:core` is the
-    WCAG arithmetic (12 cases, pinned against the published grey thresholds) and `ChartPaletteContrastTest`
+    WCAG arithmetic (nine cases, pinned against the published grey thresholds) and `ChartPaletteContrastTest`
     refuses any tone under 4.5 : 1 per surface. The palette is now **two sets of six tones at the lightness each
     surface needs**, carried by `LocalChartTones`; the dark set is the 300-level tones the light theme used to
     use, because they were always fine on near-black. No in-app switch: the phone already knows. ADR-033.
@@ -421,7 +421,30 @@ a weight trend line and a projection, plus a backup screen. 140 :core + 42 :data
     - **A theme is a place, not a coat of paint.** Every screen already asked `MaterialTheme.colorScheme`, so
       dark mode needed no screen changes: the work was the palette, the window background and the test.
 27. Tests: 140 :core, 42 :data, 16 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**.
-28. Next: **M7.6** — strings and the verification sweep, then the rest of M6 and the release.
+28. ~~**M7.6 — strings and the verification sweep**~~ — lint's first run found **37** things, and the triage was
+    the work: 22 `PluralsCandidate`, 6 unused strings, a `<vector>` warning, a manifest attribute and four
+    small code smells. Ten strings became `<plurals>` in both languages ("Synced 1 days", "restored 1 rows",
+    "1 weigh-ins"); the twelve where the number is followed by an invariant unit (`kcal`, `kg`) or a
+    count-last phrase keep `tools:ignore` and a reason in the file. `StringResourceParityTest` now reads
+    `<plurals>` too and asserts the quantities each grammar needs — a missing Russian `few` fails **silently**
+    at runtime by falling back to `other` ("5 дня"). `android:dataExtractionRules` excludes everything, with
+    `fullBackupContent="false"` for API 28–30. Second lint run: **5 warnings**, each a decision recorded in
+    the plan table. ADR-034.
+29. **The refusal branch was lying, and only reading it out loud showed that.** With fewer weigh-ins than the
+    rule needs, History said *"needs 3 logged days"* — the wrong noun, pointing the person at the wrong thing
+    to fix; "weigh-ins too close" and both implausible-change refusals said it too. Six refusals now give six
+    sentences, with the thresholds passed in from the constants the rule uses, so the text cannot drift from
+    the arithmetic (the same class of bug as AGENTS item 20, one level up).
+30. **Lint's `ObsoleteSdkInt` advice was wrong for adaptive icons, and trying it is how I know.** It says
+    `mipmap-anydpi-v26` can be merged into `mipmap-anydpi` because `minSdk` is 28. Merged, the build failed
+    resource linking with `resource mipmap/ic_launcher not found`: an `<adaptive-icon>` outside a `-v26`
+    folder is not resolved at all. Reverted; the folder stays and the warning is documented instead of
+    suppressed. Also learned: an XML comment cannot contain `--`, which AAPT2 reports as an unparseable
+    resource rather than as a bad comment.
+31. Tests: 140 :core, 42 :data, 19 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**
+    (308 `<string>` + 12 `<plurals>` in each language).
+32. Next: the rest of **M6** — device matrix on both phones, TalkBack, release signing, README — then the
+    release.
 
 ## Toolchain (installed 2026-11-07, verified)
 

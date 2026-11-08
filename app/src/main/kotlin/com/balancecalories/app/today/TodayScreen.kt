@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -452,7 +453,7 @@ private fun DailyBurn.localizedNote(): String = when {
 /** What the last sync attempt did, in words the user can act on. */
 @Composable
 private fun DailyActivityRepository.SyncResult.localizedText(): String = when (this) {
-    is DailyActivityRepository.SyncResult.Synced -> stringResource(R.string.sync_result_synced, days)
+    is DailyActivityRepository.SyncResult.Synced -> pluralStringResource(R.plurals.sync_result_synced, days, days)
     DailyActivityRepository.SyncResult.NoPermission -> stringResource(R.string.sync_result_no_permission)
     DailyActivityRepository.SyncResult.Unavailable -> stringResource(R.string.sync_result_unavailable)
     is DailyActivityRepository.SyncResult.Failed -> stringResource(R.string.sync_result_failed, reason)

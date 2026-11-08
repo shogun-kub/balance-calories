@@ -25,6 +25,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.balancecalories.app.AppContainer
@@ -289,12 +290,12 @@ private sealed interface BackupStatus {
 
 @Composable
 private fun BackupStatus.message(): String = when (this) {
-    is BackupStatus.JsonSaved -> stringResource(R.string.backup_saved, bytes)
+    is BackupStatus.JsonSaved -> pluralStringResource(R.plurals.backup_saved, bytes, bytes)
     BackupStatus.CsvSaved -> stringResource(R.string.backup_csv_saved)
     is BackupStatus.Restored -> if (droppedColumns > 0) {
-        stringResource(R.string.backup_restored_partial, rows, fromSchemaVersion, droppedColumns)
+        pluralStringResource(R.plurals.backup_restored_partial, rows, rows, fromSchemaVersion, droppedColumns)
     } else {
-        stringResource(R.string.backup_restored, rows, fromSchemaVersion)
+        pluralStringResource(R.plurals.backup_restored, rows, rows, fromSchemaVersion)
     }
     is BackupStatus.Refused -> when (reason) {
         ImportOutcome.Refusal.NOT_A_BACKUP -> stringResource(R.string.backup_refused_not_a_backup)

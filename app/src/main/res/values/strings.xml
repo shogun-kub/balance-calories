@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Balance Calories</string>
 
     <string name="no_weight_title">No weight yet</string>
@@ -30,7 +30,7 @@
     <string name="goal_lose_steady">Lose 0.25 kg a week</string>
     <string name="goal_maintain">Maintain weight</string>
     <string name="goal_gain">Gain 0.25 kg a week</string>
-    <string name="preview_target">Estimated target: %1$d kcal a day</string>
+    <string name="preview_target" tools:ignore="PluralsCandidate">Estimated target: %1$d kcal a day</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_ok">OK</string>
@@ -42,8 +42,6 @@
     <string name="error_weight">Weight must be 30–300 kg</string>
     <string name="error_weight_imperial">Weight must be 66–661 lb</string>
     <string name="error_save">Could not save the profile: %1$s</string>
-    <string name="label_sex_male_short">M</string>
-    <string name="label_sex_female_short">F</string>
 
     <string name="profiles_title">Profiles</string>
     <string name="profiles_note">One profile per person. Only one of them can read the band on this phone.</string>
@@ -100,14 +98,13 @@
     <string name="row_setting">app settings</string>
 
     <string name="target_title">Energy target</string>
-    <string name="target_note">Computed from your profile and latest weight. Nothing leaves the phone.</string>
 
     <string name="label_bmr">BMR</string>
     <string name="label_tdee">TDEE</string>
     <string name="label_limit">Safety rule</string>
     <string name="label_health_connect">Health Connect</string>
 
-    <string name="kcal_int">%1$d kcal</string>
+    <string name="kcal_int" tools:ignore="PluralsCandidate">%1$d kcal</string>
     <string name="kcal_decimal">%1$.0f kcal</string>
 
     <string name="limit_none">none</string>
@@ -135,7 +132,6 @@
     <string name="product_portion_kcal">%1$.0f kcal per portion</string>
     <string name="product_meal">Meal</string>
     <string name="product_no_energy">No energy data for this product</string>
-    <string name="product_logged">Logged</string>
 
     <string name="meal_breakfast">Breakfast</string>
     <string name="meal_lunch">Lunch</string>
@@ -162,7 +158,6 @@
     <string name="entry_edit_title">Change the portion</string>
     <string name="entry_edit_kcal">%1$.0f kcal after the change</string>
     <string name="action_copy_yesterday">Repeat yesterday (%1$d)</string>
-    <string name="copy_result">Copied: %1$d</string>
     <string name="scan_title">Scan a barcode</string>
     <string name="scan_hint">Point the camera at the barcode on the package</string>
     <string name="scan_torch_on">Torch on</string>
@@ -222,10 +217,9 @@
     <string name="today_burned">Burned</string>
     <string name="today_balance">Balance</string>
     <string name="today_balance_estimate">Balance (estimate)</string>
-    <string name="today_steps">Steps</string>
     <string name="today_steps_value">Steps: %1$d</string>
     <string name="today_burn_from_band">from the band</string>
-    <string name="today_burn_partial">band data is still filling in</string>
+    <string name="today_burn_partial">band data is still coming in</string>
     <string name="today_burn_estimated">no band data — the whole-day estimate is shown</string>
     <string name="today_burn_bmr_mix">band active calories plus our BMR formula</string>
     <string name="today_burn_permission">read access to Health Connect is needed for burned calories</string>
@@ -234,7 +228,10 @@
     <string name="today_never_synced">Never synced</string>
     <string name="action_allow_activity">Allow activity access</string>
     <string name="action_sync_band">Sync band</string>
-    <string name="sync_result_synced">Synced %1$d days</string>
+    <plurals name="sync_result_synced">
+        <item quantity="one">Synced %1$d day</item>
+        <item quantity="other">Synced %1$d days</item>
+    </plurals>
     <string name="sync_result_no_permission">Health Connect access was not granted</string>
     <string name="sync_result_unavailable">This phone has no Health Connect store</string>
     <string name="sync_result_failed">Sync failed: %1$s</string>
@@ -247,10 +244,31 @@
     <string name="history_confidence_low">low</string>
     <string name="history_confidence_medium">medium</string>
     <string name="history_confidence_high">high</string>
-    <string name="history_adaptive_detail">average intake %1$s, weight %2$s over %3$d days</string>
-    <string name="history_need_more">needs %1$d logged days, has %2$d</string>
-    <string name="history_apply_target">Set target to %1$d kcal</string>
-    <string name="history_target_applied">Target updated to %1$d kcal</string>
+    <plurals name="history_adaptive_detail">
+        <item quantity="one">average intake %1$s, weight %2$s over %3$d day</item>
+        <item quantity="other">average intake %1$s, weight %2$s over %3$d days</item>
+    </plurals>
+    <plurals name="history_need_window">
+        <item quantity="one">needs %1$d day of history, has %2$d</item>
+        <item quantity="other">needs %1$d days of history, has %2$d</item>
+    </plurals>
+<plurals name="history_need_weigh_ins">
+        <item quantity="one">needs %1$d weigh-in, has %2$d</item>
+        <item quantity="other">needs %1$d weigh-ins, has %2$d</item>
+    </plurals>
+    <plurals name="history_weigh_ins_too_close">
+        <item quantity="one">weigh-ins need to be at least %1$d day apart</item>
+        <item quantity="other">weigh-ins need to be at least %1$d days apart</item>
+    </plurals>
+    <string name="history_impossible_change">weight moved more than %1$s kg a week: check the weigh-ins</string>
+    <string name="history_impossible_tdee">the numbers imply an expenditure outside %1$s–%2$s × BMR</string>
+    <string name="history_no_estimate">no estimate yet</string>
+    <plurals name="history_need_days">
+        <item quantity="one">needs %1$d logged day, has %2$d</item>
+        <item quantity="other">needs %1$d logged days, has %2$d</item>
+    </plurals>
+    <string name="history_apply_target" tools:ignore="PluralsCandidate">Set target to %1$d kcal</string>
+    <string name="history_target_applied" tools:ignore="PluralsCandidate">Target updated to %1$d kcal</string>
     <string name="history_recent">Recent days</string>
     <string name="history_no_days">No days logged yet</string>
     <string name="history_no_entries">no entries</string>
@@ -265,24 +283,33 @@
     <string name="history_recap_title">Last 7 days</string>
     <string name="history_recap_predicted">the food log implies %1$s</string>
     <string name="history_recap_actual">the scale says %1$s</string>
-    <string name="history_recap_streak">logged %1$d days in a row</string>
+    <plurals name="history_recap_streak">
+        <item quantity="one">logged %1$d day in a row</item>
+        <item quantity="other">logged %1$d days in a row</item>
+    </plurals>
     <string name="history_recap_none">nothing logged this week</string>
     <string name="history_trend">Weight trend</string>
         <string name="history_trend_empty">a trend needs at least two weigh-ins</string>
-    <string name="history_projection">To %1$s kg: about %2$d days, around %3$s</string>
-    <string name="history_projection_note">an estimate at the planned rate, not a promise</string>
+    <plurals name="history_projection">
+        <item quantity="one">To %1$s kg: about %2$d day, around %3$s</item>
+        <item quantity="other">To %1$s kg: about %2$d days, around %3$s</item>
+    </plurals>
+    <string name="history_projection_note">an estimate at the current rate, not a promise</string>
 
     <!-- M5: the automation switch. Asking is the default; less asking is a choice, not a surprise. -->
     <string name="history_auto_apply">Apply the measured target automatically</string>
     <string name="history_auto_apply_help">only when the evidence is at least medium; otherwise it waits for your tap</string>
-    <string name="history_applied_auto">target updated automatically to %1$d kcal</string>
+    <string name="history_applied_auto" tools:ignore="PluralsCandidate">target updated automatically to %1$d kcal</string>
 
     <!-- M6: backup, restore and the spreadsheet report. -->
     <string name="backup_title">Data</string>
     <string name="backup_json_title">Backup</string>
     <string name="backup_json_note">One file with everything: profiles, weights, food, recipes and band days. Starter ingredients are not included — they ship with the app. The file is not encrypted, so keep it somewhere you trust.</string>
     <string name="backup_export_json">Save a backup (JSON)</string>
-    <string name="backup_saved">backup saved: %1$d characters</string>
+    <plurals name="backup_saved">
+        <item quantity="one">backup saved: %1$d character</item>
+        <item quantity="other">backup saved: %1$d characters</item>
+    </plurals>
     <string name="backup_csv_title">Spreadsheet</string>
     <string name="backup_csv_note">One row per day: eaten, burned, balance, steps and weight. For opening in Excel or Sheets, not for restoring.</string>
     <string name="backup_export_csv">Export days (CSV)</string>
@@ -293,8 +320,14 @@
     <string name="backup_confirm_title">Replace all data?</string>
     <string name="backup_confirm_text">Everything in the app will be replaced by the contents of the file. Your current data will be gone.</string>
     <string name="backup_confirm_action">Replace</string>
-    <string name="backup_restored">restored %1$d rows from a schema %2$d backup</string>
-    <string name="backup_restored_partial">restored %1$d rows from a schema %2$d backup; %3$d fields this version does not know were skipped</string>
+    <plurals name="backup_restored">
+        <item quantity="one">restored %1$d row from a schema %2$d backup</item>
+        <item quantity="other">restored %1$d rows from a schema %2$d backup</item>
+    </plurals>
+    <plurals name="backup_restored_partial">
+        <item quantity="one">restored %1$d row from a schema %2$d backup; skipped unknown fields: %3$d</item>
+        <item quantity="other">restored %1$d rows from a schema %2$d backup; skipped unknown fields: %3$d</item>
+    </plurals>
     <string name="backup_refused_not_a_backup">this is not a Balance Calories backup</string>
     <string name="backup_refused_newer">this backup comes from a newer version of the app, so this one cannot read it</string>
     <string name="backup_refused_damaged">the file is damaged or incomplete, so nothing was changed</string>
@@ -317,7 +350,7 @@
     <string name="weight_saved">Saved: %1$s %2$s</string>
     <string name="weight_recent">Recent readings</string>
     <string name="weight_error_number">Enter a number</string>
-    <string name="weight_error_range">Outside 20-400 kg: check the number</string>
+    <string name="weight_error_range">Outside 20–400 kg: check the number</string>
     <string name="unit_kilograms">kg</string>
     <string name="unit_pounds">lb</string>    <!-- M7.2: the intake/burn chart. Colour is decoration; the legend and the dividers carry the meaning. -->
     <string name="chart_title">Eaten and burned</string>
@@ -328,25 +361,28 @@
     <string name="chart_legend_other">Unlabelled energy %1$d%%</string>
     <string name="chart_legend_burn">Burned</string>
     <string name="chart_legend_burn_estimate">Burned (estimate)</string>
-    <string name="chart_legend_target">Target %1$d kcal</string>
-    <string name="chart_summary">%1$d of %2$d days logged: %3$d kcal eaten; burns average %4$d kcal a day, and %5$d of those days are estimates</string>
+    <string name="chart_legend_target" tools:ignore="PluralsCandidate">Target %1$d kcal</string>
+    <string name="chart_summary" tools:ignore="PluralsCandidate">%1$d of %2$d days logged: %3$d kcal eaten; burns average %4$d kcal a day, and %5$d of those days are estimates</string>
     <string name="chart_no_data">No logged days in this range, so there is nothing to draw yet.</string>
-    <string name="chart_last_logged">Last logged day: %1$s, %2$d kcal</string>    <!-- M7.2b: the Today gauge. Colour is decoration; the grams beside it and the description carry the meaning. -->
-    <string name="gauge_of_target">of %1$d kcal</string>
+    <string name="chart_last_logged" tools:ignore="PluralsCandidate">Last logged day: %1$s, %2$d kcal</string>    <!-- M7.2b: the Today gauge. Colour is decoration; the grams beside it and the description carry the meaning. -->
+    <string name="gauge_of_target" tools:ignore="PluralsCandidate">of %1$d kcal</string>
     <string name="gauge_target_today">target for today</string>
-    <string name="gauge_remaining">%1$d kcal left</string>
-    <string name="gauge_over">over by %1$d kcal</string>
+    <string name="gauge_remaining" tools:ignore="PluralsCandidate">%1$d kcal left</string>
+    <string name="gauge_over" tools:ignore="PluralsCandidate">over by %1$d kcal</string>
     <string name="gauge_nothing_logged">nothing logged yet</string>
     <string name="gauge_protein">Protein %1$d g</string>
     <string name="gauge_fat">Fat %1$d g</string>
     <string name="gauge_carbs">Carbs %1$d g</string>
     <string name="gauge_unlabelled">some energy is unlabelled</string>
-    <string name="gauge_description">Today: %1$d of %2$d kcal eaten, protein %3$d g, fat %4$d g, carbs %5$d g</string>
-    <string name="gauge_description_empty">Today: nothing logged against a target of %1$d kcal</string>
+    <string name="gauge_description" tools:ignore="PluralsCandidate">Today: %1$d of %2$d kcal eaten, protein %3$d g, fat %4$d g, carbs %5$d g</string>
+    <string name="gauge_description_empty" tools:ignore="PluralsCandidate">Today: nothing logged against a target of %1$d kcal</string>
     <string name="action_read_band">Read the band</string>
     <string name="weight_chart_legend_points">Weigh-ins</string>
     <string name="weight_chart_legend_goal">Goal %1$s</string>
-    <string name="weight_chart_description">Weight: %1$d weigh-ins in %2$d days, from %3$s to %4$s</string>
+    <plurals name="weight_chart_description">
+        <item quantity="one">Weight over %2$d day, weigh-ins: %1$d, from %3$s to %4$s</item>
+        <item quantity="other">Weight over %2$d days, weigh-ins: %1$d, from %3$s to %4$s</item>
+    </plurals>
     <string name="weight_chart_legend_trend">Trend</string>
     <string name="weight_chart_goal_below">Goal %1$s · below the chart</string>
     <string name="weight_chart_goal_above">Goal %1$s · above the chart</string>

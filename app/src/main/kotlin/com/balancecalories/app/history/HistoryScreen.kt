@@ -35,6 +35,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.balancecalories.app.AppContainer
@@ -190,23 +191,10 @@ private fun AdaptiveCard(
         val tdeeKcal = estimate.tdeeKcal
         if (tdeeKcal == null) {
             // Say what is missing, not just "not enough data": the person can act on a specific number.
-            val refusal = estimate.refusal
+            // Each refusal names its own noun -- the weigh-in shortfall used to say "needs 3 logged days",
+            // which pointed the person at the wrong thing to fix.
             Text(
-                text = if (refusal == AdaptiveTdee.Refusal.NOT_ENOUGH_LOGGED_DAYS ||
-                    refusal == AdaptiveTdee.Refusal.NOT_ENOUGH_DAYS
-                ) {
-                    stringResource(
-                        R.string.history_need_more,
-                        AdaptiveTdee.MIN_LOGGED_DAYS,
-                        estimate.loggedDays,
-                    )
-                } else {
-                    stringResource(
-                        R.string.history_need_more,
-                        AdaptiveTdee.MIN_WEIGHT_POINTS,
-                        estimate.weighIns,
-                    )
-                },
+                text = refusalText(estimate.refusal, estimate.loggedDays, estimate.weighIns, outcome.days.size),
                 style = MaterialTheme.typography.bodySmall,
             )
             // The preference is offered even before there is an estimate to apply: someone who wants fewer
@@ -225,8 +213,9 @@ private fun AdaptiveCard(
             style = MaterialTheme.typography.bodySmall,
         )
         Text(
-            text = stringResource(
-                R.string.history_adaptive_detail,
+            text = pluralStringResource(
+                R.plurals.history_adaptive_detail,
+                outcome.days.size,
                 stringResource(R.string.kcal_decimal, estimate.averageIntakeKcal ?: 0.0),
                 signedKg(estimate.weightChangeKg ?: 0.0),
                 outcome.days.size,
@@ -354,6 +343,44 @@ private fun TdeeConfidence.localized(): String = when (this) {
  * stored value always is.
  */
 @Composable
+private fun refusalText(
+    refusal: AdaptiveTdee.Refusal?,
+    loggedDays: Int,
+    weighIns: Int,
+    windowDays: Int,
+): String = when (refusal) {
+    AdaptiveTdee.Refusal.NOT_ENOUGH_DAYS -> pluralStringResource(
+        R.plurals.history_need_window, AdaptiveTdee.MIN_LOGGED_DAYS, AdaptiveTdee.MIN_LOGGED_DAYS, windowDays,
+    )
+
+    AdaptiveTdee.Refusal.NOT_ENOUGH_LOGGED_DAYS -> pluralStringResource(
+        R.plurals.history_need_days, AdaptiveTdee.MIN_LOGGED_DAYS, AdaptiveTdee.MIN_LOGGED_DAYS, loggedDays,
+    )
+
+    AdaptiveTdee.Refusal.NOT_ENOUGH_WEIGH_INS -> pluralStringResource(
+        R.plurals.history_need_weigh_ins, AdaptiveTdee.MIN_WEIGHT_POINTS, AdaptiveTdee.MIN_WEIGHT_POINTS, weighIns,
+    )
+
+    AdaptiveTdee.Refusal.WEIGH_INS_TOO_CLOSE -> pluralStringResource(
+        R.plurals.history_weigh_ins_too_close,
+        AdaptiveTdee.MIN_WEIGHT_SPAN_DAYS.toInt(),
+        AdaptiveTdee.MIN_WEIGHT_SPAN_DAYS,
+    )
+
+    AdaptiveTdee.Refusal.IMPLAUSIBLE_WEIGHT_CHANGE ->
+        stringResource(R.string.history_impossible_change, trimNumber(AdaptiveTdee.MAX_WEEKLY_CHANGE_KG))
+
+    AdaptiveTdee.Refusal.IMPLAUSIBLE_TDEE -> stringResource(
+        R.string.history_impossible_tdee,
+        trimNumber(AdaptiveTdee.MIN_BMR_FACTOR),
+        trimNumber(AdaptiveTdee.MAX_BMR_FACTOR),
+    )
+
+    // No refusal and no number should not happen; a plain sentence beats a crash if it ever does.
+    null -> stringResource(R.string.history_no_estimate)
+}
+
+@Composable
 private fun signedKg(value: Double): String {
     val unit = stringResource(R.string.weight_kg, trimNumber(kotlin.math.abs(value)))
     return when {
@@ -401,7 +428,7 @@ private fun RecapBlock(
         }
         if (recap.streakDays > 1) {
             Text(
-                text = stringResource(R.string.history_recap_streak, recap.streakDays),
+                text = pluralStringResource(R.plurals.history_recap_streak, recap.streakDays, recap.streakDays),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.secondary,
             )
@@ -422,8 +449,9 @@ private fun RecapBlock(
             val days = Projection.daysToGoal(latestWeight, goalKg, profile.goalRateKgPerWeek)
             if (days != null) {
                 Text(
-                    text = stringResource(
-                        R.string.history_projection,
+                    text = pluralStringResource(
+                        R.plurals.history_projection,
+                        days,
                         trimNumber(goalKg),
                         days,
                         formatter.format(Projection.dateToGoal(today, days)),

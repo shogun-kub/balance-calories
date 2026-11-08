@@ -42,8 +42,6 @@
     <string name="error_weight">Вес должен быть 30–300 кг</string>
     <string name="error_weight_imperial">Вес должен быть 66–661 фунт</string>
     <string name="error_save">Не удалось сохранить профиль: %1$s</string>
-    <string name="label_sex_male_short">М</string>
-    <string name="label_sex_female_short">Ж</string>
 
     <string name="profiles_title">Профили</string>
     <string name="profiles_note">Один профиль на человека. Читать браслет на этом телефоне может только один из них.</string>
@@ -100,7 +98,6 @@
     <string name="row_setting">настройки приложения</string>
 
     <string name="target_title">Цель по калориям</string>
-    <string name="target_note">Рассчитано по вашему профилю и последнему весу. Ничего не покидает телефон.</string>
 
     <string name="label_bmr">Базовый обмен</string>
     <string name="label_tdee">Суточный расход</string>
@@ -135,7 +132,6 @@
     <string name="product_portion_kcal">%1$.0f ккал на порцию</string>
     <string name="product_meal">Приём пищи</string>
     <string name="product_no_energy">Нет данных об энергии для этого продукта</string>
-    <string name="product_logged">Записано</string>
 
     <string name="meal_breakfast">Завтрак</string>
     <string name="meal_lunch">Обед</string>
@@ -162,7 +158,6 @@
     <string name="entry_edit_title">Изменить порцию</string>
     <string name="entry_edit_kcal">%1$.0f ккал после изменения</string>
     <string name="action_copy_yesterday">Повторить вчерашнее (%1$d)</string>
-    <string name="copy_result">Скопировано: %1$d</string>
     <string name="scan_title">Сканировать штрихкод</string>
     <string name="scan_hint">Наведите камеру на штрихкод на упаковке</string>
     <string name="scan_torch_on">Фонарик включён</string>
@@ -222,7 +217,6 @@
     <string name="today_burned">Сожжено</string>
     <string name="today_balance">Баланс</string>
     <string name="today_balance_estimate">Баланс (оценка)</string>
-    <string name="today_steps">Шаги</string>
     <string name="today_steps_value">Шаги: %1$d</string>
     <string name="today_burn_from_band">по данным браслета</string>
     <string name="today_burn_partial">данные браслета ещё уточняются</string>
@@ -234,7 +228,12 @@
     <string name="today_never_synced">Синхронизаций ещё не было</string>
     <string name="action_allow_activity">Разрешить доступ к активности</string>
     <string name="action_sync_band">Синхронизировать браслет</string>
-    <string name="sync_result_synced">Синхронизировано дней: %1$d</string>
+    <plurals name="sync_result_synced">
+        <item quantity="one">Синхронизирован %1$d день</item>
+        <item quantity="few">Синхронизировано %1$d дня</item>
+        <item quantity="many">Синхронизировано %1$d дней</item>
+        <item quantity="other">Синхронизировано %1$d дня</item>
+    </plurals>
     <string name="sync_result_no_permission">Доступ к Health Connect не предоставлен</string>
     <string name="sync_result_unavailable">На этом телефоне нет хранилища Health Connect</string>
     <string name="sync_result_failed">Синхронизация не удалась: %1$s</string>
@@ -247,8 +246,39 @@
     <string name="history_confidence_low">низкая</string>
     <string name="history_confidence_medium">средняя</string>
     <string name="history_confidence_high">высокая</string>
-    <string name="history_adaptive_detail">средний приход %1$s, вес %2$s за %3$d дн.</string>
-    <string name="history_need_more">нужно %1$d дней с записями, есть %2$d</string>
+    <plurals name="history_adaptive_detail">
+        <item quantity="one">средний приход %1$s, вес %2$s за %3$d день</item>
+        <item quantity="few">средний приход %1$s, вес %2$s за %3$d дня</item>
+        <item quantity="many">средний приход %1$s, вес %2$s за %3$d дней</item>
+        <item quantity="other">средний приход %1$s, вес %2$s за %3$d дня</item>
+    </plurals>
+    <plurals name="history_need_window">
+        <item quantity="one">нужен %1$d день истории, есть %2$d</item>
+        <item quantity="few">нужно %1$d дня истории, есть %2$d</item>
+        <item quantity="many">нужно %1$d дней истории, есть %2$d</item>
+        <item quantity="other">нужно %1$d дня истории, есть %2$d</item>
+    </plurals>
+<plurals name="history_need_weigh_ins">
+        <item quantity="one">нужно %1$d взвешивание, есть %2$d</item>
+        <item quantity="few">нужно %1$d взвешивания, есть %2$d</item>
+        <item quantity="many">нужно %1$d взвешиваний, есть %2$d</item>
+        <item quantity="other">нужно %1$d взвешивания, есть %2$d</item>
+    </plurals>
+    <plurals name="history_weigh_ins_too_close">
+        <item quantity="one">взвешивания должны отстоять друг от друга минимум на %1$d день</item>
+        <item quantity="few">взвешивания должны отстоять друг от друга минимум на %1$d дня</item>
+        <item quantity="many">взвешивания должны отстоять друг от друга минимум на %1$d дней</item>
+        <item quantity="other">взвешивания должны отстоять друг от друга минимум на %1$d дня</item>
+    </plurals>
+    <string name="history_impossible_change">вес изменился больше чем на %1$s кг в неделю: проверьте взвешивания</string>
+    <string name="history_impossible_tdee">получается расход вне диапазона %1$s–%2$s × BMR</string>
+    <string name="history_no_estimate">оценки пока нет</string>
+    <plurals name="history_need_days">
+        <item quantity="one">нужен %1$d день с записями, есть %2$d</item>
+        <item quantity="few">нужно %1$d дня с записями, есть %2$d</item>
+        <item quantity="many">нужно %1$d дней с записями, есть %2$d</item>
+        <item quantity="other">нужно %1$d дня с записями, есть %2$d</item>
+    </plurals>
     <string name="history_apply_target">Поставить цель %1$d ккал</string>
     <string name="history_target_applied">Цель обновлена: %1$d ккал</string>
     <string name="history_recent">Последние дни</string>
@@ -265,11 +295,21 @@
     <string name="history_recap_title">Последние 7 дней</string>
     <string name="history_recap_predicted">по дневнику %1$s</string>
     <string name="history_recap_actual">весы говорят %1$s</string>
-    <string name="history_recap_streak">записей подряд: %1$d дн.</string>
+    <plurals name="history_recap_streak">
+        <item quantity="one">записей подряд: %1$d день</item>
+        <item quantity="few">записей подряд: %1$d дня</item>
+        <item quantity="many">записей подряд: %1$d дней</item>
+        <item quantity="other">записей подряд: %1$d дня</item>
+    </plurals>
     <string name="history_recap_none">за эту неделю ничего не записано</string>
     <string name="history_trend">Тренд веса</string>
         <string name="history_trend_empty">для тренда нужно минимум два взвешивания</string>
-    <string name="history_projection">До %1$s кг: примерно %2$d дн., около %3$s</string>
+    <plurals name="history_projection">
+        <item quantity="one">До %1$s кг: примерно %2$d день, около %3$s</item>
+        <item quantity="few">До %1$s кг: примерно %2$d дня, около %3$s</item>
+        <item quantity="many">До %1$s кг: примерно %2$d дней, около %3$s</item>
+        <item quantity="other">До %1$s кг: примерно %2$d дня, около %3$s</item>
+    </plurals>
     <string name="history_projection_note">это оценка при текущем темпе, а не обещание</string>
 
     <!-- M5: переключатель автоматизации. По умолчанию приложение спрашивает; меньше вопросов — это выбор. -->
@@ -282,7 +322,12 @@
     <string name="backup_json_title">Резервная копия</string>
     <string name="backup_json_note">Один файл со всем: профили, вес, еда, рецепты и дни с браслета. Базовые ингредиенты не входят — они поставляются с приложением. Файл не зашифрован, храните его в надёжном месте.</string>
     <string name="backup_export_json">Сохранить копию (JSON)</string>
-    <string name="backup_saved">копия сохранена: символов — %1$d</string>
+    <plurals name="backup_saved">
+        <item quantity="one">копия сохранена: символов — %1$d</item>
+        <item quantity="few">копия сохранена: символов — %1$d</item>
+        <item quantity="many">копия сохранена: символов — %1$d</item>
+        <item quantity="other">копия сохранена: символов — %1$d</item>
+    </plurals>
     <string name="backup_csv_title">Таблица</string>
     <string name="backup_csv_note">Одна строка в день: съедено, сожжено, баланс, шаги и вес. Для Excel или Таблиц, а не для восстановления.</string>
     <string name="backup_export_csv">Экспорт дней (CSV)</string>
@@ -293,8 +338,18 @@
     <string name="backup_confirm_title">Заменить все данные?</string>
     <string name="backup_confirm_text">Всё в приложении будет заменено содержимым файла. Текущие данные будут потеряны.</string>
     <string name="backup_confirm_action">Заменить</string>
-    <string name="backup_restored">восстановлено строк: %1$d, копия схемы %2$d</string>
-    <string name="backup_restored_partial">восстановлено строк: %1$d, копия схемы %2$d; пропущено полей, неизвестных этой версии: %3$d</string>
+    <plurals name="backup_restored">
+        <item quantity="one">восстановлено строк: %1$d, копия схемы %2$d</item>
+        <item quantity="few">восстановлено строк: %1$d, копия схемы %2$d</item>
+        <item quantity="many">восстановлено строк: %1$d, копия схемы %2$d</item>
+        <item quantity="other">восстановлено строк: %1$d, копия схемы %2$d</item>
+    </plurals>
+    <plurals name="backup_restored_partial">
+        <item quantity="one">восстановлено строк: %1$d, копия схемы %2$d; пропущено неизвестных полей: %3$d</item>
+        <item quantity="few">восстановлено строк: %1$d, копия схемы %2$d; пропущено неизвестных полей: %3$d</item>
+        <item quantity="many">восстановлено строк: %1$d, копия схемы %2$d; пропущено неизвестных полей: %3$d</item>
+        <item quantity="other">восстановлено строк: %1$d, копия схемы %2$d; пропущено неизвестных полей: %3$d</item>
+    </plurals>
     <string name="backup_refused_not_a_backup">это не резервная копия Баланса Калорий</string>
     <string name="backup_refused_newer">копия сделана более новой версией приложения, эта её прочитать не может</string>
     <string name="backup_refused_damaged">файл повреждён или неполон, поэтому ничего не изменено</string>
@@ -346,7 +401,12 @@
     <string name="action_read_band">Читать браслет</string>
     <string name="weight_chart_legend_points">Взвешивания</string>
     <string name="weight_chart_legend_goal">Цель %1$s</string>
-    <string name="weight_chart_description">Вес: %1$d взвешиваний за %2$d дн., с %3$s до %4$s</string>
+    <plurals name="weight_chart_description">
+        <item quantity="one">Вес за %2$d день, взвешиваний: %1$d, с %3$s до %4$s</item>
+        <item quantity="few">Вес за %2$d дня, взвешиваний: %1$d, с %3$s до %4$s</item>
+        <item quantity="many">Вес за %2$d дней, взвешиваний: %1$d, с %3$s до %4$s</item>
+        <item quantity="other">Вес за %2$d дня, взвешиваний: %1$d, с %3$s до %4$s</item>
+    </plurals>
     <string name="weight_chart_legend_trend">Тренд</string>
     <string name="weight_chart_goal_below">Цель %1$s · ниже графика</string>
     <string name="weight_chart_goal_above">Цель %1$s · выше графика</string>

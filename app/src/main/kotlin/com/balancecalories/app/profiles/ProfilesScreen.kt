@@ -45,12 +45,12 @@ fun ProfilesScreen(
     profiles: List<Profile>,
     archivedProfiles: List<Profile>,
     activeProfileId: Long?,
-    initiallyShowArchived: Boolean = false,
     onAddProfile: () -> Unit,
     onEditProfile: (Profile) -> Unit,
     onSelectProfile: (Profile) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    initiallyShowArchived: Boolean = false,
 ) {
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<Profile?>(null) }
