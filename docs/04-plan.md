@@ -249,16 +249,25 @@ prototype and something two people open every day, so it lands before the releas
       profile/settings/data/debug screens stay behind a gear icon in the top bar, not in the tab row.
       Rationale: a tab is a *place you return to*, and settings is a place you visit. Five tabs force a
       "More" tab, which is a drawer with extra steps, and the owner confirmed the four-tab set.
-- [ ] Icons: hand-written vector drawables (a plate, a bowl, a chart, a scale) rather than
+- [x] Icons: hand-written vector drawables (a plate, a bowl, a chart, a scale) rather than
       `material-icons-extended`. That artifact is ~4 MB of vectors to use four of them, and the four we need
       are the four definitions of the app. `material-icons-core` (~100 KB, includes the gear and back arrow)
       is the one dependency worth adding.
-- [ ] Keep the screens themselves unchanged in this step: tabs are a container, and mixing an IA change with
+- [x] Keep the screens themselves unchanged in this step: tabs are a container, and mixing an IA change with
       a redesign makes it impossible to say which one broke something.
-- [ ] `Back` behaviour: tab switches do not stack; `back` from a tab returns to `Сегодня`, `back` on
+- [x] `Back` behaviour: tab switches do not stack; `back` from a tab returns to `Сегодня`, `back` on
       `Сегодня` leaves the app. Sub-screens (product, recipe, weight entry) keep the existing back arrow.
-- [ ] Remember the last tab across process death (`rememberSaveable`), so a phone that kills the app
+- [x] Remember the last tab across process death (`rememberSaveable`), so a phone that kills the app
       overnight does not send the person somewhere else.
+
+**Done 2026-11-08.** Four tabs with hand-drawn icons, the gear in a top bar, `Back` semantics as
+specified, and the selected tab survives process death. Two things the device changed: labels are
+dropped above a 1.5× font scale (at 2× "Сегодня" needs more than a quarter of the bar and a squeezed
+label breaks inside the word — the ADR-026 failure, seen again before it shipped), and the recipes
+list moved under `Еда` instead of a fifth destination. Profiles moved into Settings: switching
+profile is rare on a phone that belongs to one person, so it earns neither a tab nor a button on
+Today. Verified on the Honor X7c (Android 14): all four tabs, the gear, back from a tab and back
+from an overlay, at font scales 1.0, 1.3 and 2.0. ADR-027.
 
 ### M7.2 — Intake/burn chart with macro split (2 d)
 
@@ -286,16 +295,32 @@ The wife's request, and the one item on this list that is more than cosmetic: th
 weigh-ins to work at all (`MIN_WEIGHT_POINTS = 3`, `MIN_WEIGHT_SPAN_DAYS = 7`), so a first-class entry point
 makes the app's central number arrive sooner and refuse less often.
 
-- [ ] A `Вес` tab with today's weight, a one-field entry (keypad, 0.1 kg step), and the last reading as the
+- [x] A `Вес` tab with today's weight, a one-field entry (keypad, 0.1 kg step), and the last reading as the
       prefill so the usual case is "same as yesterday, adjusted".
-- [ ] Writes `body_measurement` with `source = 'manual'`, which outranks scale, Gadgetbridge and Health
+- [x] Writes `body_measurement` with `source = 'manual'`, which outranks scale, Gadgetbridge and Health
       Connect in the canonical ranking — a number the person typed on purpose should win over a number
       something else inferred.
 - [ ] Chart: **raw points as small dots**, the **EWMA line** on top, and the **goal weight as a dashed
       horizontal line** when one is set. The dots matter because hiding them behind a smooth line implies a
       precision the scale does not have; showing both is honest about the noise.
 - [ ] Range selector 30/90/365 days, and the trend line labelled with its current rate (`-0.35 kg/week`).
-- [ ] Currently weight can only be recorded by **editing the profile form**, which is why this needs its own
+- [x] Currently weight can only be recorded by **editing the profile form**, which is why this needs its own
+
+**Entry half landed with M7.1 (2026-11-08)**, because a fourth tab cannot be a placeholder: the `Вес`
+tab ships with the field, the prefill, the rate line, the recent readings and the save path, and only
+the chart is left here. Two things it exposed, both fixed:
+
+- **Saving twice in one day appended a second row.** Typing 79.5 an hour after 80 left both, so
+  "last reading" said 79.5 while the list said 80 — two screens disagreeing about one body. A source
+  now owns **one row per day**: `record` deletes the day row from that source before inserting, so a
+  re-typed weight corrects the day instead of being averaged with the value it replaced. Different
+  sources still keep their own rows, which is what the canonical ranking reads.
+- **The readings list showed the EWMA, not the readings.** It is now fed by
+  `HistoryRepository.weightPoints`, the unsmoothed canonical per-day values. A list headed "recent
+  weigh-ins" must print what the scale said; the smoothed line belongs to the chart in this section.
+
+Verified on the Honor X7c: 80 to 79.5 to 78.2 left exactly one `manual` row for the day, the list and
+the heading agreed at every step, and the seed target followed the weight (1924 to 1904).
       place: an action you take twice a week should not be four taps deep in a settings-shaped screen.
 
 ### M7.4 — Launcher icon (0.5 d)

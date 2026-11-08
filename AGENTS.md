@@ -14,11 +14,11 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1-M5 complete, M6 half done.** `:core` (107 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
+Current state: **M1-M5 and M7.1 complete, M6 half done.** `:core` (107 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
 repositories) build green, and `:app` has the whole loop: Today with burned/balance/quality, the food side
 (products, search, scanning, logging, recipes) and **History** with the adaptive TDEE, the weekly recap,
 a weight trend line and a projection, plus a backup screen. 107 :core + 42 :data + 10 :app JVM tests and
-**113 device tests** (109 :data, 4 :app) pass. Next: the rest of M6 (device matrix, TalkBack, release) then **M7 interface** — tabs, charts, weight, icon; see docs/04-plan.md.
+**115 device tests** (111 :data, 4 :app) pass, and the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear. Next: M7.2 (the intake/burn chart), then the rest of M6 and the release; see docs/04-plan.md.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -295,10 +295,28 @@ a weight trend line and a projection, plus a backup screen. 107 :core + 42 :data
 7. Tests: 21 new device cases (11 backup round-trip, 10 CSV). Totals: 107 :core, 42 :data, 10 :app JVM; 109 :data,
    4 :app device. Strings 280/280.
 8. Next: the rest of M6 — device matrix on both phones, TalkBack and contrast, release signing, README.
-9. **M7 — Interface is planned and not started** (`docs/04-plan.md`): bottom tabs with four destinations, an
-   intake/burn chart with the macro split, a `Вес` tab with manual entry and a chart, a launcher icon (the app
-   currently has **none**, so the home screen shows the platform's robot), and a dark theme. Ordered before the
-   release build, not after it.
+9. ~~**M7.1 — tabs**~~ — four destinations (`Сегодня` · `Еда` · `История` · `Вес`) in a `NavigationBar`, with
+   settings, profiles, products and recipes as **overlays** on top of the current tab. The flat `Screen` enum
+   became `Tab` + `Overlay`; back pops one overlay, then returns to `Сегодня`, then leaves the app, and tab
+   switches do not stack. The tab survives process death (`rememberSaveable`). Icons are **hand-drawn** vector
+   drawables (home, bowl-and-fork, bars, balance, sliders) rather than `material-icons-extended` — ~4 MB of
+   vectors to use five glyphs. Recipes moved under `Еда`, profiles moved into Settings. ADR-027.
+10. **Two traps in M7.1, both visible only on a device:**
+    - **Labels break inside words at a 200% font scale.** At 2× "Сегодня" needs more width than a quarter of the
+      bar and a squeezed `Text` does not ellipsize — it becomes a vertical column of letters, the ADR-026 failure
+      back again. The bar is now **icon-only above 1.5×**, with the label moved into the icon's content
+      description so TalkBack still names the destination.
+    - **The Honor reverts to landscape after a reinstall.** `settings put system user_rotation 0` does not stick
+      across `install -r`, so a tap aimed at the tab bar hits the launcher instead. Set rotation, wait, then dump
+      and tap **by the reported bounds** — never by remembered coordinates.
+11. **The `Вес` tab ships with working entry, not a placeholder** — field, prefill from the last reading, rate
+    line, recent readings, save. It exposed two real bugs, both fixed:
+    - **Saving twice in one day appended a second row.** `record` now deletes the day's row from that source
+      before inserting, so a re-typed weight corrects the day; different sources still keep their own rows.
+    - **The readings list printed the EWMA** instead of the readings; it now uses `weightPoints` (unsmoothed).
+    The chart is still M7.3. Two device tests pin the replace rule and the canonical preference.
+12. Tests: 107 :core, 42 :data, 10 :app JVM; **111 :data, 4 :app device** (115 device). Strings **296/296**.
+13. Next: **M7.2** — the intake/burn chart with the macro split.
 ## Toolchain (installed 2026-11-07, verified)
 
 | Item | Location / version |

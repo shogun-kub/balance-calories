@@ -310,4 +310,20 @@
     <!-- M6: the data screen (backup, restore, CSV). -->
     <string name="settings_data">Data</string>
     <string name="settings_data_note">Backup, restore, and a spreadsheet of your days.</string>
-</resources>
+    <!-- M7.1: the four tabs and the weight screen. -->
+    <string name="nav_today">Today</string>
+    <string name="nav_food">Food</string>
+    <string name="nav_history">History</string>
+    <string name="nav_weight">Weight</string>
+    <string name="weight_title">Weight</string>
+    <string name="weight_latest">Last reading: %1$s %2$s</string>
+    <string name="weight_none">No weigh-ins recorded yet</string>
+    <string name="weight_rate">%1$s %2$s per week</string>
+    <string name="weight_entry_label">Today\'s weight</string>
+    <string name="weight_save">Save weight</string>
+    <string name="weight_saved">Saved: %1$s %2$s</string>
+    <string name="weight_recent">Recent readings</string>
+    <string name="weight_error_number">Enter a number</string>
+    <string name="weight_error_range">Outside 20-400 kg: check the number</string>
+    <string name="unit_kilograms">kg</string>
+    <string name="unit_pounds">lb</string></resources>

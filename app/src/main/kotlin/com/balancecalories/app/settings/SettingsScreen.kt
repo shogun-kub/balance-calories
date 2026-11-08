@@ -53,6 +53,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenDebug: () -> Unit,
     onOpenData: () -> Unit,
+    onOpenProfiles: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
@@ -111,6 +112,11 @@ fun SettingsScreen(
 
         Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleMedium)
         LanguageSetting()
+
+        // Profiles moved here when the four tabs took the Today screen's navigation column: switching
+        // profile is a rare act on a phone that belongs to one person, so it earns neither a tab nor a
+        // button on Today.
+        TextButton(onClick = onOpenProfiles) { Text(stringResource(R.string.profiles_title)) }
 
         HorizontalDivider()
         Text(stringResource(R.string.settings_data), style = MaterialTheme.typography.titleMedium)

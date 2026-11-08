@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Today: the home of the app, drawn as a house with a door. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M12,2.6L1.6,11.4L4,11.4L4,21.4L10,21.4L10,15.4L14,15.4L14,21.4L20,21.4L20,11.4L22.4,11.4Z" />
+</vector>

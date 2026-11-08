@@ -75,10 +75,6 @@ fun TodayScreen(
     profile: Profile,
     container: AppContainer,
     onOpenFood: () -> Unit,
-    onOpenRecipes: () -> Unit,
-    onOpenProfiles: () -> Unit,
-    onOpenSettings: () -> Unit,
-    onOpenHistory: () -> Unit,
 ) {
     val today = remember { LocalDate.now() }
     val scope = rememberCoroutineScope()
@@ -147,7 +143,7 @@ fun TodayScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
-        Text(text = profile.name, style = MaterialTheme.typography.titleMedium)
+
 
         if (weightKg == null) {
             Text(text = stringResource(R.string.no_weight_title), style = MaterialTheme.typography.titleMedium)
@@ -318,17 +314,6 @@ fun TodayScreen(
         Button(onClick = onOpenFood, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.today_add_food))
         }
-        TextButton(onClick = onOpenRecipes) { Text(stringResource(R.string.recipes_title)) }
-
-        // FlowRow, not Row: at a 200% font scale three buttons do not fit on one line, and a squeezed TextButton
-        // breaks its label inside a word — "Настройки" came out as a single vertical column of letters, a metre
-        // tall, with the rest of the screen pushed off it.
-        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = onOpenHistory) { Text(stringResource(R.string.history_title)) }
-            TextButton(onClick = onOpenProfiles) { Text(stringResource(R.string.profiles_title)) }
-            TextButton(onClick = onOpenSettings) { Text(stringResource(R.string.action_settings)) }
-        }
-
         // Kept from the M1 screen: the inputs behind the target stay visible while the maths is fresh.
         HorizontalDivider()
         Text(text = stringResource(R.string.target_title), style = MaterialTheme.typography.titleSmall)

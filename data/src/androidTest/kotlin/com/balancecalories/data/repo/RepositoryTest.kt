@@ -192,4 +192,37 @@ class RepositoryTest {
         // Editing does not delete history: yesterday's target is still what the app said.
         assertEquals(2033, targets.effectiveOn(created.id, today)!!.kcal)
     }
-}
+    /**
+     * Re-typing a weight on the same day corrects it instead of adding a reading.
+     *
+     * The weight screen saves whatever is in the field, and people weigh themselves, mistype, and type it again.
+     * Two rows for one manual weigh-in would make the trend average a number the person had already replaced.
+     */
+    @Test
+    fun manualWeightReplacesTheDayInsteadOfAppending() = runBlocking {
+        val profileId = profiles.create(profile("Weight test")).id
+
+        body.record(profileId, 80.0, today, BodyMeasurementRepository.SOURCE_MANUAL)
+        body.record(profileId, 79.5, today, BodyMeasurementRepository.SOURCE_MANUAL)
+
+        val rows = db.bodyMeasurementDao().weightsBetween(profileId, today.toString(), today.toString())
+        assertEquals("one row per source per day", 1, rows.size)
+        assertEquals(79.5, rows.single().weightKg!!, 0.001)
+
+        // A different source on the same day is a different reading and must survive.
+        body.record(profileId, 80.4, today, BodyMeasurementRepository.SOURCE_SCALE)
+        val after = db.bodyMeasurementDao().weightsBetween(profileId, today.toString(), today.toString())
+        assertEquals("two sources, two rows", 2, after.size)
+    }
+
+    /** The canonical day value prefers the typed weight over the instrument's. */
+    @Test
+    fun canonicalWeightPrefersManualOverScale() = runBlocking {
+        val profileId = profiles.create(profile("Canonical test")).id
+
+        body.record(profileId, 80.4, today, BodyMeasurementRepository.SOURCE_SCALE)
+        body.record(profileId, 79.5, today, BodyMeasurementRepository.SOURCE_MANUAL)
+
+        val perDay = CanonicalWeights(db).perDay(profileId, today, today)
+        assertEquals(79.5, perDay.getValue(today), 0.001)
+    }}

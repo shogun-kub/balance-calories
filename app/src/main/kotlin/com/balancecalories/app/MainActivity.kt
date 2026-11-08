@@ -4,18 +4,33 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balancecalories.app.backup.BackupScreen
 import com.balancecalories.app.debug.DebugScreen
@@ -23,20 +38,30 @@ import com.balancecalories.app.food.ProductFormScreen
 import com.balancecalories.app.food.ProductScreen
 import com.balancecalories.app.food.ProductsScreen
 import com.balancecalories.app.history.HistoryScreen
+import com.balancecalories.app.profile.ProfileFormScreen
+import com.balancecalories.app.profiles.ProfilesScreen
 import com.balancecalories.app.recipes.RecipeEditorScreen
 import com.balancecalories.app.recipes.RecipeScreen
 import com.balancecalories.app.recipes.RecipesScreen
-import com.balancecalories.app.profile.ProfileFormScreen
-import com.balancecalories.app.profiles.ProfilesScreen
 import com.balancecalories.app.scanner.ScannerScreen
 import com.balancecalories.app.settings.SettingsScreen
 import com.balancecalories.app.today.TodayScreen
+import com.balancecalories.app.weight.WeightScreen
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.Recipe
 import com.balancecalories.core.profile.Profile
 import kotlinx.coroutines.launch
 
-private enum class Screen { TODAY, PROFILES, FORM, SETTINGS, BACKUP, DEBUG, FOOD, PRODUCT, PRODUCT_FORM, SCAN, RECIPES, RECIPE, RECIPE_FORM, HISTORY }
+/**
+ * The four places the app has.
+ *
+ * A tab is somewhere you *return to*; settings, profiles and the product/recipe detail screens are places you
+ * *visit*, so they are pushed on top of the current tab instead of taking a tab slot of their own (ADR-027).
+ */
+private enum class Tab { TODAY, FOOD, HISTORY, WEIGHT }
+
+/** Screens pushed over a tab. One is enough: nothing in this app is three levels deep. */
+private enum class Overlay { PROFILES, PROFILE_FORM, SETTINGS, BACKUP, DEBUG, PRODUCT, PRODUCT_FORM, SCAN, RECIPES, RECIPE, RECIPE_FORM }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,7 +97,9 @@ private fun Root() {
     val activeId by container.settings.observeActiveProfileId()
         .collectAsStateWithLifecycle(initialValue = null)
 
-    var screen by remember { mutableStateOf(Screen.TODAY) }
+    // Saveable, so a phone that kills the app overnight does not send the person somewhere else.
+    var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
+    var overlay by rememberSaveable { mutableStateOf<Overlay?>(null) }
     var editing by remember { mutableStateOf<Profile?>(null) }
     var openedProduct by remember { mutableStateOf<Product?>(null) }
     var formEditing by remember { mutableStateOf<Product?>(null) }
@@ -80,14 +107,25 @@ private fun Root() {
     var recipeEditing by remember { mutableStateOf<Recipe?>(null) }
     var scannedBarcode by remember { mutableStateOf<String?>(null) }
 
-    // System back walks one step up the food stack, and returns to Today from anywhere else.
-    BackHandler(enabled = screen != Screen.TODAY) {
-        screen = when (screen) {
-            Screen.PRODUCT, Screen.PRODUCT_FORM, Screen.SCAN -> Screen.FOOD
-            Screen.RECIPE, Screen.RECIPE_FORM -> Screen.RECIPES
-            else -> {
-                editing = null
-                Screen.TODAY
+    // Back pops one overlay, then returns to Today from another tab, then leaves the app. Tab switches do not
+    // stack: a person who taps Еда, История, Еда and then back expects Today, not a tour of their taps.
+    BackHandler(enabled = overlay != null || tab != Tab.TODAY) {
+        val current = overlay
+        if (current == null) {
+            tab = Tab.TODAY
+        } else {
+            overlay = when (current) {
+                // Product and scanning belong to the Еда tab; stepping back out of them lands there.
+                Overlay.PRODUCT, Overlay.PRODUCT_FORM, Overlay.SCAN -> {
+                    tab = Tab.FOOD
+                    null
+                }
+                Overlay.RECIPE, Overlay.RECIPE_FORM -> Overlay.RECIPES
+                Overlay.BACKUP, Overlay.DEBUG -> Overlay.SETTINGS
+                else -> {
+                    editing = null
+                    null
+                }
             }
         }
     }
@@ -101,164 +139,169 @@ private fun Root() {
     val active = profiles.firstOrNull { it.id == activeId } ?: profiles.firstOrNull()
 
     when {
+        // No profile at all: the only thing to do is create one, so the tabs would be four empty rooms.
         allProfiles.isEmpty() -> ProfileFormScreen(
             container = container,
             existing = null,
-            onSaved = { screen = Screen.TODAY },
+            onSaved = { tab = Tab.TODAY },
         )
 
-        screen == Screen.PROFILES -> ProfilesScreen(
+        // Onboarding and profile management are the whole screen when there is nobody to show data for.
+        active == null -> ProfilesScreen(
+            container = container,
+            profiles = profiles,
+            archivedProfiles = archivedProfiles,
+            activeProfileId = null,
+            initiallyShowArchived = true,
+            onAddProfile = {
+                editing = null
+                overlay = Overlay.PROFILE_FORM
+            },
+            onEditProfile = {
+                editing = it
+                overlay = Overlay.PROFILE_FORM
+            },
+            onSelectProfile = { profile ->
+                scope.launch { container.settings.setActiveProfile(profile.id) }
+                tab = Tab.TODAY
+            },
+            onBack = { tab = Tab.TODAY },
+        )
+
+        // Overlays: one screen on top of the current tab, with the tab bar hidden while it is open.
+        overlay == Overlay.PROFILES -> ProfilesScreen(
             container = container,
             profiles = profiles,
             archivedProfiles = archivedProfiles,
             activeProfileId = active?.id,
-            // Archiving the last visible profile opens the archive instead of hiding the only way back.
             initiallyShowArchived = profiles.isEmpty(),
             onAddProfile = {
                 editing = null
-                screen = Screen.FORM
+                overlay = Overlay.PROFILE_FORM
             },
             onEditProfile = {
                 editing = it
-                screen = Screen.FORM
+                overlay = Overlay.PROFILE_FORM
             },
             onSelectProfile = { profile ->
                 scope.launch { container.settings.setActiveProfile(profile.id) }
-                screen = Screen.TODAY
+                overlay = null
+                tab = Tab.TODAY
             },
-            onBack = { screen = Screen.TODAY },
+            onBack = { overlay = null },
         )
 
-        screen == Screen.FORM -> ProfileFormScreen(
+        overlay == Overlay.PROFILE_FORM -> ProfileFormScreen(
             container = container,
             existing = editing,
             onSaved = {
                 editing = null
-                screen = Screen.TODAY
+                overlay = null
             },
         )
 
-        screen == Screen.HISTORY && active != null -> HistoryScreen(
-            profile = active,
-            container = container,
-            onBack = { screen = Screen.TODAY },
-        )
-
-        screen == Screen.BACKUP && active != null -> BackupScreen(
-        container = container,
-        profile = active,
-        onBack = { screen = Screen.SETTINGS },
-    )
-
-    screen == Screen.SETTINGS && active != null -> SettingsScreen(
+        overlay == Overlay.SETTINGS -> SettingsScreen(
             container = container,
             profile = active,
-            onBack = { screen = Screen.TODAY },
-            onOpenDebug = { screen = Screen.DEBUG },
-        onOpenData = { screen = Screen.BACKUP },
+            onBack = { overlay = null },
+            onOpenDebug = { overlay = Overlay.DEBUG },
+            onOpenData = { overlay = Overlay.BACKUP },
+            onOpenProfiles = { overlay = Overlay.PROFILES },
         )
 
-        screen == Screen.DEBUG && active != null -> DebugScreen(
+        overlay == Overlay.BACKUP -> BackupScreen(
             container = container,
             profile = active,
-            onBack = { screen = Screen.SETTINGS },
+            onBack = { overlay = Overlay.SETTINGS },
         )
 
-        screen == Screen.RECIPES && active != null -> RecipesScreen(
+        overlay == Overlay.DEBUG -> DebugScreen(
+            container = container,
+            profile = active,
+            onBack = { overlay = Overlay.SETTINGS },
+        )
+
+        overlay == Overlay.RECIPES -> RecipesScreen(
             container = container,
             profileId = active.id,
-            onBack = { screen = Screen.TODAY },
+            onBack = { overlay = null },
             onOpen = { recipe ->
                 openedRecipe = recipe
-                screen = Screen.RECIPE
+                overlay = Overlay.RECIPE
             },
             onNew = {
                 recipeEditing = null
-                screen = Screen.RECIPE_FORM
+                overlay = Overlay.RECIPE_FORM
             },
         )
 
-        screen == Screen.RECIPE && openedRecipe != null && active != null -> RecipeScreen(
+        overlay == Overlay.RECIPE && openedRecipe != null -> RecipeScreen(
             container = container,
             profileId = active.id,
             recipe = openedRecipe!!,
-            onBack = { screen = Screen.RECIPES },
+            onBack = { overlay = Overlay.RECIPES },
             onEdit = {
                 recipeEditing = openedRecipe
-                screen = Screen.RECIPE_FORM
+                overlay = Overlay.RECIPE_FORM
             },
             onLogged = {
                 openedRecipe = null
-                screen = Screen.TODAY
+                overlay = null
+                tab = Tab.TODAY
             },
             onDeleted = {
                 openedRecipe = null
-                screen = Screen.RECIPES
+                overlay = Overlay.RECIPES
             },
         )
 
-        screen == Screen.RECIPE_FORM && active != null -> RecipeEditorScreen(
+        overlay == Overlay.RECIPE_FORM -> RecipeEditorScreen(
             container = container,
             profileId = active.id,
             existing = recipeEditing,
             onSaved = { saved ->
                 openedRecipe = saved
+                val wasEditing = recipeEditing != null
                 recipeEditing = null
                 // Straight to the dish that was just saved: its numbers are the point of the exercise.
-                screen = Screen.RECIPE
+                overlay = if (wasEditing) Overlay.RECIPE else Overlay.RECIPE
             },
-            onCancel = { screen = if (recipeEditing != null) Screen.RECIPE else Screen.RECIPES },
+            onCancel = { overlay = if (recipeEditing != null) Overlay.RECIPE else Overlay.RECIPES },
         )
 
-        screen == Screen.FOOD && active != null -> ProductsScreen(
+        overlay == Overlay.SCAN -> ScannerScreen(
             container = container,
-            profileId = active.id,
-            onBack = { screen = Screen.TODAY },
-            onPick = { product ->
-                openedProduct = product
-                screen = Screen.PRODUCT
-            },
-            onAddManual = {
-                openedProduct = null
-                formEditing = null
-                scannedBarcode = null
-                screen = Screen.PRODUCT_FORM
-            },
-            onScan = { screen = Screen.SCAN },
-        )
-
-        screen == Screen.SCAN -> ScannerScreen(
-            container = container,
-            onBack = { screen = Screen.FOOD },
+            onBack = { overlay = null },
             onProduct = { product ->
                 openedProduct = product
-                screen = Screen.PRODUCT
+                overlay = Overlay.PRODUCT
             },
             onAddManually = { barcode ->
                 formEditing = null
                 scannedBarcode = barcode
-                screen = Screen.PRODUCT_FORM
+                overlay = Overlay.PRODUCT_FORM
             },
         )
 
-        screen == Screen.PRODUCT && openedProduct != null && active != null -> ProductScreen(
+        overlay == Overlay.PRODUCT && openedProduct != null -> ProductScreen(
             product = openedProduct!!,
             container = container,
             profileId = active.id,
-            onBack = { screen = Screen.FOOD },
+            onBack = { overlay = null },
             onEdit = {
                 formEditing = openedProduct
                 scannedBarcode = null
-                screen = Screen.PRODUCT_FORM
+                overlay = Overlay.PRODUCT_FORM
             },
             onLogged = {
                 openedProduct = null
                 formEditing = null
-                screen = Screen.TODAY
+                overlay = null
+                tab = Tab.TODAY
             },
         )
 
-        screen == Screen.PRODUCT_FORM && active != null -> ProductFormScreen(
+        overlay == Overlay.PRODUCT_FORM -> ProductFormScreen(
             container = container,
             existing = formEditing,
             initialBarcode = scannedBarcode,
@@ -268,46 +311,146 @@ private fun Root() {
                     // decide the portion. Straight to Today would hide the change the user just made.
                     openedProduct = saved
                     formEditing = null
-                    screen = Screen.PRODUCT
+                    overlay = Overlay.PRODUCT
                 } else {
                     // Straight to Today: a product typed here was typed to be logged, not to be filed away.
-                    screen = Screen.TODAY
+                    overlay = null
+                    tab = Tab.TODAY
                 }
             },
-            onCancel = { screen = if (formEditing != null) Screen.PRODUCT else Screen.FOOD },
+            onCancel = {
+                overlay = if (formEditing != null) Overlay.PRODUCT else null
+            },
         )
 
-        // Everything is archived: show the list with the archive open, so restoring is one tap away
-        // instead of dropping the user into onboarding as if profile had never existed.
-        active == null -> ProfilesScreen(
-            container = container,
-            profiles = profiles,
-            archivedProfiles = archivedProfiles,
-            activeProfileId = null,
-            initiallyShowArchived = true,
-            onAddProfile = {
-                editing = null
-                screen = Screen.FORM
-            },
-            onEditProfile = {
-                editing = it
-                screen = Screen.FORM
-            },
-            onSelectProfile = { profile ->
-                scope.launch { container.settings.setActiveProfile(profile.id) }
-                screen = Screen.TODAY
-            },
-            onBack = { screen = Screen.TODAY },
-        )
-
-        else -> TodayScreen(
+        // Otherwise: the tabs.
+        else -> TabScaffold(
+            tab = tab,
+            onSelectTab = { tab = it },
             profile = active,
-            container = container,
-            onOpenRecipes = { screen = Screen.RECIPES },
-            onOpenFood = { screen = Screen.FOOD },
-            onOpenProfiles = { screen = Screen.PROFILES },
-            onOpenHistory = { screen = Screen.HISTORY },
-            onOpenSettings = { screen = Screen.SETTINGS },
-        )
+            onOpenSettings = { overlay = Overlay.SETTINGS },
+        ) {
+            when (tab) {
+                Tab.TODAY -> TodayScreen(
+                    profile = active,
+                    container = container,
+                    onOpenFood = { tab = Tab.FOOD },
+                )
+
+                Tab.FOOD -> ProductsScreen(
+                    container = container,
+                    profileId = active.id,
+                    onPick = { product ->
+                        openedProduct = product
+                        overlay = Overlay.PRODUCT
+                    },
+                    onAddManual = {
+                        openedProduct = null
+                        formEditing = null
+                        scannedBarcode = null
+                        overlay = Overlay.PRODUCT_FORM
+                    },
+                    onScan = { overlay = Overlay.SCAN },
+                    onOpenRecipes = { overlay = Overlay.RECIPES },
+                )
+
+                Tab.HISTORY -> HistoryScreen(
+                    profile = active,
+                    container = container,
+                )
+
+                Tab.WEIGHT -> WeightScreen(
+                    container = container,
+                    profile = active,
+                )
+            }
+        }
     }
+}
+
+/**
+ * The frame every tab shares: the current profile's name, a way into settings, and the four destinations.
+ *
+ * The bar is drawn here rather than inside each screen so that a tab cannot appear without it — a screen that
+ * forgot the bar would become a dead end, and the bug would only show up on the tab nobody was testing.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TabScaffold(
+    tab: Tab,
+    onSelectTab: (Tab) -> Unit,
+    profile: Profile,
+    onOpenSettings: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    // A label only earns its place if it fits on one line. At a 200% font scale "Сегодня" needs more width than
+    // a quarter of the bar, and a squeezed Text does not ellipsize — it breaks inside the word, which is how the
+    // previous navigation row rendered "Настройки" as a vertical column of letters. Above the threshold the bar
+    // becomes icon-only and the icons carry the names for TalkBack instead.
+    val showLabels = LocalDensity.current.fontScale < 1.5f
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = profile.name,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                actions = {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_settings),
+                            contentDescription = stringResource(R.string.action_settings),
+                        )
+                    }
+                },
+            )
+        },
+        bottomBar = {
+            NavigationBar {
+                Tab.entries.forEach { destination ->
+                    NavigationBarItem(
+                        selected = destination == tab,
+                        onClick = { onSelectTab(destination) },
+                        icon = {
+                            Icon(
+                                painter = painterResource(destination.iconRes()),
+                                // With no label the icon is the only name a screen reader gets.
+                                contentDescription = if (showLabels) {
+                                    null
+                                } else {
+                                    stringResource(destination.labelRes())
+                                },
+                            )
+                        },
+                        label = if (showLabels) {
+                            { Text(stringResource(destination.labelRes()), maxLines = 1) }
+                        } else {
+                            null
+                        },
+                    )
+                }
+            }
+        },
+    ) { padding ->
+        Box(modifier = Modifier.padding(padding)) {
+            content()
+        }
+    }
+}
+private fun Tab.labelRes(): Int = when (this) {
+    Tab.TODAY -> R.string.nav_today
+    Tab.FOOD -> R.string.nav_food
+    Tab.HISTORY -> R.string.nav_history
+    Tab.WEIGHT -> R.string.nav_weight
+}
+
+/** Null content description on purpose: the label beside it already names the destination. */
+private fun Tab.iconRes(): Int = when (this) {
+    Tab.TODAY -> R.drawable.ic_tab_today
+    Tab.FOOD -> R.drawable.ic_tab_food
+    Tab.HISTORY -> R.drawable.ic_tab_history
+    Tab.WEIGHT -> R.drawable.ic_tab_weight
 }

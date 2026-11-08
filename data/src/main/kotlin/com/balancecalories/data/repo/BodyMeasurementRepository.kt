@@ -30,6 +30,9 @@ class BodyMeasurementRepository(
         source: String,
         measuredAt: Long = clock(),
     ) {
+        // Replaces the day's row from this source: re-typing a weight corrects it instead of adding a second
+        // reading the trend would have to average.
+        dao.deleteForDay(profileId, localDate.toString(), source)
         dao.upsert(
             BodyMeasurementEntity(
                 profileId = profileId,

@@ -56,6 +56,23 @@ class HistoryRepository(
     }
 
     /**
+     * The weigh-ins themselves, one per day, unsmoothed.
+     *
+     * A chart wants the trend line; a list of readings wants the readings. Showing the smoothed series as
+     * "recent weigh-ins" would print a number the scale never displayed.
+     */
+    suspend fun weightPoints(
+        profileId: Long,
+        today: LocalDate,
+        days: Int,
+    ): List<Pair<LocalDate, Double>> {
+        val from = today.minusDays(days - 1L)
+        return CanonicalWeights(database).perDay(profileId, from, today)
+            .toSortedMap()
+            .toList()
+    }
+
+    /**
      * The week in one glance. The trend is smoothed over twice the window so the first recap day does not start its
      * own baseline from a single weigh-in.
      */

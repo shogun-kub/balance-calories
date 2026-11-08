@@ -63,6 +63,18 @@ interface BodyMeasurementDao {
     @Insert(onConflict = androidx.room.OnConflictStrategy.REPLACE)
     suspend fun upsert(measurement: BodyMeasurementEntity)
 
+    /**
+     * One weight per source per day: a second row from the same source is a correction of the first,
+     * not another measurement. Typing 79.5 an hour after 80 used to leave both rows, and the trend
+     * then averaged a weight the person had already replaced. Sources stay separate (see
+     * [com.balancecalories.data.repo.CanonicalWeights]), so this cannot delete a band reading.
+     */
+    @Query(
+        "DELETE FROM body_measurement WHERE profile_id = :profileId " +
+            "AND local_date = :localDate AND source = :source",
+    )
+    suspend fun deleteForDay(profileId: Long, localDate: String, source: String)
+
     @Query("SELECT * FROM body_measurement WHERE profile_id = :profileId ORDER BY measured_at DESC LIMIT 1")
     suspend fun latest(profileId: Long): BodyMeasurementEntity?
 

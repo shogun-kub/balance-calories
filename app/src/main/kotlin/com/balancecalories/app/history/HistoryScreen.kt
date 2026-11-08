@@ -71,7 +71,6 @@ import kotlinx.coroutines.launch
 fun HistoryScreen(
     profile: Profile,
     container: AppContainer,
-    onBack: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val zone = remember { ZoneId.systemDefault() }
@@ -127,7 +126,6 @@ fun HistoryScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
         Text(text = stringResource(R.string.history_title), style = MaterialTheme.typography.headlineMedium)
 
         val outcome = tdee

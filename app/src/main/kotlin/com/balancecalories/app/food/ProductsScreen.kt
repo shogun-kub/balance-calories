@@ -58,10 +58,10 @@ import kotlinx.coroutines.launch
 fun ProductsScreen(
     container: AppContainer,
     profileId: Long,
-    onBack: () -> Unit,
     onPick: (Product) -> Unit,
     onAddManual: () -> Unit,
     onScan: () -> Unit,
+    onOpenRecipes: () -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<Product>>(emptyList()) }
@@ -85,9 +85,12 @@ fun ProductsScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
-            Text(text = stringResource(R.string.food_title), style = MaterialTheme.typography.titleLarge)
+        // Header: the title on the left, recipes on the right. Recipes are food that has been cooked
+        // rather than ingredients, and they belong to this tab; a stranded link under the search box
+        // read as a truncated list item.
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(text = stringResource(R.string.food_title), style = MaterialTheme.typography.headlineMedium)
+            TextButton(onClick = onOpenRecipes) { Text(stringResource(R.string.recipes_title)) }
         }
 
         OutlinedTextField(

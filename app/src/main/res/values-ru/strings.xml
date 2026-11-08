@@ -310,4 +310,20 @@
     <!-- M6: экран данных (копия, восстановление, CSV). -->
     <string name="settings_data">Данные</string>
     <string name="settings_data_note">Резервная копия, восстановление и таблица по дням.</string>
-</resources>
+    <!-- M7.1: the four tabs and the weight screen. -->
+    <string name="nav_today">Сегодня</string>
+    <string name="nav_food">Еда</string>
+    <string name="nav_history">История</string>
+    <string name="nav_weight">Вес</string>
+    <string name="weight_title">Вес</string>
+    <string name="weight_latest">Последнее измерение: %1$s %2$s</string>
+    <string name="weight_none">Взвешиваний пока нет</string>
+    <string name="weight_rate">%1$s %2$s в неделю</string>
+    <string name="weight_entry_label">Вес сегодня</string>
+    <string name="weight_save">Сохранить вес</string>
+    <string name="weight_saved">Сохранено: %1$s %2$s</string>
+    <string name="weight_recent">Последние измерения</string>
+    <string name="weight_error_number">Введите число</string>
+    <string name="weight_error_range">Вне диапазона 20–400 кг: проверьте число</string>
+    <string name="unit_kilograms">кг</string>
+    <string name="unit_pounds">фунт</string></resources>
