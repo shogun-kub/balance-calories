@@ -458,6 +458,44 @@ Verified for our exact `fields=` subset (13 field names): the product response i
 is accepted by the filter (absent for Nutella, present for Russian products), and `energy-kj_100g` and
 `energy_100g` both carry kilojoules — `energy_100g` is **not** kcal despite its name.
 
+### 3.1.2 Text search is a different service — measured 2026-11-08
+
+Searching by name is not the barcode endpoint with a different path: it is a separate host, a different
+response shape, and one of the two candidate endpoints is unusable in a UI.
+
+| | barcode lookup | text search (shipped) | legacy `search.pl` |
+| --- | --- | --- | --- |
+| host | `world.openfoodfacts.org` | `search.openfoodfacts.org` | `world.openfoodfacts.org` |
+| path | `/api/v3/product/{code}.json` | `/search?q=…` | `/cgi/search.pl?search_terms=…&json=1` |
+| product holder | `product` (object) | `hits` (array) | `products` (array) |
+| total count | absent | `count`, `page_size`, `page_count`, `is_count_exact` | `count` |
+| latency (one query) | ~1 s | **0.5 s** | **no answer after 40 s; still nothing after 13 min** |
+
+The legacy endpoint was not merely slow: the same query that `search.openfoodfacts.org` answered in half a
+second never produced a response, so it cannot sit behind a button that a person is waiting on. The newer
+service is OpenFoodFacts' own search-a-licious index.
+
+What is pinned by tests (`data/src/test/.../OffSearchParserTest`, `OpenFoodFactsClientTest`, fixture
+`fixtures/off/search-hits.json`, query "nutella", 631 matches, 3 on the page):
+
+1. **`brands` changes type between endpoints.** A product object has `"brands": "Nutella, Ferrero"` (a
+   string); a search hit has `"brands": ["Nutella"]` (an array). Reading it with `getString` throws — which
+   is exactly what the first two parser tests did before the fix. The parser now accepts both shapes and
+   joins arrays with ", ", so the "first brand" rule downstream works on either.
+2. **`count` is the total, not the page length.** Showing `hits.size` would tell the user "3 found" when the
+   server said 631.
+3. **Cyrillic queries work, and must be percent-encoded.** `q=молоко` returns Russian products with Cyrillic
+   `product_name` (there is no separate `product_name_ru` in search hits); the URL-encoded form is
+   `q=%D0%BC%D0%BE%D0%BB%D0%BE%D0%BA%D0%BE`.
+4. **`fields=` filters the hits too**, so the search payload stays small.
+5. **A hit without a `code` is dropped; a hit without energy is kept** and shown with the reason. The first
+   cannot be stored (the code is the identity), the second is a real answer the user can act on.
+6. **No rate-limit headers** were present on search responses either, so the client's own throttle remains
+   the only protection.
+
+An empty result is `count: 0` with `hits: []` and HTTP 200 — distinguishable from a failure, which is why
+the parser returns `Unavailable` for a 5xx or a body without a `hits` array rather than "nothing found".
+
 ### 3.2 Rate limits — the design constraint
 
 Straight from the docs:

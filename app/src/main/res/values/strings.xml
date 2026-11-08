@@ -181,4 +181,12 @@
     <string name="scan_permission_denied">Camera access is off. You can still type the barcode.</string>
     <string name="scan_add_manually">Add this product by hand</string>
     <string name="action_open_settings">Open settings</string>
-    <string name="action_scan">Scan a barcode</string></resources>
+    <string name="action_scan">Scan a barcode</string>
+    <string name="food_search_off">Search OpenFoodFacts</string>
+    <string name="food_search_off_busy">Searching OpenFoodFacts…</string>
+    <string name="food_search_off_count">Found on OpenFoodFacts: %1$d</string>
+    <string name="food_search_off_nothing">OpenFoodFacts knows no product by that name.</string>
+    <string name="food_search_off_failed">OpenFoodFacts did not answer: %1$s</string>
+    <string name="food_search_off_no_energy">No calorie data — cannot log it</string>
+    <string name="food_search_off_note">Crowd-sourced values, not a lab measurement. Check the pack if the number looks wrong.</string>
+</resources>

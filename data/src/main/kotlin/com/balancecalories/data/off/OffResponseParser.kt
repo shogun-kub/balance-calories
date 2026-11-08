@@ -166,8 +166,23 @@ object OffResponseParser {
         }
     }
 
+    /**
+     * Reads a text field, tolerating the two shapes OFF actually uses.
+     *
+     * **The barcode endpoint and the search endpoint disagree on `brands`**, measured 2026-11-08: the
+     * product object carries `"brands": "Nutella, Ferrero"` (a string), while a search hit carries
+     * `"brands": ["Nutella"]` (an array). Reading the array with `getString` throws, which turned two
+     * parser tests red and would have crashed the search screen on the first real result. Arrays are joined
+     * with ", " so the "first brand" rule downstream keeps working on both shapes.
+     */
     private fun JSONObject.text(key: String): String? {
         if (!has(key) || isNull(key)) return null
-        return getString(key).trim().ifBlank { null }
+        val joined = when (val raw = get(key)) {
+            is org.json.JSONArray -> (0 until raw.length()).mapNotNull { raw.optString(it).ifBlank { null } }
+                .joinToString(", ")
+                .ifBlank { null }
+            else -> getString(key)
+        } ?: return null
+        return joined.trim().ifBlank { null }
     }
 }

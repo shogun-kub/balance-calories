@@ -18,8 +18,8 @@ Current state: **M1 complete, M2 nearly done.** `:core` (46 JVM tests) and `:dat
 7 repositories, OFF client, product persistence, food logging) build green, and `:app` has the full food
 loop: Today with target/eaten/remaining/macros/meal sections, product list and search, product screen with
 portion preview, manual product form, entry edit, repeat-yesterday, and a working **barcode scanner**
-(CameraX 1.6.2 + zxing-cpp 3.1.1, single FOSS build). 46 :core + 31 :data JVM tests and **53 device tests**
-(49 :data, 4 :app) pass. Next in M2: scanner polish, then OFF product search; M3 recipes after that.
+(CameraX 1.6.2 + zxing-cpp 3.1.1, single FOSS build). 46 :core + 42 :data JVM tests and **53 device tests**
+(49 :data, 4 :app) pass. Next in M2: recents/frequents, the edit-product entry point, then M3 recipes.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -141,7 +141,14 @@ portion preview, manual product form, entry edit, repeat-yesterday, and a workin
    offers "Repeat yesterday (n)" when today is empty and yesterday is not.
    Verified on the Honor X7c: 100 g → 50 g of bell pepper previewed 13 kcal and stored 13; copying moved
    yesterday's row to today as a new row (id 3) while the deleted avocado entry stayed deleted.
-6. Next: the barcode scanner, product search over OFF, then M3 recipes.
+6. ~~Barcode scanner~~ — see the build notes below; one FOSS engine, a `TextureView` preview, and a real
+   package read on the device.
+7. ~~Product search over OpenFoodFacts~~ — the local list still answers every keystroke with no network; the
+   remote search is an explicit button (quota per client, Cyrillic names would fire per character) against
+   `search.openfoodfacts.org`, and a hit becomes a row only when tapped, through `saveFromOff` (ADR-019).
+   The measured shape is in docs/02-research.md §3.1.2; the trap is that **`brands` is an array in a search
+   hit and a string in a product lookup**, which threw until `OffResponseParser.text` accepted both.
+8. Next: recents/frequents in the food list, the edit-product entry point, then M3 recipes.
 
 
 ## Toolchain (installed 2026-11-07, verified)
@@ -261,7 +268,7 @@ in the same command.
 ```powershell
 .\gradlew.bat :core:test            # pure JVM maths: formulas, day bucketing, recipes
 .\gradlew.bat :data:testDebugUnitTest
-.\gradlew.bat :app:assembleDebug    # foss flavour by default
+.\gradlew.bat :app:assembleDebug
 .\gradlew.bat :app:installDebug
 .\gradlew.bat lint detekt           # if detekt is added, keep the config in the repo
 ```
@@ -377,8 +384,8 @@ Learned the hard way, several times:
 - No backend, no account, no analytics, no crash upload. If that ever changes, it is an ADR first.
 - `allowBackup=false` and data-extraction rules that exclude the database: health data must not drift
   into a cloud backup.
-- Network is restricted to OpenFoodFacts hosts; cleartext off; a request without our User-Agent is a
-  bug.
+- Network is restricted to OpenFoodFacts hosts (`world.` for barcode lookup, `search.` for text search);
+  cleartext off; a request without our User-Agent is a bug.
 - Exports are the user's data leaving the app: write them where the user chose, never to a fixed path,
   never automatically to a shared folder.
 

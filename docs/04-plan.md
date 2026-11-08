@@ -132,7 +132,14 @@ Exit criteria: I can create two profiles and see a defensible daily target with 
 - [ ] Food entries: partial edit (meal change), quick kcal without a product
 - [x] Today screen v1: target, eaten, remaining, macro row, meal sections, per-entry delete, and the target's
       inputs (BMR, TDEE, safety rule) kept visible underneath.
-- [ ] Product search (explicit, debounced) + recents/frequents
+- [x] Product search: local search answers on every keystroke (no network); OpenFoodFacts search is a
+      **button**, because the quota is per client and a Cyrillic name would otherwise fire one request per
+      character. A hit is a candidate — it is written only when tapped, through the same `saveFromOff` path
+      as a scan (ADR-019). Measured host and shape in docs/02-research.md §3.1.2; the legacy
+      `/cgi/search.pl` never answered and is not used.
+      Verified on the Honor X7c: "nutella" → `В OpenFoodFacts найдено: 631`, tapping the first hit stored
+      product id 72 (`source='off'`, revision recorded, no override) and opened it at 519.2 kcal.
+- [ ] Recents and frequents in the food list: what was eaten lately should not need a search at all.
 - [x] Golden tests for OFF payloads (`fixtures/off/`, captured live on 2026-11-08); fake-clock tests for the
       rate limiter and a scripted transport for the retry state machine.
 

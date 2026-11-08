@@ -18,6 +18,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -27,13 +28,22 @@ import com.balancecalories.app.AppContainer
 import com.balancecalories.app.R
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.ProductSource
-import com.balancecalories.core.food.Barcode
+import com.balancecalories.data.off.OffProduct
+import com.balancecalories.data.off.OffSearch
+import kotlinx.coroutines.launch
 
 /**
- * The food list: a search over everything already on the phone.
+ * The food list: a search over everything already on the phone, plus a deliberate search of
+ * OpenFoodFacts.
  *
- * No network happens here. The starter pack is local, and a scanned product is already stored, so the list
- * works in a basement with no signal (AGENTS.md, hard rule 11).
+ * The local list is never blocked by the network (AGENTS.md, hard rule 11): it answers on every keystroke
+ * from the starter pack and from whatever has been scanned before. The remote search is a **button**, not a
+ * keystroke handler, for two reasons that both matter: OFF's quota is per client, and a name typed in
+ * Cyrillic would otherwise fire a request per character.
+ *
+ * A remote result is not stored until it is tapped. The products table holds what was chosen, and
+ * [com.balancecalories.data.repo.ProductRepository.importSearchHit] funnels the tap through the same
+ * `saveFromOff` rules as a scan, so an override or a newer revision behaves identically.
  */
 @Composable
 fun ProductsScreen(
@@ -45,7 +55,9 @@ fun ProductsScreen(
 ) {
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<Product>>(emptyList()) }
+    var remote by remember { mutableStateOf<RemoteState>(RemoteState.Idle) }
     val languageTag = LocalConfiguration.current.locales[0]?.toLanguageTag()
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(query) {
         results = if (query.isBlank()) {
@@ -53,6 +65,8 @@ fun ProductsScreen(
         } else {
             container.products.search(query)
         }
+        // A new query makes the old answer look like an answer to the new question.
+        remote = RemoteState.Idle
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -74,9 +88,85 @@ fun ProductsScreen(
             Text(text = stringResource(R.string.food_empty_note), style = MaterialTheme.typography.bodySmall)
         }
 
+        if (query.trim().length >= MIN_REMOTE_QUERY) {
+            TextButton(
+                enabled = remote !is RemoteState.Searching,
+                onClick = {
+                    val asked = query.trim()
+                    remote = RemoteState.Searching
+                    scope.launch {
+                        val answer = runCatching { container.offClient.search(asked) }.getOrElse {
+                            OffSearch.Unavailable(it.message ?: it::class.java.simpleName)
+                        }
+                        remote = when (answer) {
+                            is OffSearch.Found -> RemoteState.Found(answer)
+                            is OffSearch.Invalid -> RemoteState.Idle
+                            is OffSearch.Unavailable -> RemoteState.Failed(answer.reason)
+                        }
+                    }
+                },
+            ) {
+                Text(
+                    text = if (remote is RemoteState.Searching) {
+                        stringResource(R.string.food_search_off_busy)
+                    } else {
+                        stringResource(R.string.food_search_off)
+                    },
+                )
+            }
+        }
+
         LazyColumn(modifier = Modifier.weight(1f)) {
-            items(results, key = { it.id }) { product ->
+            items(results, key = { "local-${it.id}" }) { product ->
                 ProductRow(product = product, languageTag = languageTag, onClick = { onPick(product) })
+            }
+
+            when (val state = remote) {
+                RemoteState.Idle, RemoteState.Searching -> Unit
+
+                is RemoteState.Failed -> item("remote-failed") {
+                    Text(
+                        text = stringResource(R.string.food_search_off_failed, state.reason),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+
+                is RemoteState.Found -> {
+                    val found = state.search
+                    if (found.isEmpty) {
+                        item("remote-none") {
+                            Text(
+                                text = stringResource(R.string.food_search_off_nothing),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    } else {
+                        item("remote-header") {
+                            Text(
+                                text = stringResource(R.string.food_search_off_count, found.totalCount),
+                                style = MaterialTheme.typography.titleSmall,
+                            )
+                            Text(
+                                text = stringResource(R.string.food_search_off_note),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                        items(found.products, key = { "remote-${it.code}" }) { hit ->
+                            RemoteProductRow(
+                                hit = hit,
+                                onClick = {
+                                    scope.launch {
+                                        val stored = runCatching {
+                                            container.products.importSearchHit(hit)
+                                        }.getOrNull()
+                                        if (stored != null) onPick(stored)
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -84,6 +174,17 @@ fun ProductsScreen(
         TextButton(onClick = onAddManual) { Text(stringResource(R.string.food_add_manual)) }
     }
 }
+
+/** What the remote search is doing, so the list can say it instead of staying silent. */
+private sealed interface RemoteState {
+    data object Idle : RemoteState
+    data object Searching : RemoteState
+    data class Found(val search: OffSearch.Found) : RemoteState
+    data class Failed(val reason: String) : RemoteState
+}
+
+/** Below this the query is not a search: OFF's own index returns half the database for one letter. */
+private const val MIN_REMOTE_QUERY = 2
 
 @Composable
 private fun ProductRow(product: Product, languageTag: String?, onClick: () -> Unit) {
@@ -102,6 +203,40 @@ private fun ProductRow(product: Product, languageTag: String?, onClick: () -> Un
                     color = MaterialTheme.colorScheme.secondary,
                 )
             }
+        }
+    }
+}
+
+/**
+ * One OpenFoodFacts hit.
+ *
+ * A hit with no energy is shown but not clickable, with the reason in place of a number: hiding it would
+ * look like the search failed, and logging it would put a zero-calorie product on the plate.
+ */
+@Composable
+private fun RemoteProductRow(hit: OffProduct, onClick: () -> Unit) {
+    val usable = hit.isUsable
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = usable, onClick = onClick)
+            .padding(vertical = 8.dp),
+    ) {
+        Text(text = hit.name ?: hit.code, style = MaterialTheme.typography.bodyLarge)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (usable) {
+                Text(
+                    text = stringResource(R.string.kcal_decimal, hit.energy?.kcal ?: 0.0),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.food_search_off_no_energy),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            Text(text = hit.brand ?: ProductSource.OFF.localized(), style = MaterialTheme.typography.bodySmall)
         }
     }
 }

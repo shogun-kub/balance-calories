@@ -64,6 +64,19 @@ class ProductRepository(
     suspend fun browse(limit: Int = 200): List<Product> = products.browse(limit).map { it.toDomain() }
 
     /**
+     * Stores one OpenFoodFacts **search result** so it becomes a normal local product.
+     *
+     * Selecting a search hit is not a second kind of persistence: it goes through [saveFromOff], so a
+     * product found by name and a product found by barcode end up as the same kind of row, with the same
+     * override and revision rules. Nothing is written for results the user does not pick — the products
+     * table holds what was chosen, not every Nutella in the database.
+     *
+     * Returns null when the hit has no usable energy — a name and a picture do not put calories on the
+     * plate, and the screen says so instead of logging zero.
+     */
+    suspend fun importSearchHit(hit: OffProduct): Product? = saveFromOff(hit)
+
+    /**
      * Stores an OpenFoodFacts product, unless the local row is the user's own correction or already newer.
      *
      * Returns null when the product is unusable, so the caller can say why instead of showing an empty row.

@@ -172,4 +172,64 @@ class OpenFoodFactsClientTest {
         assertEquals(null, OpenFoodFactsClient.normalizeBarcode("40123456789O1")) // letter O
         assertEquals(null, OpenFoodFactsClient.normalizeBarcode(""))
     }
+
+    private val searchBody = """
+        {"hits":[{"code":"0098008952506","product_name":"Nutella",
+        "nutriments":{"energy-kcal_100g":540.54}}],"count":631,"page":1,"page_size":20}
+    """.trimIndent()
+
+    @Test
+    fun aQueryTooShortToBeASearchNeverLeavesThePhone() = runBlocking {
+        val transport = ScriptedTransport(emptyList())
+
+        val result = client(transport).search(" n ")
+
+        assertTrue("expected Invalid, got $result", result is OffSearch.Invalid)
+        assertEquals("no request should have been made", 0, transport.requests.size)
+    }
+
+    @Test
+    fun searchHitsTheSearchHostAndReturnsTheTotalCount() = runBlocking {
+        val transport = ScriptedTransport(listOf(reply(200, searchBody)))
+
+        val result = client(transport).search("nutella") as OffSearch.Found
+
+        val url = transport.requests.single().first
+        assertTrue("must use the search host, not the barcode host: $url", url.startsWith("https://search.openfoodfacts.org/search?"))
+        assertTrue("query must be present: $url", url.contains("q=nutella"))
+        assertEquals(631, result.totalCount)
+        assertEquals("Nutella", result.products.single().name)
+    }
+
+    @Test
+    fun aCyrillicQueryIsPercentEncoded() = runBlocking {
+        val transport = ScriptedTransport(listOf(reply(200, searchBody)))
+
+        client(transport).search("молоко")
+
+        val url = transport.requests.single().first
+        // Cyrillic in a URL is not optional to encode: unencoded bytes are rejected or mangled upstream.
+        assertTrue("query must be percent-encoded: $url", url.contains("q=%D0%BC%D0%BE%D0%BB%D0%BE%D0%BA%D0%BE"))
+        assertTrue("no raw Cyrillic may reach the wire: $url", url.none { it.code > 127 })
+    }
+
+    @Test
+    fun aSearchServerErrorIsReportedWithoutThrowing() = runBlocking {
+        val transport = ScriptedTransport(listOf(reply(503, null), reply(503, null), reply(503, null)))
+
+        val result = client(transport).search("nutella")
+
+        assertTrue("expected Unavailable, got $result", result is OffSearch.Unavailable)
+        assertEquals("a 5xx is worth three attempts, then stop", 3, transport.requests.size)
+    }
+
+    @Test
+    fun pageSizeIsCappedSoACallerCannotAskForEverything() = runBlocking {
+        val transport = ScriptedTransport(listOf(reply(200, searchBody)))
+
+        client(transport).search("nutella", pageSize = 10_000)
+
+        val url = transport.requests.single().first
+        assertTrue("page_size must be clamped: $url", url.contains("page_size=${OpenFoodFactsClient.MAX_PAGE_SIZE}"))
+    }
 }
