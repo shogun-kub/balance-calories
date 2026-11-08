@@ -245,10 +245,10 @@ prototype and something two people open every day, so it lands before the releas
 
 ### M7.1 — Navigation by tabs (2 d)
 
-- [ ] Bottom `NavigationBar` with **four destinations** — `Сегодня` · `Еда` · `История` · `Вес` — and the
-      profile/settings/data/debug screens behind a gear icon in the top bar, not in the tab row.
+- [x] **Decided (owner, 2026-11-08): four tabs** — `Сегодня` · `Еда` · `История` · `Вес`.
+      profile/settings/data/debug screens stay behind a gear icon in the top bar, not in the tab row.
       Rationale: a tab is a *place you return to*, and settings is a place you visit. Five tabs force a
-      "More" tab, which is a drawer with extra steps.
+      "More" tab, which is a drawer with extra steps, and the owner confirmed the four-tab set.
 - [ ] Icons: hand-written vector drawables (a plate, a bowl, a chart, a scale) rather than
       `material-icons-extended`. That artifact is ~4 MB of vectors to use four of them, and the four we need
       are the four definitions of the app. `material-icons-core` (~100 KB, includes the gear and back arrow)
@@ -303,16 +303,20 @@ makes the app's central number arrive sooner and refuse less often.
 - [ ] The app has **no icon at all** today: `AndroidManifest.xml` declares no `android:icon`, so it shows the
       platform's default robot. Any icon is an improvement; this one is *the* improvement, because it is the
       only part of the app seen on the home screen.
-- [ ] Design brief from the owner: **scales (balance) with food on one pan and a dumbbell on the other** —
-      energy in, energy out, in one glyph. That is the product's thesis and it survives being 48 dp wide.
-- [ ] Constraint worth stating early: at 48 dp a cake and a dumbbell are two smudges. The icon must work as a
-      **silhouette** — thick strokes, no fine detail, two colours plus the background — and it must be
-      checked at 24, 48 and 108 dp before it is called done. A vector drawable keeps it crisp at all three.
-- [ ] Deliver the full adaptive-icon set: `mipmap-anydpi-v26` foreground + background layers, a **monochrome
-      layer** for Android 13 themed icons (an app without one looks broken in a themed launcher), and a
-      legible fallback for pre-26 devices.
-
-### M7.5 — Dark theme and contrast (0.5 d)
+- [x] **Decided (owner, 2026-11-08): a balance scale, cake on one side, dumbbell on the other.** One glyph for
+      the whole product: what you eat weighed against what you spend.
+- [x] **Also decided: the cake is bare** — a slice standing directly on its side of the balance, with **no plate
+      or dish under it**. A dish would be a third shape at the same scale as the slice and would read as a
+      plated dessert rather than as the energy side of a balance.
+- [ ] Silhouette rule, because a balance plus two objects is four shapes inside 48 dp: the **beam and the two
+      pans** carry the meaning, so they are drawn as flat two-tone shapes with **negative space** between the
+      beam and each object's supporting edge, not as outlines. The slice and the dumbbell must differ in
+      **outline**, not in detail — a triangle-ish wedge against a horizontal bar with two square ends — so they
+      stay distinguishable in greyscale and at 24 dp.
+- [ ] Three sketches before the final one: beam + pans + objects; a reduced beam with the two objects hanging
+      directly; and beam + objects with no pans at all. The owner picks from images at 24, 48 and 108 dp, because
+      the choice is legibility, not taste — and if the pans do not survive 24 dp, dropping them is the agreed
+      fallback rather than redrawing them smaller.### M7.5 — Dark theme and contrast (0.5 d)
 
 - [ ] `MaterialTheme {}` currently resolves to a **light-only** scheme; there is no `darkColorScheme`. The
       macro colours make this urgent: green, yellow and red chosen for a white background are not the same
