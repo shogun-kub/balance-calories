@@ -431,6 +431,33 @@ Notes:
 - The response also carries `nutriments_estimated`, `nova-group`, `nutriscore_grade` — useful for
   display, never for the balance math.
 
+### 3.1.1 Measured against the live API — 2026-11-08
+
+Probed with `curl`-equivalent requests and our User-Agent before writing the client, because a remembered
+schema is not evidence. What the server actually did:
+
+| Case | Endpoint | HTTP | Body signal |
+| --- | --- | --- | --- |
+| found | v3 | 200 | `"status": "success"` |
+| found | v2 | 200 | `"status": 1` (number) |
+| absent (valid checksum, random code) | both | **404** | v2 `{"status":0,…"product not found"}`; v3 `{"status":"failure","errors":[…]}` |
+| malformed code `abc` | v2 | 200 | `{"status":0,"status_verbose":"no code or invalid code"}` |
+| overloaded | — | **503** | search endpoint returned 503 during the session; the product endpoint stayed up |
+| rate-limit headers | both | — | **none**; no `X-RateLimit-*`, no `Retry-After` |
+
+Two traps worth remembering:
+
+1. **`status: 1` does not mean useful.** Random junk codes genuinely exist in the database: `9999999999999`
+   is a cucumber ("Salatgurke"), `1234567890128` is a fruit-cluster snack, `77777777` is "old". So a found
+   product can still be unusable, and the client treats "no name" and "no energy" as explicit unusable
+   states rather than logging a zero-calorie food.
+2. **The v2/v3 status field differs in type.** v3 says the string `"success"`, v2 the number `1`. A parser
+   that checks `status == 1` silently reads every v3 answer as missing; the shipped parser accepts both.
+
+Verified for our exact `fields=` subset (13 field names): the product response is ~3 KB, `product_name_ru`
+is accepted by the filter (absent for Nutella, present for Russian products), and `energy-kj_100g` and
+`energy_100g` both carry kilojoules — `energy_100g` is **not** kcal despite its name.
+
 ### 3.2 Rate limits — the design constraint
 
 Straight from the docs:

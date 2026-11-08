@@ -1,0 +1,6 @@
+{
+  "_fixture_note": "Observed live on 2026-11-08: a malformed code answers HTTP 200 with status 0 and this exact wording. The client treats it as Invalid rather than NotFound, because retrying a non-barcode is pointless.",
+  "code": "abc",
+  "status": 0,
+  "status_verbose": "no code or invalid code"
+}

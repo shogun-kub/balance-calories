@@ -96,18 +96,23 @@ Exit criteria: I can create two profiles and see a defensible daily target with 
 
 - [x] Starter ingredient pack: generated JSON asset (`tools/generate_starter_pack.py`), **69 items** across
       12 categories with English and Russian names, per 100 g, imported once on first run in a single
-      transaction. Smaller than the planned ~150: 69 reviewable entries beat 150 guessed ones, and the pack
-      grows from user entries and OpenFoodFacts lookups.
-      as `source='starter'`, editable/deletable, plus a small script that regenerates it
-- [ ] OFF client: fields, UA, token bucket, backoff, 404 caching, `pending_lookup`
-- [ ] OFF → `product` mapper incl. kJ-only, serving-string parsing, `energy_estimated`
+      transaction, marked `source='starter'` so it stays editable and deletable like any other product.
+      Smaller than the planned ~150: 69 reviewable entries beat 150 guessed ones, and the pack grows from
+      user entries and OpenFoodFacts lookups.
+- [x] OFF client: `OpenFoodFactsClient` on v3 with our User-Agent, a 6-second request throttle (OFF sends no
+      rate-limit headers, so we choose to be slow), bounded retries for network errors/429/5xx, no retry for
+      404, and local barcode validation. Parser understands both v3 (`status: "success"`) and v2 (`status: 1`).
+- [ ] OFF → `product` mapper incl. kJ-only, serving-string parsing, `energy_estimated`: energy precedence
+      (`LabelEnergy`) and quantity parsing are done and tested; persisting into `product`/`pending_lookup`
+      is next.
 - [ ] Product screen (per-100 g table, portion input, meal picker, log)
 - [ ] Manual product creation + local override flow
 - [ ] Scanner screen: CameraX + zxing-cpp, overlay, torch, haptics, manual entry, debounce
 - [ ] Food entries: create/edit/delete (soft), copy yesterday, quick kcal
 - [ ] Today screen v1: eaten, target, remaining, macro row, meal sections
 - [ ] Product search (explicit, debounced) + recents/frequents
-- [ ] Golden tests for OFF payloads; fake-clock tests for rate limiter
+- [x] Golden tests for OFF payloads (`fixtures/off/`, captured live on 2026-11-08); fake-clock tests for the
+      rate limiter and a scripted transport for the retry state machine.
 
 Exit criteria: a full day of eating can be logged faster than with a notes app, offline included.
 

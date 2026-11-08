@@ -44,4 +44,10 @@ dependencies {
     androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
+
+    // JVM unit tests for the OpenFoodFacts client and parser: they exercise JSON parsing and the
+    // retry/404 state machine, none of which needs a device. Android's org.json is a throwing stub on
+    // the JVM, so the real implementation is a test-only dependency.
+    testImplementation(libs.org.json)
+    testImplementation(libs.junit4)
 }

@@ -14,12 +14,13 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1 complete, M2 started.** `:core` (30 tests) and `:data` (schema **v3**, 7 DAOs, 6
-repositories) build green, and `:app` covers profiles end to end: create, edit, switch, delete,
-archive/restore, settings, debug. The starter ingredient pack ships as an asset and imports on first run
-(69 bilingual items, verified on the Honor: schema migrated 2 → 3 in place, 69 product rows). 20
-instrumentation tests pass on device, including three migration tests and the pack import. Next in M2: the
-OpenFoodFacts client, product screen, scanner and food entries.
+Current state: **M1 complete, M2 in progress.** `:core` (38 JVM tests) and `:data` (schema **v3**, 7 DAOs,
+6 repositories, OpenFoodFacts client with 22 JVM tests) build green, and `:app` covers profiles end to end:
+create, edit, switch, delete, archive/restore, settings, debug. The starter ingredient pack ships as an
+asset and imports on first run (69 bilingual items, verified on the Honor: schema migrated 2 → 3 in place,
+69 product rows), and the OFF client is written against the **measured** v3 contract. 20 instrumentation
+tests pass on device. Next in M2: persist OFF results into `product` + `pending_lookup`, then the product
+screen, scanner and food entries.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -108,7 +109,17 @@ OpenFoodFacts client, product screen, scanner and food entries.
    Schema **v3** added `product.name_ru` (nullable) for the Russian names; migration 2 → 3 is additive and
    tested. Values are composition-table estimates, which is exactly why the product keeps a `source` column
    and why a scanned OpenFoodFacts product or a user edit outranks it.
-2. Next: OpenFoodFacts client, `pending_lookup`, screenshot fixtures; then product screen and scanner.
+2. ~~OpenFoodFacts client~~ — `OpenFoodFactsClient` (v3, User-Agent, one request per 6 s against a published
+   15/min quota, bounded retries for network errors/429/5xx, no retry for 404, local barcode validation) and
+   `OffResponseParser`, which accepts **both** status shapes (v3 `"success"`, v2 `1`). `LabelEnergy` in
+   `:core` decides energy precedence: stated kcal (measured) → kJ ÷ 4.184 (estimated) → Atwater from macros
+   (estimated) → nothing. The contract in docs/02-research.md §3.1.1 was measured, not recalled: absent
+   products answer **HTTP 404**, malformed codes answer 200 + `status: 0`, and responses carry **no**
+   rate-limit headers. Junk codes really exist in OFF (`9999999999999` is a cucumber), so a found product
+   can still be unusable — `OffProduct.isUsable` says why. No new shipping dependency: `HttpURLConnection`
+   plus `org.json`; `org.json:json` is test-only, because Android's version is a stub on the JVM.
+3. Next: OFF → `product` persistence (`pending_lookup` for 404s and offline scans), then product screen and
+   scanner.
 
 
 ## Toolchain (installed 2026-11-07, verified)

@@ -1,0 +1,6 @@
+{
+  "_fixture_note": "Observed live on 2026-11-08: a valid-format barcode that is not in the database answers HTTP 404 with status 0. The barcode here is randomly generated and belongs to no product.",
+  "code": "2573468086162",
+  "status": 0,
+  "status_verbose": "product not found"
+}
