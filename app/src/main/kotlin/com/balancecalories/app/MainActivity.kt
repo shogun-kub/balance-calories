@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.balancecalories.app.onboarding.OnboardingScreen
 import com.balancecalories.core.energy.TargetCalculator
 import com.balancecalories.core.energy.TargetLimit
 import com.balancecalories.core.profile.Profile
@@ -40,10 +41,7 @@ class MainActivity : ComponentActivity() {
                         .collectAsStateWithLifecycle(initialValue = emptyList())
 
                     when (val active = profiles.firstOrNull()) {
-                        null -> EmptyState(
-                            title = stringResource(R.string.no_profile_title),
-                            note = stringResource(R.string.no_profile_note),
-                        )
+                        null -> OnboardingScreen(container = container)
                         else -> ProfileTarget(profile = active, container = container)
                     }
                 }

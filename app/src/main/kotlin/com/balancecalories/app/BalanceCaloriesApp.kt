@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.Context
 import com.balancecalories.data.db.BalanceCaloriesDatabase
 import com.balancecalories.data.db.createDatabase
+import com.balancecalories.data.health.HealthConnectState
+import com.balancecalories.data.health.HealthConnectSupport
 import com.balancecalories.data.repo.BodyMeasurementRepository
 import com.balancecalories.data.repo.ProfileRepository
 import com.balancecalories.data.repo.TargetRepository
@@ -19,6 +21,13 @@ class AppContainer(context: Context) {
     val profiles: ProfileRepository = ProfileRepository(database)
     val body: BodyMeasurementRepository = BodyMeasurementRepository(database)
     val targets: TargetRepository = TargetRepository(database)
+
+    /**
+     * Whether this phone can supply band data at all. The first profile claims the band when it can;
+     * a phone without Health Connect keeps working for food and formulas.
+     */
+    val healthConnectAvailable: Boolean =
+        HealthConnectSupport.state(context.applicationContext) == HealthConnectState.AVAILABLE
 }
 
 class BalanceCaloriesApp : Application() {

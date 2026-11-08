@@ -2,13 +2,45 @@
 <resources>
     <string name="app_name">Balance Calories</string>
 
-    <string name="no_profile_title">No profile yet</string>
-    <string name="no_profile_note">Onboarding comes next: name, body data and a goal.</string>
     <string name="no_weight_title">No weight yet</string>
     <string name="no_weight_note">The target needs a weight reading, so onboarding will ask for one.</string>
 
+    <string name="onboarding_title">Create your profile</string>
+    <string name="onboarding_note">Body data and a goal, then the app can compute your daily target. Nothing leaves the phone.</string>
+    <string name="field_name">Name</string>
+    <string name="field_sex">Sex</string>
+    <string name="sex_male">Male</string>
+    <string name="sex_female">Female</string>
+    <string name="field_birth_date">Date of birth</string>
+    <string name="field_birth_date_empty">Choose a date</string>
+    <string name="field_height">Height, cm</string>
+    <string name="field_weight">Weight, kg</string>
+    <string name="field_activity">Activity level</string>
+    <string name="activity_sedentary">Sedentary — desk work, little walking</string>
+    <string name="activity_light">Light — some walking or 1–2 workouts a week</string>
+    <string name="activity_moderate">Moderate — 3–4 workouts a week</string>
+    <string name="activity_hard">Hard — physical job or 5+ workouts a week</string>
+    <string name="activity_athlete">Athlete — training most days</string>
+    <string name="field_goal">Weekly goal</string>
+    <string name="goal_lose_fast">Lose 0.5 kg a week</string>
+    <string name="goal_lose_steady">Lose 0.25 kg a week</string>
+    <string name="goal_maintain">Maintain weight</string>
+    <string name="goal_gain">Gain 0.25 kg a week</string>
+    <string name="preview_target">Estimated target: %1$d kcal a day</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_ok">OK</string>
+    <string name="saving">Saving…</string>
+    <string name="error_name">Enter a name</string>
+    <string name="error_birth_date">Choose a date of birth between 1900 and 14 years ago</string>
+    <string name="error_height">Height must be 100–250 cm</string>
+    <string name="error_weight">Weight must be 30–300 kg</string>
+    <string name="error_save">Could not save the profile: %1$s</string>
+    <string name="label_sex_male_short">M</string>
+    <string name="label_sex_female_short">F</string>
+
     <string name="target_title">Energy target</string>
-    <string name="target_note">Demo body data until onboarding exists — nothing here is stored yet.</string>
+    <string name="target_note">Computed from your profile and latest weight. Nothing leaves the phone.</string>
 
     <string name="label_bmr">BMR</string>
     <string name="label_tdee">TDEE</string>

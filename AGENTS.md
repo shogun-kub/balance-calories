@@ -17,12 +17,11 @@ Two outputs, everything else supports them:
 Current state: **M1 in progress.** `docs/` is complete through the plan, the toolchain is installed,
 `:core` — the pure Kotlin energy maths — builds and tests green (27 tests), and the module skeleton
 exists: `:data` (Health Connect status probe, Room schema v1 with 11 tables and 4 DAOs, plus Profile /
-BodyMeasurement / Target repositories behind domain mappers) and `:app` (Application container, reads
-the active profile from the database, computes its target with `:core`, shows an empty state when there
-is no profile yet). `assembleDebug` succeeds and the APK installs and runs on the Honor X7c, creating
-`balancecalories.db` on first launch; 12 instrumentation tests pass there. What is still missing from
-M1: the onboarding flow that creates a profile, profile switching and editing, settings, the debug
-screen.
+BodyMeasurement / Target repositories behind domain mappers) and `:app` (Application container,
+onboarding that writes profile + first weight + seed target, target screen reading the database).
+`assembleDebug` succeeds and the APK installs and runs on the Honor X7c, creating `balancecalories.db`;
+12 instrumentation tests pass there, and onboarding was exercised by hand through the UI. What is still
+missing from M1: profile edit/switch/archive UI, settings, the debug screen.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -72,9 +71,10 @@ screen.
    `MigrationTestHelper` harness proven by `MigrationHarnessTest`.
 4. ~~Repositories and mappers over the DAOs~~ — `ProfileRepository`, `BodyMeasurementRepository`,
    `TargetRepository`, and `Profile` as a `:core` domain type; `:app` never sees an entity or Room.
-5. Onboarding (steps 1–3) that creates a profile and its first weight; then profile switch/edit/archive.
-6. Target calculation writing `target_history` from onboarding; settings (units, day start, language);
-   debug screen.
+5. ~~Onboarding (steps 1–3)~~ — one scrollable form validates, then writes profile, first weight and
+   seed target in order. Verified on device: rows land in `profile`, `body_measurement`,
+   `target_history`. Profile edit/switch/archive UI is next.
+6. Settings (units, day start, language); debug screen.
 
 
 ## Toolchain (installed 2026-11-07, verified)

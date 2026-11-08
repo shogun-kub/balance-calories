@@ -72,15 +72,19 @@ it exists.
 
 ## M1 — Skeleton, profiles, targets (4 d)
 
-- [x] Project setup, partial: Gradle **9.8.2** wrapper committed, version catalog, `:core` as a pure
-      JVM module (Kotlin 2.4.21, JUnit 5.14.4). Hilt, Compose theme and the `:data`/`:app` modules are
-      still to come.
-- [ ] Room schema v1 + DAOs + migration test harness
+- [x] Project setup: Gradle **9.8.2** wrapper committed, version catalog, `:core` as a pure JVM module,
+      `:data` and `:app` as Android modules (Kotlin **2.3.20**, JUnit 5.14.4, AGP 9.5.1, compileSdk 36).
+      Hilt is still deferred; the app uses a manual container.
+- [x] Room schema v1 + DAOs + migration test harness — 11 tables, schema JSON committed, 12
+      instrumentation tests green on the Honor X7c
 - [x] `:core` energy module: Mifflin–St Jeor and Harris–Benedict BMR, PAL seed, deficit cap, safety
       floors, weekly clamp, DST-aware day bucketing — 27 tests green (`.\gradlew.bat :core:test`)
-- [ ] Universal profile model: create/edit, switch, archive; `band_enabled` enforced (one per device)
-- [ ] Profile create/edit, onboarding step 1–3 (profile, body data, goal rate)
-- [ ] Target calculation + `target_history` write
+- [ ] Universal profile model: **create and the one-band-per-device rule are done**; edit, switch and
+      archive have repository support but no UI yet
+- [x] Profile create, onboarding step 1–3 (profile, body data, goal rate) — verified by hand on the
+      Honor: a typed profile wrote `profile`, `body_measurement` and `target_history` rows and survived
+      a restart
+- [x] Target calculation + `target_history` write (seed mode; adaptive and pinned arrive in M5)
 - [ ] Settings: units, day-start hour, language
 - [ ] Debug screen: show computed BMR/TDEE/target inputs and outputs
 
