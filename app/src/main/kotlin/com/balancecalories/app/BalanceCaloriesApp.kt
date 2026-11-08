@@ -6,9 +6,14 @@ import com.balancecalories.data.db.BalanceCaloriesDatabase
 import com.balancecalories.data.db.createDatabase
 import com.balancecalories.data.health.HealthConnectState
 import com.balancecalories.data.health.HealthConnectSupport
+import com.balancecalories.data.off.HttpUrlOffTransport
+import com.balancecalories.data.off.OpenFoodFactsClient
 import com.balancecalories.data.repo.AppSettingsRepository
+import com.balancecalories.data.repo.BarcodeResolver
 import com.balancecalories.data.repo.BodyMeasurementRepository
 import com.balancecalories.data.repo.DebugRepository
+import com.balancecalories.data.repo.FoodEntryRepository
+import com.balancecalories.data.repo.ProductRepository
 import com.balancecalories.data.repo.ProfileRepository
 import com.balancecalories.data.repo.StarterPackImporter
 import com.balancecalories.data.repo.TargetRepository
@@ -29,6 +34,13 @@ class AppContainer(context: Context) {
     val targets: TargetRepository = TargetRepository(database)
     val settings: AppSettingsRepository = AppSettingsRepository(database)
     val debug: DebugRepository = DebugRepository(database)
+    val products: ProductRepository = ProductRepository(database)
+    val food: FoodEntryRepository = FoodEntryRepository(database)
+
+    /** One client for the whole process, so its throttle paces every screen together, not per screen. */
+    val offClient: OpenFoodFactsClient = OpenFoodFactsClient(HttpUrlOffTransport())
+
+    val barcodes: BarcodeResolver = BarcodeResolver(products)
 
     /** Imports the bundled ingredient pack on first launch; idempotent, see StarterPackImporter. */
     val starterPack: StarterPackImporter = StarterPackImporter(

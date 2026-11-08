@@ -14,13 +14,13 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1 complete, M2 in progress.** `:core` (46 JVM tests) and `:data` (schema **v3**, 8 DAOs,
-7 repositories, OpenFoodFacts client + product persistence) build green, and `:app` covers profiles end to
-end: create, edit, switch, delete, archive/restore, settings, debug. The starter ingredient pack ships as an
-asset and imports on first run (69 bilingual items, verified on the Honor: schema migrated 2 → 3 in place,
-69 product rows). The OFF client is written against the **measured** v3 contract, and products persist with a
-stable id, honoured user overrides and cached misses. 35 instrumentation tests pass on the Honor X7c.
-Next in M2: the product screen and manual entry, then the scanner, then food entries and Today v1.
+Current state: **M1 complete, M2 in progress.** `:core` (46 JVM tests) and `:data` (schema **v4**, 9 DAOs,
+7 repositories, OpenFoodFacts client + product persistence + food logging) build green. `:app` now has the
+food flow: profiles end to end (create, edit, switch, delete, archive/restore), settings, debug, plus Today
+with target/eaten/remaining/macros/meal sections, a local product list, a product screen with portion
+preview and logging, and a manual product form. The starter pack (69 bilingual items) imports on first run;
+the OFF client follows the **measured** v3 contract. 44 instrumentation tests pass on the Honor X7c.
+Next in M2: edit and copy entries, the barcode scanner, product search over OFF, then M3 recipes.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -126,7 +126,16 @@ Next in M2: the product screen and manual entry, then the scanner, then food ent
    `pending_lookup` does double duty — offline retry queue and cached 404 — separated by the `not_found`
    marker (ADR-015). Domain maths lives in `:core`: `Product` (with `displayName(languageTag)` and
    `hasEnergy`), `FoodMath.portion` (linear, missing stays missing, negative grams throws), `Barcode`.
-4. Next: product screen + manual entry, then the scanner, then food entries and Today v1.
+4. ~~Logging and Today v1~~ — `FoodEntryRepository` writes a **snapshot** (grams, scaled nutrition and the
+   product's names, schema **v4**) so renaming or deleting a product cannot rewrite yesterday; delete is a
+   soft delete and the day ignores the row. `TodayScreen` shows target, eaten, remaining, macros and meal
+   sections, and keeps BMR/TDEE/safety rule visible. Food screens: `ProductsScreen` (local search + browse),
+   `ProductScreen` (per-100 g table, portion, meal chips, log), `ProductFormScreen` (manual product; accepts
+   an existing one but no screen opens it yet).
+   Verified on the Honor X7c: schema 3 → 4 migrated in place with 69 products intact; 150 g of avocado
+   previewed 240 kcal and stored `150.0 g / 240.0 kcal / P 3.0 / F 22.05` with the name snapshot; Today read
+   240 eaten, 1684 remaining; deleting the row set `deleted_at` and the day went back to 0.
+5. Next: edit/copy-yesterday entries, the scanner, then product search over OFF and M3 recipes.
 
 
 ## Toolchain (installed 2026-11-07, verified)
@@ -275,7 +284,7 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (35 tests) — database behaviour, migrations, repositories, starter pack, products
+# OK (44 tests) — database behaviour, migrations, repositories, starter pack, products, food entries
 ```
 
 ## Devices and how to test on them

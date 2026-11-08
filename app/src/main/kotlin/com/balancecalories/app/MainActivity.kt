@@ -4,15 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,22 +16,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balancecalories.app.debug.DebugScreen
+import com.balancecalories.app.food.ProductFormScreen
+import com.balancecalories.app.food.ProductScreen
+import com.balancecalories.app.food.ProductsScreen
 import com.balancecalories.app.profile.ProfileFormScreen
 import com.balancecalories.app.profiles.ProfilesScreen
 import com.balancecalories.app.settings.SettingsScreen
-import com.balancecalories.core.energy.TargetCalculator
-import com.balancecalories.core.energy.TargetLimit
+import com.balancecalories.app.today.TodayScreen
+import com.balancecalories.core.food.Product
 import com.balancecalories.core.profile.Profile
-import com.balancecalories.data.health.HealthConnectState
-import com.balancecalories.data.health.HealthConnectSupport
-import java.time.LocalDate
 import kotlinx.coroutines.launch
 
-private enum class Screen { TODAY, PROFILES, FORM, SETTINGS, DEBUG }
+private enum class Screen { TODAY, PROFILES, FORM, SETTINGS, DEBUG, FOOD, PRODUCT, PRODUCT_FORM }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,8 +45,8 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * Routing is three enum states and the stored "current profile" id: no Navigation Compose yet, because
- * four destinations do not justify the dependency.
+ * Routing is an enum and the stored "current profile" id: no Navigation Compose yet, because eight
+ * destinations still do not justify the dependency.
  *
  * Which profile is shown comes from the database, not from list order. If the stored id points at a
  * profile that no longer exists, the first available one is adopted, so a deleted selection cannot leave
@@ -75,11 +67,17 @@ private fun Root() {
 
     var screen by remember { mutableStateOf(Screen.TODAY) }
     var editing by remember { mutableStateOf<Profile?>(null) }
+    var openedProduct by remember { mutableStateOf<Product?>(null) }
 
-    // System back from any sub-screen returns to Today instead of closing the app.
+    // System back walks one step up the food stack, and returns to Today from anywhere else.
     BackHandler(enabled = screen != Screen.TODAY) {
-        editing = null
-        screen = Screen.TODAY
+        screen = when (screen) {
+            Screen.PRODUCT, Screen.PRODUCT_FORM -> Screen.FOOD
+            else -> {
+                editing = null
+                Screen.TODAY
+            }
+        }
     }
 
     LaunchedEffect(profiles, activeId) {
@@ -141,8 +139,42 @@ private fun Root() {
             onBack = { screen = Screen.SETTINGS },
         )
 
+        screen == Screen.FOOD -> ProductsScreen(
+            container = container,
+            onBack = { screen = Screen.TODAY },
+            onPick = { product ->
+                openedProduct = product
+                screen = Screen.PRODUCT
+            },
+            onAddManual = {
+                openedProduct = null
+                screen = Screen.PRODUCT_FORM
+            },
+        )
+
+        screen == Screen.PRODUCT && openedProduct != null && active != null -> ProductScreen(
+            product = openedProduct!!,
+            container = container,
+            profileId = active.id,
+            onBack = { screen = Screen.FOOD },
+            onLogged = {
+                openedProduct = null
+                screen = Screen.TODAY
+            },
+        )
+
+        screen == Screen.PRODUCT_FORM && active != null -> ProductFormScreen(
+            container = container,
+            existing = null,
+            onSaved = {
+                // Straight to Today: a product typed here was typed to be logged, not to be filed away.
+                screen = Screen.TODAY
+            },
+            onCancel = { screen = Screen.FOOD },
+        )
+
         // Everything is archived: show the list with the archive open, so restoring is one tap away
-        // instead of dropping the user into onboarding as if no profile had ever existed.
+        // instead of dropping the user into onboarding as if profile had never existed.
         active == null -> ProfilesScreen(
             container = container,
             profiles = profiles,
@@ -164,125 +196,12 @@ private fun Root() {
             onBack = { screen = Screen.TODAY },
         )
 
-        else -> ProfileTarget(
+        else -> TodayScreen(
             profile = active,
             container = container,
+            onOpenFood = { screen = Screen.FOOD },
             onOpenProfiles = { screen = Screen.PROFILES },
             onOpenSettings = { screen = Screen.SETTINGS },
         )
     }
 }
-
-/**
- * Reads the profile's latest weight and computes the target with `:core`. Nothing is written here: a
- * target enters `target_history` at onboarding, at an explicit edit, or when the user recalculates.
- */
-@Composable
-private fun ProfileTarget(
-    profile: Profile,
-    container: AppContainer,
-    onOpenProfiles: () -> Unit,
-    onOpenSettings: () -> Unit,
-) {
-    val today = remember { LocalDate.now() }
-    var weightKg by remember(profile.id) { mutableStateOf<Double?>(null) }
-    var loaded by remember(profile.id) { mutableStateOf(false) }
-
-    LaunchedEffect(profile.id) {
-        weightKg = container.body.latestWeightKg(profile.id)
-        loaded = true
-    }
-
-    val weight = weightKg
-    if (!loaded) return
-
-    if (weight == null) {
-        EmptyState(
-            title = stringResource(R.string.no_weight_title),
-            note = stringResource(R.string.no_weight_note),
-        )
-        return
-    }
-
-    val target = remember(profile.id, weight, today) {
-        TargetCalculator.seed(
-            profile = profile.toEnergyProfile(weight),
-            goalRateKgPerWeek = profile.goalRateKgPerWeek,
-            on = today,
-        )
-    }
-    val context = LocalContext.current
-    val hcState = remember(context) { HealthConnectSupport.state(context) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineMedium,
-        )
-        Text(text = profile.name, style = MaterialTheme.typography.titleMedium)
-        Text(
-            text = stringResource(R.string.target_note),
-            style = MaterialTheme.typography.bodySmall,
-        )
-
-        MetricRow(stringResource(R.string.label_bmr), stringResource(R.string.kcal_decimal, target.bmrKcal))
-        MetricRow(stringResource(R.string.label_tdee), stringResource(R.string.kcal_decimal, target.tdeeKcal))
-        MetricRow(stringResource(R.string.label_target), stringResource(R.string.kcal_int, target.kcal))
-        MetricRow(stringResource(R.string.label_limit), target.limit.localized())
-        MetricRow(stringResource(R.string.label_health_connect), hcState.localized())
-
-        Row {
-            TextButton(onClick = onOpenProfiles) {
-                Text(stringResource(R.string.profiles_title))
-            }
-            TextButton(onClick = onOpenSettings) {
-                Text(stringResource(R.string.action_settings))
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyState(title: String, note: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
-        Text(text = title, style = MaterialTheme.typography.titleMedium)
-        Text(text = note, style = MaterialTheme.typography.bodySmall)
-    }
-}
-
-@Composable
-private fun MetricRow(label: String, value: String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium)
-        Text(text = value, style = MaterialTheme.typography.bodyMedium)
-    }
-}
-
-@Composable
-private fun TargetLimit.localized(): String = stringResource(
-    when (this) {
-        TargetLimit.NONE -> R.string.limit_none
-        TargetLimit.DEFICIT_CAP -> R.string.limit_cap
-        TargetLimit.FLOOR -> R.string.limit_floor
-    },
-)
-
-@Composable
-private fun HealthConnectState.localized(): String = stringResource(
-    when (this) {
-        HealthConnectState.AVAILABLE -> R.string.hc_available
-        HealthConnectState.UPDATE_REQUIRED -> R.string.hc_update_required
-        HealthConnectState.NOT_SUPPORTED -> R.string.hc_not_supported
-    },
-)

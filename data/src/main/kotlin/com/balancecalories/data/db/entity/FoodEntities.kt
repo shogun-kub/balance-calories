@@ -228,6 +228,19 @@ data class FoodEntryEntity(
     @ColumnInfo(name = "product_id")
     val productId: Long? = null,
 
+    /**
+     * The product's name at the moment of logging (schema v4).
+     *
+     * Part of the snapshot for the same reason the nutrition is (ADR-005): if the product is later deleted
+     * or renamed, yesterday's plate must still read correctly. Without this, `product_id` going null on
+     * delete would leave a row with numbers and no name.
+     */
+    @ColumnInfo(name = "product_name")
+    val productName: String? = null,
+
+    @ColumnInfo(name = "product_name_ru")
+    val productNameRu: String? = null,
+
     @ColumnInfo(name = "recipe_id")
     val recipeId: Long? = null,
 

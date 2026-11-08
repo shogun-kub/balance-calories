@@ -116,4 +116,49 @@
     <string name="hc_available">доступен</string>
     <string name="hc_update_required">требуется обновление</string>
     <string name="hc_not_supported">не поддерживается</string>
-</resources>
+
+    <!-- Еда: список, продукт, ручной ввод, сегодня -->
+    <string name="food_title">Еда</string>
+    <string name="food_search_hint">Поиск по названию или бренду</string>
+    <string name="food_add_manual">Добавить продукт вручную</string>
+    <string name="food_empty">Ничего не найдено</string>
+    <string name="food_empty_note">Ищите в стартовом списке или добавьте продукт со своими цифрами.</string>
+    <string name="food_source_starter">стартовый набор</string>
+    <string name="food_source_off">OpenFoodFacts</string>
+    <string name="food_source_user">ваш продукт</string>
+
+    <string name="product_per_100g">На 100 г</string>
+    <string name="product_estimated">энергия оценена</string>
+    <string name="product_override">ваши цифры</string>
+    <string name="product_portion">Порция, г</string>
+    <string name="product_portion_kcal">%1$.0f ккал на порцию</string>
+    <string name="product_meal">Приём пищи</string>
+    <string name="product_no_energy">Нет данных об энергии для этого продукта</string>
+    <string name="product_logged">Записано</string>
+
+    <string name="meal_breakfast">Завтрак</string>
+    <string name="meal_lunch">Обед</string>
+    <string name="meal_dinner">Ужин</string>
+    <string name="meal_snack">Перекус</string>
+
+    <string name="action_log">Записать</string>
+
+    <string name="form_product_title">Новый продукт</string>
+    <string name="form_product_edit_title">Изменить продукт</string>
+    <string name="field_name_ru">Название по-русски (необязательно)</string>
+    <string name="field_kcal_100g">Энергия на 100 г, ккал</string>
+    <string name="field_protein_100g">Белки на 100 г, г</string>
+    <string name="field_fat_100g">Жиры на 100 г, г</string>
+    <string name="field_carbs_100g">Углеводы на 100 г, г</string>
+    <string name="field_liquid">Жидкость (на 100 мл)</string>
+    <string name="error_name_required">Введите название</string>
+    <string name="error_kcal_required">Введите энергию на 100 г</string>
+    <string name="error_kcal_range">Энергия должна быть от 0 до 900 ккал</string>
+
+    <string name="today_eaten">Съедено</string>
+    <string name="today_remaining">Осталось</string>
+    <string name="today_empty">Сегодня ничего не записано</string>
+    <string name="today_add_food">Добавить еду</string>
+    <string name="today_entry_line">%1$.0f г · %2$.0f ккал</string>
+    <string name="macro_line">Б %1$.0f · Ж %2$.0f · У %3$.0f</string>
+    <string name="loading">Загрузка…</string></resources>

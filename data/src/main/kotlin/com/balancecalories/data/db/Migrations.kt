@@ -32,5 +32,17 @@ object Migrations {
         }
     }
 
-    val all: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
+    /**
+     * v3 → v4 snapshots the product's names on the entry, alongside the nutrition snapshot.
+     *
+     * Additive and nullable: existing entries keep working, they simply have no stored name until edited.
+     */
+    val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `food_entry` ADD COLUMN `product_name` TEXT")
+            db.execSQL("ALTER TABLE `food_entry` ADD COLUMN `product_name_ru` TEXT")
+        }
+    }
+
+    val all: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
 }

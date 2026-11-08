@@ -116,4 +116,49 @@
     <string name="hc_available">available</string>
     <string name="hc_update_required">update required</string>
     <string name="hc_not_supported">not supported</string>
-</resources>
+
+    <!-- Food: list, product, manual entry, today -->
+    <string name="food_title">Food</string>
+    <string name="food_search_hint">Search by name or brand</string>
+    <string name="food_add_manual">Add a product manually</string>
+    <string name="food_empty">Nothing found</string>
+    <string name="food_empty_note">Search the starter list, or add a product with your own numbers.</string>
+    <string name="food_source_starter">starter pack</string>
+    <string name="food_source_off">OpenFoodFacts</string>
+    <string name="food_source_user">your product</string>
+
+    <string name="product_per_100g">Per 100 g</string>
+    <string name="product_estimated">energy estimated</string>
+    <string name="product_override">your numbers</string>
+    <string name="product_portion">Portion, g</string>
+    <string name="product_portion_kcal">%1$.0f kcal per portion</string>
+    <string name="product_meal">Meal</string>
+    <string name="product_no_energy">No energy data for this product</string>
+    <string name="product_logged">Logged</string>
+
+    <string name="meal_breakfast">Breakfast</string>
+    <string name="meal_lunch">Lunch</string>
+    <string name="meal_dinner">Dinner</string>
+    <string name="meal_snack">Snack</string>
+
+    <string name="action_log">Log</string>
+
+    <string name="form_product_title">New product</string>
+    <string name="form_product_edit_title">Edit product</string>
+    <string name="field_name_ru">Name in Russian (optional)</string>
+    <string name="field_kcal_100g">Energy per 100 g, kcal</string>
+    <string name="field_protein_100g">Protein per 100 g, g</string>
+    <string name="field_fat_100g">Fat per 100 g, g</string>
+    <string name="field_carbs_100g">Carbs per 100 g, g</string>
+    <string name="field_liquid">Liquid (per 100 ml)</string>
+    <string name="error_name_required">Enter a name</string>
+    <string name="error_kcal_required">Enter energy per 100 g</string>
+    <string name="error_kcal_range">Energy must be between 0 and 900 kcal</string>
+
+    <string name="today_eaten">Eaten</string>
+    <string name="today_remaining">Remaining</string>
+    <string name="today_empty">Nothing logged today</string>
+    <string name="today_add_food">Add food</string>
+    <string name="today_entry_line">%1$.0f g · %2$.0f kcal</string>
+    <string name="macro_line">P %1$.0f · F %2$.0f · C %3$.0f</string>
+    <string name="loading">Loading…</string></resources>

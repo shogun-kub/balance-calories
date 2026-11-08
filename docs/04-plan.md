@@ -107,11 +107,19 @@ Exit criteria: I can create two profiles and see a defensible daily target with 
       overwritten, an OFF product OFF has not revised is not rewritten, and a product with no energy is
       refused rather than stored as zero calories. `BarcodeResolver` runs the decision tree — local hit →
       cached miss → fetch → unusable/offline — with the fetch injected so it is testable without a network.
-- [ ] Product screen (per-100 g table, portion input, meal picker, log)
-- [ ] Manual product creation + local override flow
+- [x] Product screen (per-100 g table, portion input, meal picker, log): the portion preview and the stored
+      entry come from the same `FoodMath.portion` call, so the number shown cannot disagree with the number
+      saved. An estimated energy is labelled **before** the user commits.
+- [x] Manual product creation: name (English and optional Russian), energy and macros per 100 g, liquid
+      toggle. Saving a correction to a scanned product marks it `is_override`.
+- [ ] Editing an existing product from the UI: `ProductFormScreen` already accepts an `existing` product,
+      but no screen opens it yet.
 - [ ] Scanner screen: CameraX + zxing-cpp, overlay, torch, haptics, manual entry, debounce
-- [ ] Food entries: create/edit/delete (soft), copy yesterday, quick kcal
-- [ ] Today screen v1: eaten, target, remaining, macro row, meal sections
+- [x] Food entries: create and soft delete, with the product name and nutrition snapshotted at log time
+      (schema v4). The row survives a delete for history; the day ignores it.
+- [ ] Food entries: edit, copy yesterday, quick kcal
+- [x] Today screen v1: target, eaten, remaining, macro row, meal sections, per-entry delete, and the target's
+      inputs (BMR, TDEE, safety rule) kept visible underneath.
 - [ ] Product search (explicit, debounced) + recents/frequents
 - [x] Golden tests for OFF payloads (`fixtures/off/`, captured live on 2026-11-08); fake-clock tests for the
       rate limiter and a scripted transport for the retry state machine.

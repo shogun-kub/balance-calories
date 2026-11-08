@@ -100,6 +100,31 @@ class MigrationHarnessTest {
         }
     }
 
+    @Test
+    fun migration3To4SnapshotsTheProductNameAndKeepsTheEntry() {
+        helper.createDatabase(TEST_DB, 3).use { db ->
+            db.execSQL(
+                "INSERT INTO food_entry (id, profile_id, consumed_at, local_date, meal, product_id, " +
+                    "grams, kcal, protein_g, fat_g, carbs_g, fiber_g, sugar_g, salt_g, was_estimated, " +
+                    "note, deleted_at) VALUES (1, 1, 1760000000000, '2026-11-08', 'lunch', NULL, " +
+                    "150.0, 300.0, 10.0, 5.0, 40.0, NULL, NULL, NULL, 0, NULL, NULL)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 4, true, Migrations.MIGRATION_3_4).use { db ->
+            assertEquals(4, db.version)
+            db.query(
+                "SELECT grams, kcal, product_name, product_name_ru FROM food_entry WHERE id = 1",
+            ).use { cursor ->
+                assertTrue("the entry must survive", cursor.moveToFirst())
+                assertEquals(150.0, cursor.getDouble(0), 0.001)
+                assertEquals(300.0, cursor.getDouble(1), 0.001)
+                assertTrue("no name for a pre-migration entry", cursor.isNull(2))
+                assertTrue(cursor.isNull(3))
+            }
+        }
+    }
+
     private fun androidx.sqlite.db.SupportSQLiteDatabase.tableNames(): List<String> {
         val names = mutableListOf<String>()
         query("SELECT name FROM sqlite_master WHERE type = 'table'").use { cursor ->

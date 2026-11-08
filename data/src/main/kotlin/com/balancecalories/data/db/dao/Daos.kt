@@ -186,6 +186,37 @@ interface ProductDao {
             "ORDER BY name LIMIT :limit",
     )
     suspend fun search(query: String, limit: Int): List<com.balancecalories.data.db.entity.ProductEntity>
+
+    @Query("SELECT * FROM product ORDER BY name LIMIT :limit")
+    suspend fun browse(limit: Int): List<com.balancecalories.data.db.entity.ProductEntity>
+}
+
+/** A logged entry joined with the product name, so the UI needs one query per day, not one per row. */
+@Dao
+interface FoodEntryDao {
+
+    @Insert
+    suspend fun insert(entry: com.balancecalories.data.db.entity.FoodEntryEntity): Long
+
+    @Query(
+        "SELECT * FROM food_entry " +
+            "WHERE profile_id = :profileId AND local_date = :localDate AND deleted_at IS NULL " +
+            "ORDER BY consumed_at, id",
+    )
+    suspend fun forDay(profileId: Long, localDate: String): List<com.balancecalories.data.db.entity.FoodEntryEntity>
+
+    @Query(
+        "SELECT COALESCE(SUM(kcal), 0) FROM food_entry " +
+            "WHERE profile_id = :profileId AND local_date = :localDate AND deleted_at IS NULL",
+    )
+    suspend fun kcalForDay(profileId: Long, localDate: String): Double
+
+    @Query("SELECT * FROM food_entry WHERE id = :id")
+    suspend fun byId(id: Long): com.balancecalories.data.db.entity.FoodEntryEntity?
+
+    /** Soft delete: history stays answerable, and a purge can happen later. */
+    @Query("UPDATE food_entry SET deleted_at = :at WHERE id = :id")
+    suspend fun softDelete(id: Long, at: Long)
 }
 
 /**

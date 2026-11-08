@@ -60,6 +60,9 @@ class ProductRepository(
     suspend fun search(query: String, limit: Int = 20): List<Product> =
         if (query.isBlank()) emptyList() else products.search(query.trim(), limit).map { it.toDomain() }
 
+    /** Everything, for the first look at the food list before the user types anything. */
+    suspend fun browse(limit: Int = 200): List<Product> = products.browse(limit).map { it.toDomain() }
+
     /**
      * Stores an OpenFoodFacts product, unless the local row is the user's own correction or already newer.
      *
