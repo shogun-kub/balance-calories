@@ -396,27 +396,37 @@ to prevent.
       with the two objects hanging; and a front-on balance whose pans are straight lines. The sheet is the point
       of the exercise — at 24 dp the pans of the first sketch merged with the food into one blob, which is exactly
       the failure the sketches existed to expose.
-- [x] **The owner chose the reduced structure** (beam and objects, no pans) after seeing all three, then asked for
-      three changes on it: the slice **rotated with depth** because it read as a flat triangle, the dumbbell in
-      **steel blue `#4682B4`**, and the pie in **two tones** because one flat amber read as a blob.
-- [x] Shipped as an **adaptive icon**: `res/drawable/ic_launcher_foreground.xml` (13 vector paths over a 108 × 108
-      viewport), the cream background as a colour resource, and a `<monochrome>` layer for Android 13+ themed
-      icons. No PNG densities and no legacy square icon — `minSdk` 28 means an adaptive icon is the only form any
-      supported phone can use.
+- [x] **The owner chose the reduced structure** (beam and objects, no pans) after seeing all three, then rejected
+      two drafts of the objects in a row — which is what produced the final language:
+      1. *"rotate the piece of cake in 3d-like style… dumbbells should be steel blue (#4682B4)… pie now looks like
+         shit (by color). Could you at least add a second colour there?"* → the slice gained a depth face and a
+         golden crust over berry filling; the dumbbell turned steel blue.
+      2. *"now we need to rotate the dumbbell the same way, because now it looks like weirdly looking wide letter H"*
+         → the dumbbell became a tilted bar with two rounded weights and a lit disc face on each outer end.
+- [x] Shipped as an **adaptive icon**: `res/drawable/ic_launcher_foreground.xml` (8 `<path>` elements over a
+      108 × 108 viewport), the cream background as a colour resource, and a `<monochrome>` layer for Android 13+
+      themed icons. No PNG densities and no legacy square icon — `minSdk` 28 means an adaptive icon is the only
+      form any supported phone can use.
 - [x] `tools/icon_design.py` is the **source of the geometry**, not a sketchbook: it renders the 24/48/108
       previews and prints the exact `pathData` the drawable carries, so the approved picture and the shipped
-      vector cannot drift apart.
+      vector cannot drift apart. Each colour group is one path with several subpaths, so a shape built from
+      many quads is rasterised once and shows no seams.
 - [x] **Verified on the Honor X7c** (ALT-LX1, Android 14 / SDK 34): the system paints it in Settings → *О
       приложении*, in the recents card, and on the launcher's third home page as **Баланс Калорий**.
 
-Two things the icon taught:
+Four things the icon taught:
 
-- **At 24 dp an icon is a silhouette test, not a drawing.** Every decision that survived was about outline —
-  a wedge with a flat crust bar against a bar with two plates. Every decision that failed was about detail: pans,
-  a domed crust, a single colour with no internal edge.
+- **At 24 dp an icon is a silhouette test, not a drawing.** Every decision that survived was about outline;
+  every decision that failed was about detail — pans, a domed crust, a single colour with no internal edge.
+- **Two rectangles on a bar are a capital H**, whatever you do to them. A dumbbell needs round weights, and the
+  lit disc face on each outer end is what says *weight seen from the side* rather than *letter*.
+- **A swept solid is not a translated outline.** Filling the outline shifted down by the object's depth leaves a
+  gap wherever the object is thinner than that depth; at the slice's tip it showed as two prongs with the
+  background between them, which read as a pen nib. The side is the shape plus its copy plus a quad on every
+  edge, all in one colour.
 - **A generated icon has to be checkable.** Because the vectors come out of the same script as the previews, the
-  only way they disagree is if the script is edited without re-rendering — which is a `git diff` on a PNG no one
-  commits. The path data is printed, never hand-typed.
+  only way they disagree is if the script is edited without re-rendering. The path data is printed, never
+  hand-typed.
 
 ### M7.5 — Dark theme and contrast (0.5 d)
 

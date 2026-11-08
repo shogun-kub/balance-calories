@@ -379,25 +379,32 @@ a weight trend line and a projection, plus a backup screen. 131 :core + 42 :data
       about.
 21. Tests: 131 :core, 42 :data, 10 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**.
 22. ~~**M7.4 — the launcher icon**~~ — a vector **adaptive icon**: an ink balance beam with a slice of pie on
-    one side and a steel-blue dumbbell on the other. The owner's brief was a balance *with pans*; three
-    sketches at 24/48/108 dp showed that at 24 dp each pan and its food merge into one blob, so he picked the
-    reduced structure (beam and objects) after seeing exactly that failure. The slice is a wedge with a flat
-    crust bar and an extruded dark side, in two tones — golden crust over berry filling — and the dumbbell is
-    `#4682B4`. Shipped as `res/drawable/ic_launcher_foreground.xml` (13 paths), a cream background colour and
-    a `<monochrome>` layer; no PNG densities, because `minSdk` 28 makes the adaptive icon the only form any
-    phone can use. `tools/icon_design.py` is the source of the geometry — it renders the review previews and
-    prints the exact `pathData` the drawable carries. Verified on the Honor: Settings → *О приложении*, the
-    recents card, and the third home page. ADR-032.
-23. **Two things the icon taught:**
-    - **At 24 dp an icon is a silhouette test, not a drawing.** Everything that survived was outline — a
-      wedge with a flat crust bar against a bar with two plates. Everything that failed was detail: pans, a
-      domed crust, one flat colour with no internal edge.
-    - **`docs/03-architecture.md` had two ADR rows glued in front of its own title**, left by an earlier
-      append. Nothing caught it because Markdown renders the damage as a table at the top of the page, and no
-      test reads the docs. Repaired and both rows moved into §13; when appending to a table, check the first
-      line of the file after the write, not just that the text landed somewhere.
-24. Tests: 131 :core, 42 :data, 10 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**.
-25. Next: **M7.5** — the dark theme, then the rest of M6 and the release.
+    one side and a steel-blue dumbbell on the other, **both solid objects seen at an angle**. The owner's brief
+    was a balance *with pans*; three sketches at 24/48/108 dp showed that at 24 dp each pan and its food merge
+    into one blob, so he picked the reduced structure after seeing exactly that failure. Two drafts of the
+    objects were then rejected — a flat triangle, then a dumbbell that was a capital H — which produced the
+    final language: the slice is a circular sector with a crust band about a third of its radius and its side
+    swept downwards, the dumbbell is a tilted bar with two rounded weights and a lit disc face on each outer end.
+    Shipped as `res/drawable/ic_launcher_foreground.xml` (8 paths), a cream background colour and a
+    `<monochrome>` layer; no PNG densities, because `minSdk` 28 makes the adaptive icon the only form any phone
+    can use. `tools/icon_design.py` is the source of the geometry — it renders the review previews and prints
+    the exact `pathData` the drawable carries. Verified on the Honor: Settings → *О приложении*, the recents
+    card, and the third home page. ADR-032.
+23. **Three things the icon taught:**
+    - **At 24 dp an icon is a silhouette test, not a drawing.** Everything that survived was outline; everything
+      that failed was detail — pans, a domed crust, one flat colour with no internal edge.
+    - **Two rectangles on a bar are a capital H**, whatever you do to them. A dumbbell needs round weights, and
+      a lit disc face on each outer end is what says *weight seen from the side* rather than *letter*.
+    - **A swept solid is not a translated outline.** Filling the outline shifted down by the object's depth
+      leaves a gap wherever the object is thinner than that depth; at the slice's tip it showed as two prongs
+      with the background between them. The side is the shape plus its copy plus a quad on every edge, one
+      colour, one path.
+24. **`docs/03-architecture.md` had two ADR rows glued in front of its own title**, left by an earlier append.
+    Nothing caught it because Markdown renders the damage as a table at the top of the page, and no test reads
+    the docs. Repaired and both rows moved into §13; when appending to a table, check the first line of the file
+    after the write, not just that the text landed somewhere.
+25. Tests: 131 :core, 42 :data, 10 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**.
+26. Next: **M7.5** — the dark theme, then the rest of M6 and the release.
 
 ## Toolchain (installed 2026-11-07, verified)
 

@@ -2,16 +2,17 @@
 The launcher icon for Balance Calories: a balance beam with a slice of pie on one side and a dumbbell on the
 other — the two halves of the product, weighed against each other.
 
-Owner's decisions (2026-11-08): structure **B** from the sketch sheet (beam and objects, no pans), the slice
-**rotated with some depth** so it reads as a wedge of cake rather than a flat triangle, the dumbbell in **steel
-blue #4682B4**, and the pie in **two colours** — golden crust over a berry filling.
+Owner's decisions: the reduced structure from the sketch sheet (beam and objects, no pans), both objects
+**seen at an angle** rather than flat, the dumbbell in **steel blue #4682B4**, and the pie in **two tones** —
+golden crust over berry filling. The proportions of the slice come from the owner's own correction (2026-11-08):
+a circular sector of radius ~19 units, a crust band about a third of it, and a depth face below.
 
 This file is the source of the geometry. It renders previews at 108/48/24 dp for review and prints the
 VectorDrawable path data that res/drawable/ic_launcher_foreground.xml carries, so the shipped vector and the
 approved preview cannot drift apart.
 
 Geometry is in icon units on a 108 x 108 canvas; the adaptive-icon safe zone is the centre 72 x 72, so every
-shape stays inside roughly x, y in [22, 86].
+shape stays inside roughly x, y in [21, 87].
 """
 
 from PIL import Image, ImageDraw
@@ -20,13 +21,15 @@ import os
 
 SS = 8
 
-INK = (34, 38, 46, 255)          # beam, stem, base, pivot
-STEEL = (70, 130, 180, 255)      # #4682B4 — the dumbbell
-CRUST = (214, 158, 74, 255)      # the top of the crust
-CRUST_SIDE = (166, 112, 46, 255)  # the crust's front face — the visible depth of the slice
+INK = (34, 38, 46, 255)            # beam, stem, base, pivot
+STEEL = (70, 130, 180, 255)        # #4682B4 — the dumbbell
+STEEL_DARK = (44, 92, 132, 255)    # the bar, in the shadow of the weights
+STEEL_LIGHT = (104, 154, 198, 255)   # the lit disc face on the outer end of each weight
+CRUST = (214, 158, 74, 255)        # the top of the crust
+CRUST_SIDE = (166, 112, 46, 255)   # the crust's front face
 FILLING = (176, 66, 62, 255)       # berry filling, the pie's second colour
-FILLING_DARK = (138, 48, 46, 255)  # the filling's cut faces, in shadow
-CREAM = (243, 237, 225, 255)     # adaptive background
+FILLING_DARK = (138, 48, 46, 255)  # its cut faces, in shadow
+CREAM = (243, 237, 225, 255)       # adaptive background
 GUIDE = (233, 30, 99, 90)
 
 BEAM_Y = 47.0
@@ -35,24 +38,32 @@ STEM_W = 4.8
 BASE_Y = 84.0
 BASE_HALF = 12.0
 
-# The slice is placed point by point rather than by squash-and-rotate: a wedge that has to read at 24 dp cannot
-# be left to a parametric guess. A is the tip, P1 and P2 are where the crust begins and ends, Q bulges the crust
-# outward. The depth is the extrusion below the top face, which is what says "a slice of something" rather than
-# "a triangle". A tip 20 units from a 60-degree crust is a slice; a long thin one is a pennant.
-PIE_A = (22.0, 59.5)
-PIE_P1 = (38.5, 52.5)
-PIE_P2 = (38.5, 65.5)
-PIE_Q = (43.5, 59.0)
-PIE_DEPTH = 4.4
-PIE_TILT = -9.0
-DUMBBELL_C = (77.0, 61.5)
-DUMBBELL_LENGTH = 18.0
-DUMBBELL_BAR = 3.4
-PLATE_W = 5.4
-PLATE_H = 13.0
+# The slice: a circular sector, apex at the left, seen almost from above. Angles in degrees, screen convention.
+PIE_APEX = (21.5, 62.0)
+PIE_RADIUS = 19.0
+PIE_START = -30.0      # the upper radius
+PIE_END = 28.0         # the lower radius
+PIE_SQUASH = 0.94      # just enough foreshortening to stop it looking like a flat wedge
+PIE_CRUST = 6.0
+PIE_DEPTH = 5.0
+PIE_SEGMENTS = 20
+
+DUMBBELL_C = (76.0, 61.5)
+DUMBBELL_TILT = -18.0      # degrees, clockwise: the bar runs up to the right
+DUMBBELL_BAR = 16.0
+DUMBBELL_BAR_TH = 3.0
+WEIGHT_HALF = 5.2          # half the height of one end weight, across the bar
+WEIGHT_T0 = 3.2            # where the weight starts, along the bar
+WEIGHT_T1 = 7.7            # and where it ends
+# --- small geometry helpers ----------------------------------------------------------------------------------
+
+def unit(size_px):
+    return size_px * SS / 108.0
 
 
-# --- geometry ------------------------------------------------------------------------------------------------
+def poly(d, points, fill, k):
+    d.polygon([(x * k, y * k) for x, y in points], fill=fill)
+
 
 def rotate(points, degrees, around):
     a = math.radians(degrees)
@@ -65,49 +76,18 @@ def rotate(points, degrees, around):
     return out
 
 
-def _lerp(p, q, t):
-    return (p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t)
+def ellipse(centre, u, v, ru, rv, segments=28):
+    """A closed ellipse around `centre`, `ru` along u and `rv` along v (both unit vectors)."""
+    cx, cy = centre
+    pts = []
+    for i in range(segments):
+        a = 2.0 * math.pi * i / segments
+        ca, sa = math.cos(a), math.sin(a)
+        pts.append((cx + ca * ru * u[0] + sa * rv * v[0], cy + ca * ru * u[1] + sa * rv * v[1]))
+    return pts
 
 
-def _quad(p, q, r, segments):
-    return [_lerp(_lerp(p, q, i / segments), _lerp(q, r, i / segments), i / segments)
-            for i in range(segments + 1)]
-
-
-def pie_top(segments=18):
-    """The slice's top face: tip, the two cut edges, and the curved crust between them."""
-    outer = _quad(PIE_P1, PIE_Q, PIE_P2, segments)
-    return [PIE_A] + outer
-
-
-def pie_crust_band(segments=18, width=4.6):
-    """The golden crust along the arc: the pie's second colour, on the top face."""
-    outer = _quad(PIE_P1, PIE_Q, PIE_P2, segments)
-    inner_p1 = _lerp(PIE_P1, PIE_A, width / math.dist(PIE_P1, PIE_A))
-    inner_p2 = _lerp(PIE_P2, PIE_A, width / math.dist(PIE_P2, PIE_A))
-    inner_q = _lerp(PIE_Q, PIE_A, width / math.dist(PIE_Q, PIE_A) * 0.9)
-    inner = _quad(inner_p1, inner_q, inner_p2, segments)
-    return outer + inner[::-1]
-
-
-def extrude(shape, depth=PIE_DEPTH):
-    return [(x, y + depth) for x, y in shape]
-
-def dumbbell_shapes(c=DUMBBELL_C, length=DUMBBELL_LENGTH, bar=DUMBBELL_BAR,
-                    plate_w=PLATE_W, plate_h=PLATE_H):
-    cx, cy = c
-    half_bar = length / 2.0 - plate_w
-    bar_rect = [(cx - half_bar, cy - bar / 2), (cx + half_bar, cy - bar / 2),
-                (cx + half_bar, cy + bar / 2), (cx - half_bar, cy + bar / 2)]
-    plates = []
-    for sign in (-1, 1):
-        x = cx + sign * (length / 2.0 - plate_w / 2.0)
-        plates.append([(x - plate_w / 2, cy - plate_h / 2), (x + plate_w / 2, cy - plate_h / 2),
-                       (x + plate_w / 2, cy + plate_h / 2), (x - plate_w / 2, cy + plate_h / 2)])
-    return bar_rect, plates
-
-
-def rounded_rect(x0, y0, x1, y1, r, segments=6):
+def rounded_rect(x0, y0, x1, y1, r, segments=5):
     pts = []
     corners = [((x1 - r, y0 + r), -90), ((x1 - r, y1 - r), 0), ((x0 + r, y1 - r), 90), ((x0 + r, y0 + r), 180)]
     for (cx, cy), start in corners:
@@ -116,6 +96,88 @@ def rounded_rect(x0, y0, x1, y1, r, segments=6):
             pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
     return pts
 
+
+# --- the slice ------------------------------------------------------------------------------------------------
+
+def _sector_point(radius, degrees):
+    ax, ay = PIE_APEX
+    a = math.radians(degrees)
+    return (ax + radius * math.cos(a), ay + radius * math.sin(a) * PIE_SQUASH)
+
+
+def pie_top(segments=PIE_SEGMENTS):
+    """The top face: the apex, then the arc of the outer edge."""
+    pts = [PIE_APEX]
+    for i in range(segments + 1):
+        pts.append(_sector_point(PIE_RADIUS, PIE_START + (PIE_END - PIE_START) * i / segments))
+    return pts
+
+
+def pie_crust_band(segments=PIE_SEGMENTS):
+    """The crust: a band along the outer edge, the pie's second colour."""
+    outer = [_sector_point(PIE_RADIUS, PIE_START + (PIE_END - PIE_START) * i / segments)
+             for i in range(segments + 1)]
+    inner = [_sector_point(PIE_RADIUS - PIE_CRUST, PIE_START + (PIE_END - PIE_START) * i / segments)
+             for i in range(segments + 1)]
+    return outer + inner[::-1]
+
+
+def extrude(shape, depth=PIE_DEPTH):
+    """
+    The visible side of a slice: the shape swept downwards.
+
+    Translating the whole outline by `depth` and filling it leaves a gap wherever the slice is thinner than the
+    depth — at the tip it showed as two prongs with the background between them, which read as a pen nib rather
+    than as a solid slice. A swept solid is the shape plus its copy plus a quad on every edge, and the seam
+    disappears because all of it is one colour.
+    """
+    shifted = [(x, y + depth) for x, y in shape]
+    pieces = [shape, shifted]
+    n = len(shape)
+    for i in range(n):
+        a, b = shape[i], shape[(i + 1) % n]
+        pieces.append([a, b, (b[0], b[1] + depth), (a[0], a[1] + depth)])
+    return pieces
+
+
+# --- the dumbbell ---------------------------------------------------------------------------------------------
+
+def _dumbbell_axes():
+    a = math.radians(DUMBBELL_TILT)
+    return (math.cos(a), math.sin(a)), (-math.sin(a), math.cos(a))
+
+
+def _at(t, across_offset=0.0):
+    """A point t units from the dumbbell's centre along the bar, offset across it."""
+    along, across = _dumbbell_axes()
+    cx, cy = DUMBBELL_C
+    return (cx + along[0] * t + across[0] * across_offset,
+            cy + along[1] * t + across[1] * across_offset)
+
+
+def dumbbell_shapes():
+    """
+    A dumbbell seen at an angle, as two weights on a bar.
+
+    The first attempt drew the plates as thin ellipses — which is what a plate looks like edge-on, and which is
+    also exactly the vertical stroke of a capital H. These are **rounded blocks with a lit disc face on the outer
+    end**: the face is the cue that says "this is a weight seen from the side", and the round corners are what
+    stop the two ends reading as letters.
+    """
+    along, across = _dumbbell_axes()
+    half = DUMBBELL_BAR / 2.0
+    bar = rounded_rect(-half, -DUMBBELL_BAR_TH / 2.0, half, DUMBBELL_BAR_TH / 2.0, DUMBBELL_BAR_TH / 2.0)
+    bar = [_at(x, y) for x, y in bar]
+
+    weights, caps = [], []
+    for sign in (-1, 1):
+        t0, t1 = sorted((sign * WEIGHT_T0, sign * WEIGHT_T1))
+        block = rounded_rect(t0, -WEIGHT_HALF, t1, WEIGHT_HALF, 1.7)
+        weights.append([_at(x, y) for x, y in block])
+        caps.append(ellipse(_at(sign * (WEIGHT_T1 - 0.85), 0.0), across, along, WEIGHT_HALF - 0.35, 1.4))
+    return bar, weights, caps
+
+# --- the frame ------------------------------------------------------------------------------------------------
 
 def structure_shapes():
     """Beam, pivot, stem and base — all ink."""
@@ -128,39 +190,43 @@ def structure_shapes():
 
 def strings():
     return [rounded_rect(28.6, BEAM_Y + 2.0, 31.4, 54.0, 1.2),
-            rounded_rect(75.6, BEAM_Y + 2.0, 78.4, 53.2, 1.2)]
+            rounded_rect(74.6, BEAM_Y + 2.0, 77.4, 53.2, 1.2)]
 
 
 def icon_layers():
-    """Fill and polygon, back to front. The single source of truth for both the preview and the vector."""
+    """
+    (colour, [polygons]) back to front — the single source of truth for both the preview and the vector.
+
+    The side of the slice is a list of quads rather than one outline because a swept solid is easier to build
+    that way; each group still becomes ONE `<path>` with several subpaths, so the pieces are rasterised together
+    and no antialiasing seam appears between them.
+    """
     top = pie_top()
     crust = pie_crust_band()
-    bar_rect, plates = dumbbell_shapes()
-    layers = []
-    for shape in strings():
-        layers.append((INK, shape))
-    for shape in structure_shapes():
-        layers.append((INK, shape))
-    # the slice, back to front: the filling's depth, the crust's depth, then the two top faces. Extruding the
-    # crust separately is what keeps the cut faces berry-coloured while the crust face stays golden.
-    layers.append((FILLING_DARK, extrude(top)))
-    layers.append((CRUST_SIDE, extrude(crust)))
-    layers.append((FILLING, top))
-    layers.append((CRUST, crust))
-    layers.append((STEEL, bar_rect))
-    for plate in plates:
-        layers.append((STEEL, plate))
-    return layers
+    bar, weights, caps = dumbbell_shapes()
+    return [
+        (INK, strings() + structure_shapes()),
+        # the slice, back to front: the filling's depth, the crust's depth, then the two top faces. Extruding
+        # the crust separately keeps the cut faces berry-coloured while the crust's own face stays golden.
+        (FILLING_DARK, extrude(top)),
+        (CRUST_SIDE, extrude(crust)),
+        (FILLING, [top]),
+        (CRUST, [crust]),
+        # the dumbbell: the bar, then each weight, then the lit disc on its outer end
+        (STEEL_DARK, [bar]),
+        (STEEL, weights),
+        (STEEL_LIGHT, caps),
+    ]
 
-
-# --- rendering -----------------------------------------------------------------------------------------------
+# --- rendering -------------------------------------------------------------------------------------------------
 
 def render_preview(size_px):
     k = size_px * SS / 108.0
     img = Image.new("RGBA", (size_px * SS, size_px * SS), CREAM)
     d = ImageDraw.Draw(img)
-    for colour, shape in icon_layers():
-        d.polygon([(x * k, y * k) for x, y in shape], fill=colour)
+    for colour, shapes in icon_layers():
+        for shape in shapes:
+            d.polygon([(x * k, y * k) for x, y in shape], fill=colour)
     return img.resize((size_px, size_px), Image.LANCZOS)
 
 
@@ -175,8 +241,9 @@ def path_data(points):
 def emit_vector():
     """Print the <path> elements for res/drawable/ic_launcher_foreground.xml."""
     hex_colour = lambda c: "#{:02X}{:02X}{:02X}".format(c[0], c[1], c[2])
-    for colour, shape in icon_layers():
-        print(f'    <path android:fillColor="{hex_colour(colour)}" android:pathData="{path_data(shape)}" />')
+    for colour, shapes in icon_layers():
+        data = " ".join(path_data(shape) for shape in shapes)
+        print(f'    <path android:fillColor="{hex_colour(colour)}" android:pathData="{data}" />')
 
 
 def main():
@@ -184,7 +251,6 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     for size_px in (108, 48, 24):
         render_preview(size_px).save(os.path.join(out_dir, f"final_{size_px}.png"))
-    # one review sheet: the real sizes, shown at 2x
     sheet = Image.new("RGBA", (3 * 240 + 80, 240 + 80), (252, 252, 254, 255))
     d = ImageDraw.Draw(sheet)
     x = 30
