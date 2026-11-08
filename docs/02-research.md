@@ -99,6 +99,82 @@ Health Connect docs: <https://gadgetbridge.org/basics/integrations/health-connec
 Intent docs: <https://gadgetbridge.org/internals/automations/intents/>
 Data management / DB export: <https://gadgetbridge.org/internals/development/data-management/>
 
+### 1.4.1 Measured on the owner's phone — 2026-11-08
+
+Observed over `adb` on the Honor X7c (Android 14, SDK 34, MagicOS `8.0.0.302(C185E8R2P5)`); none of
+the rows below is inferred:
+
+| Observation | Value |
+| --- | --- |
+| Gadgetbridge installed? | **No** — `pm list packages -u` contains no `nodomain.freeyourgadget.gadgetbridge` |
+| Huawei Health | `com.huawei.health` 17.0.10.300, `targetSdk 35` |
+| Honor Health | `com.hihonor.health` 17.26.10.301 |
+| Health Connect | framework service `healthconnect` present, `com.google.android.healthconnect.controller` v17, DB `Version 27`, size `1396 kb` |
+| Band 9 Bluetooth state | bonded as `HUAWEI Band 9-660` (`[LE]`); no active connection observed at sample time |
+| Huawei Health → Health Connect | `Fitness: GRANTED_AND_DECLARED`, **`Contributed Data: false`** |
+| Health types granted to Huawei Health | `WRITE_STEPS`, `WRITE_ACTIVE_CALORIES_BURNED`, `WRITE_SLEEP` — all `granted=true`, `USER_SET` |
+| Apps that have contributed HC data | exactly one, and it is not a health app: `app.chompass` |
+
+Two conclusions, both of which change the plan:
+
+1. **Gadgetbridge may not be needed on this phone.** Huawei Health 17.x declares, and has already been
+   granted, write access to exactly the three record types this app consumes — steps, active calories,
+   sleep. If its Health Connect export can be switched on and is fed by a synced band, the pairing step
+   and the Huawei-account-ID workaround from §1.3 disappear for the owner.
+2. **Today no band data reaches Health Connect at all.** The permissions are granted, so the break is
+   upstream of Health Connect: either the band never syncs into Huawei Health, or Huawei Health's
+   export is switched off. Nothing downstream can be validated until `Contributed Data` flips to
+   `true`.
+
+Consequence: test the Huawei Health path first, because it is one toggle instead of one installation;
+keep Gadgetbridge as the documented fallback and as the likely answer for the wife's Redmi. The
+calorie-semantics spike (§1.6) is blocked on this until records exist.
+
+### 1.4.2 Outcome — Huawei Health cannot export, Gadgetbridge is the path (2026-11-08)
+
+The Huawei Health route was tested and closed, not assumed:
+
+- The APK (289,300,035 bytes, pulled from `/data/app/…/base.apk`) **does** contain the feature:
+  `com.huawei.ui.thirdpartservice.activity.healthconnect.HealthConnectActivity`, the
+  `androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE` filter, and the strings
+  *"Authorize the Health app to share health and fitness data to Health Connect"*,
+  *"…Fitness data, calories, step count, and sleep data will all be shared with Health Connect"*,
+  *"…To stop sharing data with Health Connect, tap REVOKE AUTHORIZATION"*.
+- The entry is nevertheless **absent from the UI**: the Settings list runs
+  `Цель → Синхронизация вручную → … → Очистить кэш` with no Health Connect row, and the
+  *Предоставление данных и авторизация* screen (`huaweischeme://healthapp/thirdPartService`) lists
+  only ECG / arterial stiffness / sleep-breathing services. The activity is `not exported`, so no
+  adb intent can reach it either.
+- `dumpsys healthconnect` stayed at `com.huawei.health … Contributed Data: false` across three checks
+  spanning ~30 minutes while the band synced normally (Huawei Health itself showed
+  `Синхронизировано: 08.11.2026 09:42`).
+- Working hypothesis, recorded as inference: the app gates its export on the **standalone Health
+  Connect app** (`com.google.android.apps.healthdata`), which does not exist on Android 14 because
+  Health Connect is part of the OS.
+
+Gadgetbridge was therefore installed over adb and paired:
+
+| Step | Result |
+| --- | --- |
+| Install | `nodomain.freeyourgadget.gadgetbridge` **2026.11.0**, `versionCode 256`, from F-Droid |
+| Device support | `HuaweiBand9Coordinator` present in the build |
+| First pairing attempt | failed: *"Не удалось согласовать ключ аутентификации"* — the Huawei account key |
+| Account ID | not obtainable without root: `huid=` was not in logcat, and Huawei Health redacts account names in `dumpsys account` |
+| Resolution | **band factory reset** (user's choice), which clears the stored key — no Huawei ID needed |
+| Pairing | succeeded: `HUAWEI Band 9-660`, connected, battery 62 % |
+| Health Connect export | enabled, band selected as source, **30-day backfill**, `Синхронизация после синхронизации устройства` on |
+| HC permissions for GB | granted all write types via `PermissionsActivity` |
+| First export run | `Синхронизация данных Health Connect завершена (синхронизировать нечего)` — GB had no activity yet, because the band had just been reset |
+
+Open item: the end-to-end write is **not yet observed**. Health Connect still reports
+`Contributed Data: false` for Gadgetbridge, because the freshly reset band has recorded no steps or
+active calories. The next device sync after real activity is the test that closes it — and it is also
+the precondition for the §1.6 calorie-semantics spike.
+
+Note for the wife's Redmi (Android 11): the same Gadgetbridge path applies, but it needs the
+standalone Health Connect app from Play Store, and the Band 11 pairing will hit the same
+account-key question — so decide **before** resetting whether her band's history matters.
+
 ### 1.5 Topology — confirmed: one phone per person
 
 Gadgetbridge keeps data per device (`device_id` in its own DB) and can host several gadgets, but

@@ -105,6 +105,27 @@ from machine-wide `ANDROID_HOME`.
 | Gradle | Wrapper **9.8.2** committed under `gradle/wrapper/`; no system Gradle. Kotlin **2.4.21** and JUnit **5.14.4** pinned in `gradle/libs.versions.toml` |
 | Phones | Honor X7c — Android 14, MagicOS 8.0, Huawei Band 9 · Redmi Note 8 Pro — Android 11, MIUI 12.5.3, Huawei Band 11 |
 
+### adb on this machine — use a private port
+
+Honor Suite (`C:\Program Files (x86)\HonorSuite`, service `HonorSuiteService64.exe`) bundles an adb
+server **v39** and keeps it on port **5037**; SDK platform-tools is **v41**. The two evict each
+other's daemon — `adb server version (39) doesn't match this client (41); killing...` — and
+`adb devices` then reports nothing even though the phone is healthy. Run every adb call on a private
+port instead of fighting over 5037:
+
+```powershell
+$env:ANDROID_ADB_SERVER_PORT = '5039'
+& 'C:\Program Files\Android\Sdk\platform-tools\adb.exe' devices -l
+# <serial>   device   product:ALT-LX1 model:ALT_LX1 device:HNALT-QL
+```
+
+The Honor X7c (`ALT-LX1`, Android 14 / SDK 34, MagicOS `8.0.0.302(C185E8R2P5)`) exposes the real
+adb interface as `MI_02` — `bInterfaceClass=255, SubClass=66, Prot=1`, bound to `WINUSB`. `MI_01` is
+a `CDROM Linux File-CD Gadget` (Honor's installer disc), not mass storage. The interface only
+appears after Honor Suite's driver is installed; MagicOS then shows the `Allow USB debugging` dialog.
+An adb server started from this sandbox dies with the shell that launched it, so bootstrap and query
+in the same command.
+
 ## Remaining setup (M1)
 
 1. Write `local.properties` with `sdk.dir` (escaped spaces) — untracked, needed once an Android module
