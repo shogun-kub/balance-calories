@@ -2,11 +2,13 @@
 # No "+", no "latest.release", no "-SNAPSHOT" in anything that ships.
 #
 # Versions are resolved against the real repositories, not recalled: AGP and the androidx
-# coordinates from dl.google.com, the rest from Maven Central. Kotlin stays on the version that
-# :core already builds and tests with.
+# coordinates from dl.google.com, the rest from Maven Central.
+#
+# Kotlin is 2.3.20, not the newest 2.4.21: KSP's newest release (2.3.13) is built on Kotlin
+# 2.3.20, and Room needs a working annotation processor. 2.3.20 builds this project fine.
 
 [versions]
-kotlin = "2.4.21"
+kotlin = "2.3.20"
 junit = "5.14.4"
 agp = "9.5.1"
 androidx-activity = "1.13.0"
@@ -16,6 +18,8 @@ androidx-lifecycle = "2.10.0"
 # minCompileSdk 35. Newer BOMs pull ui 1.12.x, which demands compileSdk 37 (not installed).
 compose-bom = "2026.06.01"
 health-connect = "1.1.0"
+room = "2.8.5"
+ksp = "2.3.13"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -23,6 +27,7 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
 [libraries]
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
@@ -34,6 +39,10 @@ androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-ru
 # Health Connect client. The platform store exists from Android 14; on Android 11 the standalone
 # app supplies it (see docs/02-research.md §2).
 androidx-health-connect-client = { module = "androidx.health.connect:connect-client", version.ref = "health-connect" }
+
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
 compose-ui = { module = "androidx.compose.ui:ui" }

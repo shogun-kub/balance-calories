@@ -33,8 +33,11 @@ history, settings, the debug screen.
    (ui 1.12.x) and lifecycle `2.11.0` declare `minCompileSdk=37` and fail `checkDebugAarMetadata`.
    Before upgrading either, check the AAR's `aar-metadata.properties` — not the release notes.
    Raising the ceiling means installing platform 37, then bumping `compileSdk`.
-3. **Room has no working KSP for Kotlin 2.4.21** (KSP publishes `2.3.x`). When Room lands, use KAPT
-   until a matching KSP exists, or the build will fail at annotation processing.
+3. **Kotlin is 2.3.20 on purpose, and Room uses KSP.** Kotlin 2.4.21 builds this project, but KSP's
+   newest release (`2.3.13`) declares `kotlinBaseVersion=2.3.20`, and Room needs a working annotation
+   processor. Measured, not assumed: with Kotlin **2.3.20** + KSP **2.3.13** + Room **2.8.5**, Room
+   generates `*_Impl.kt` and exports `schemas/…/<version>.json`. The alternative — KAPT — works but is
+   slower and deprecated; it is not needed. Revisit when KSP ships a 2.4.x build.
 
 ## Remaining setup (M1)
 
@@ -130,7 +133,7 @@ from machine-wide `ANDROID_HOME`.
 | Node.js | **v24.13.1** — available, not required by the app |
 | Android SDK | `C:\Program Files\Android\Sdk` — platform-tools **37.0.1**, `platforms;android-36`, `build-tools;36.0.0`, cmdline-tools **16111833**; `ANDROID_HOME`/`ANDROID_SDK_ROOT` set at machine scope, `platform-tools` and `cmdline-tools\latest\bin` on the machine `PATH` |
 | Android Studio | **2026.2.2.9** (`AI-262.10968.63.2622.16840690`) at `C:\Program Files\Android\Android Studio`, bundled JBR, Start Menu shortcut |
-| Gradle | Wrapper **9.8.2** committed under `gradle/wrapper/`; no system Gradle. Kotlin **2.4.21** and JUnit **5.14.4** pinned in `gradle/libs.versions.toml` |
+| Gradle | Wrapper **9.8.2** committed under `gradle/wrapper/`; no system Gradle. Kotlin **2.3.20** (held back for KSP — see the build notes above) and JUnit **5.14.4** pinned in `gradle/libs.versions.toml` |
 | Phones | Honor X7c — Android 14, MagicOS 8.0, Huawei Band 9 · Redmi Note 8 Pro — Android 11, MIUI 12.5.3, Huawei Band 11 |
 
 ### adb on this machine — use a private port
