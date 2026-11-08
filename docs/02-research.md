@@ -233,6 +233,55 @@ Second, subtler trap: **do not also add workout calories**. Health Connect's
 `ActiveCaloriesBurnedRecord` already contains workout burn; adding `ExerciseSessionRecord` calories on
 top double-counts.
 
+#### 1.6.1 First measured sync — S1 largely answered (2026-11-08)
+
+After the band reset and Gadgetbridge pairing (§1.4.2), the first real device sync ran at 10:34 and
+produced, on the Gadgetbridge dashboard:
+
+| Tile | Value |
+| --- | --- |
+| Шаги | 98 |
+| Расстояние | 100 м |
+| Активные | 2 kcal |
+| Калории | 817 (of which "2 active") |
+
+What actually reached Health Connect, read from its own *Данные и доступ* screen (only types with
+data are listed) and corroborated by `Contributed Data: true` plus a write-rate entry for the
+Gadgetbridge UID:
+
+| Category | Types present |
+| --- | --- |
+| Активность | **Расстояние**, **Сожжено калорий во время активности**, **Шаги** |
+| Питание | Питание |
+| Физические параметры | Вес, Рост |
+| — | **no BasalMetabolicRate, no TotalCaloriesBurned** |
+
+The individual active-calorie records, as Health Connect displays them:
+
+```
+10:30 – 10:31 · Gadgetbridge · 2 ккал
+10:31 – 10:32 · Gadgetbridge · 0,9 ккал
+```
+
+That list contains only types which actually hold records — verified by opening **Вес**, which shows a
+single foreign entry: `09:15 · Chompass · 205 фунтов` (6 Oct), from the `app.chompass` package that is
+the only pre-existing contributor. Two consequences: our reader must attribute every record to its
+origin app instead of trusting the store, and a user-typed weight must outrank a foreign one.
+
+Conclusions, now measured rather than inferred:
+
+1. **Gadgetbridge 2026.11.0 (stable) exports active calories only.** The `817` on its dashboard is
+   its own total estimate (BMR + active) and is *not* written to Health Connect. So the answer to
+   "does the band report total or active?" is: the band's exported number is **active**, and the
+   ambiguity that would have shifted each day by ~1500–1800 kcal does not exist for the reads we make.
+2. **Our app must supply BMR itself**, exactly as `:core` already does (Mifflin–St Jeor from the
+   profile), and add Health Connect's `ActiveCaloriesBurned`. Total = `bmr(profile) + active(hc)`.
+3. If a future Gadgetbridge build starts writing `BasalMetabolicRateRecord`, that measured value must
+   take precedence over the formula, and the UI must label it as measured rather than estimated.
+   Not observed on this build — open question.
+4. `TotalCaloriesBurnedRecord` must not be relied on: nothing writes it here, and if something does
+   later, adding active calories on top of it would double-count.
+
 ---
 
 ## 2. Health Connect
