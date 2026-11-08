@@ -36,6 +36,9 @@ interface ProfileDao {
     @Query("UPDATE profile SET band_enabled = 0 WHERE id != :keepId")
     suspend fun clearBandExcept(keepId: Long)
 
+    @Query("UPDATE profile SET band_enabled = :enabled WHERE id = :id")
+    suspend fun setBandEnabled(id: Long, enabled: Boolean)
+
     @Query("UPDATE profile SET archived_at = :at WHERE id = :id")
     suspend fun archive(id: Long, at: Long)
 
@@ -65,6 +68,12 @@ interface BodyMeasurementDao {
             "AND local_date BETWEEN :from AND :to ORDER BY measured_at",
     )
     fun observeBetween(profileId: Long, from: String, to: String): Flow<List<BodyMeasurementEntity>>
+
+    @Query(
+        "SELECT weight_kg FROM body_measurement WHERE profile_id = :profileId " +
+            "AND weight_kg IS NOT NULL ORDER BY measured_at DESC LIMIT 1",
+    )
+    suspend fun latestWeightKg(profileId: Long): Double?
 }
 
 @Dao

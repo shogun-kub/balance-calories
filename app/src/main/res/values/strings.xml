@@ -2,6 +2,11 @@
 <resources>
     <string name="app_name">Balance Calories</string>
 
+    <string name="no_profile_title">No profile yet</string>
+    <string name="no_profile_note">Onboarding comes next: name, body data and a goal.</string>
+    <string name="no_weight_title">No weight yet</string>
+    <string name="no_weight_note">The target needs a weight reading, so onboarding will ask for one.</string>
+
     <string name="target_title">Energy target</string>
     <string name="target_note">Demo body data until onboarding exists — nothing here is stored yet.</string>
 

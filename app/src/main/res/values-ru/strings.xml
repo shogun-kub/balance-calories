@@ -2,6 +2,11 @@
 <resources>
     <string name="app_name">Баланс Калорий</string>
 
+    <string name="no_profile_title">Профиля пока нет</string>
+    <string name="no_profile_note">Следующий шаг — онбординг: имя, данные тела и цель.</string>
+    <string name="no_weight_title">Веса пока нет</string>
+    <string name="no_weight_note">Для расчёта цели нужен вес, поэтому онбординг его спросит.</string>
+
     <string name="target_title">Цель по калориям</string>
     <string name="target_note">Демонстрационные данные тела до появления онбординга — пока ничего не сохраняется.</string>
 

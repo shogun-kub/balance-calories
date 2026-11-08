@@ -16,11 +16,13 @@ Two outputs, everything else supports them:
 
 Current state: **M1 in progress.** `docs/` is complete through the plan, the toolchain is installed,
 `:core` — the pure Kotlin energy maths — builds and tests green (27 tests), and the module skeleton
-exists: `:data` (Health Connect status probe, Room schema v1 with 11 tables and 4 DAOs) and `:app`
-(Compose screen showing a target computed by `:core`). `assembleDebug` succeeds and the debug APK
-installs and runs on the Honor X7c; the 7 Room instrumentation tests pass there. What is still missing
-from M1: repositories and mappers over the DAOs, the profile model and onboarding, target history
-writes, settings, the debug screen.
+exists: `:data` (Health Connect status probe, Room schema v1 with 11 tables and 4 DAOs, plus Profile /
+BodyMeasurement / Target repositories behind domain mappers) and `:app` (Application container, reads
+the active profile from the database, computes its target with `:core`, shows an empty state when there
+is no profile yet). `assembleDebug` succeeds and the APK installs and runs on the Honor X7c, creating
+`balancecalories.db` on first launch; 12 instrumentation tests pass there. What is still missing from
+M1: the onboarding flow that creates a profile, profile switching and editing, settings, the debug
+screen.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -68,10 +70,11 @@ writes, settings, the debug screen.
 2. ~~Create `:data` and `:app`~~ — both exist and build.
 3. ~~Room schema v1~~ — 11 entities, 4 DAOs, schema JSON committed under `data/schemas/`, and a
    `MigrationTestHelper` harness proven by `MigrationHarnessTest`.
-4. Repositories and mappers over the DAOs; Product/Food/Recipe DAOs when M2 needs them.
-5. Profile model (create/edit/switch/archive, `band_enabled` enforced once per device) and onboarding
-   steps 1–3.
-6. Target calculation writing `target_history`; settings (units, day start, language); debug screen.
+4. ~~Repositories and mappers over the DAOs~~ — `ProfileRepository`, `BodyMeasurementRepository`,
+   `TargetRepository`, and `Profile` as a `:core` domain type; `:app` never sees an entity or Room.
+5. Onboarding (steps 1–3) that creates a profile and its first weight; then profile switch/edit/archive.
+6. Target calculation writing `target_history` from onboarding; settings (units, day start, language);
+   debug screen.
 
 
 ## Toolchain (installed 2026-11-07, verified)
@@ -220,7 +223,7 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (7 tests)
+# OK (12 tests) — database behaviour, migration harness, repositories
 ```
 
 ## Devices and how to test on them

@@ -12,16 +12,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.balancecalories.core.energy.ActivityLevel
-import com.balancecalories.core.energy.EnergyProfile
-import com.balancecalories.core.energy.Sex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balancecalories.core.energy.TargetCalculator
 import com.balancecalories.core.energy.TargetLimit
+import com.balancecalories.core.profile.Profile
 import com.balancecalories.data.health.HealthConnectState
 import com.balancecalories.data.health.HealthConnectSupport
 import java.time.LocalDate
@@ -32,7 +35,17 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    TargetScreen()
+                    val container = (LocalContext.current.applicationContext as BalanceCaloriesApp).container
+                    val profiles by container.profiles.observeActive()
+                        .collectAsStateWithLifecycle(initialValue = emptyList())
+
+                    when (val active = profiles.firstOrNull()) {
+                        null -> EmptyState(
+                            title = stringResource(R.string.no_profile_title),
+                            note = stringResource(R.string.no_profile_note),
+                        )
+                        else -> ProfileTarget(profile = active, container = container)
+                    }
                 }
             }
         }
@@ -40,25 +53,41 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * A neutral placeholder profile — a stand-in with no relation to a real person, to be replaced by the
- * onboarding flow later in M1. Real body data never enters the source tree (AGENTS.md, hard rule 1).
+ * Reads the profile's latest weight and computes the target with `:core`. Nothing is written here: a
+ * target enters `target_history` at onboarding or when the user explicitly recalculates, not every time
+ * a screen is opened.
  */
-private val demoProfile = EnergyProfile(
-    sex = Sex.MALE,
-    birthDate = LocalDate.of(1990, 1, 1),
-    heightCm = 175.0,
-    weightKg = 80.0,
-    activityLevel = ActivityLevel.LIGHT,
-)
-
 @Composable
-private fun TargetScreen() {
+private fun ProfileTarget(profile: Profile, container: AppContainer) {
     val today = remember { LocalDate.now() }
-    val target = remember(today) {
-        TargetCalculator.seed(demoProfile, goalRateKgPerWeek = -0.3, on = today)
+    var weightKg by remember(profile.id) { mutableStateOf<Double?>(null) }
+    var loaded by remember(profile.id) { mutableStateOf(false) }
+
+    LaunchedEffect(profile.id) {
+        weightKg = container.body.latestWeightKg(profile.id)
+        loaded = true
+    }
+
+    val weight = weightKg
+    if (!loaded) return
+
+    if (weight == null) {
+        EmptyState(
+            title = stringResource(R.string.no_weight_title),
+            note = stringResource(R.string.no_weight_note),
+        )
+        return
+    }
+
+    val target = remember(profile.id, weight, today) {
+        TargetCalculator.seed(
+            profile = profile.toEnergyProfile(weight),
+            goalRateKgPerWeek = profile.goalRateKgPerWeek,
+            on = today,
+        )
     }
     val context = LocalContext.current
-    val hcState = remember { HealthConnectSupport.state(context) }
+    val hcState = remember(context) { HealthConnectSupport.state(context) }
 
     Column(
         modifier = Modifier
@@ -70,35 +99,31 @@ private fun TargetScreen() {
             text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineMedium,
         )
-        Text(
-            text = stringResource(R.string.target_title),
-            style = MaterialTheme.typography.titleMedium,
-        )
+        Text(text = profile.name, style = MaterialTheme.typography.titleMedium)
         Text(
             text = stringResource(R.string.target_note),
             style = MaterialTheme.typography.bodySmall,
         )
 
-        MetricRow(
-            label = stringResource(R.string.label_bmr),
-            value = stringResource(R.string.kcal_decimal, target.bmrKcal),
-        )
-        MetricRow(
-            label = stringResource(R.string.label_tdee),
-            value = stringResource(R.string.kcal_decimal, target.tdeeKcal),
-        )
-        MetricRow(
-            label = stringResource(R.string.label_target),
-            value = stringResource(R.string.kcal_int, target.kcal),
-        )
-        MetricRow(
-            label = stringResource(R.string.label_limit),
-            value = target.limit.localized(),
-        )
-        MetricRow(
-            label = stringResource(R.string.label_health_connect),
-            value = hcState.localized(),
-        )
+        MetricRow(stringResource(R.string.label_bmr), stringResource(R.string.kcal_decimal, target.bmrKcal))
+        MetricRow(stringResource(R.string.label_tdee), stringResource(R.string.kcal_decimal, target.tdeeKcal))
+        MetricRow(stringResource(R.string.label_target), stringResource(R.string.kcal_int, target.kcal))
+        MetricRow(stringResource(R.string.label_limit), target.limit.localized())
+        MetricRow(stringResource(R.string.label_health_connect), hcState.localized())
+    }
+}
+
+@Composable
+private fun EmptyState(title: String, note: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
+        Text(text = title, style = MaterialTheme.typography.titleMedium)
+        Text(text = note, style = MaterialTheme.typography.bodySmall)
     }
 }
 

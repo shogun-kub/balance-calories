@@ -3,6 +3,7 @@
 
     <!-- Health data is not allowed to drift into a cloud backup (AGENTS.md, data and privacy). -->
     <application
+        android:name=".BalanceCaloriesApp"
         android:allowBackup="false"
         android:label="@string/app_name"
         android:supportsRtl="true"
