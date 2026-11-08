@@ -219,4 +219,26 @@
     <string name="recipe_carbs">Углеводы, г</string>
     <string name="recipe_kcal">ккал</string>
     <string name="recipe_grams_value">%1$s г</string>
+
+    <!-- M4: расход. Каждая подпись называет происхождение числа: оценка по формуле не должна выглядеть
+         как измерение браслета. -->
+    <string name="today_burned">Сожжено</string>
+    <string name="today_balance">Баланс</string>
+    <string name="today_balance_estimate">Баланс (оценка)</string>
+    <string name="today_steps">Шаги</string>
+    <string name="today_steps_value">Шаги: %1$d</string>
+    <string name="today_burn_from_band">по данным браслета</string>
+    <string name="today_burn_partial">данные браслета ещё уточняются</string>
+    <string name="today_burn_estimated">нет данных браслета — показана оценка за весь день</string>
+    <string name="today_burn_bmr_mix">активные калории браслета плюс наша формула BMR</string>
+    <string name="today_burn_permission">для расхода нужен доступ на чтение Health Connect</string>
+    <string name="today_health_connect_missing">Health Connect недоступен на этом телефоне, поэтому расход оценён</string>
+    <string name="today_last_synced">Последняя синхронизация: %1$s</string>
+    <string name="today_never_synced">Синхронизаций ещё не было</string>
+    <string name="action_allow_activity">Разрешить доступ к активности</string>
+    <string name="action_sync_band">Синхронизировать браслет</string>
+    <string name="sync_result_synced">Синхронизировано дней: %1$d</string>
+    <string name="sync_result_no_permission">Доступ к Health Connect не предоставлен</string>
+    <string name="sync_result_unavailable">На этом телефоне нет хранилища Health Connect</string>
+    <string name="sync_result_failed">Синхронизация не удалась: %1$s</string>
 </resources>

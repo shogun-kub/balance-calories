@@ -382,6 +382,54 @@ Practical consequences:
 
 ---
 
+### 2.1 What the read path actually does (measured 2026-11-08, Honor X7c / Android 14)
+
+Implemented and verified against the real store on the Honor. The client is
+`androidx.health.connect:connect-client:1.1.0`; on this phone `getSdkStatus` returns `SDK_AVAILABLE`
+because Android 14 has the store in the platform, and the standalone app
+(`com.google.android.apps.healthdata`) is absent while `com.google.android.healthconnect.controller`
+is present. That distinction matters in code: the client picks a **different permission contract** above
+SDK 34, and the platform one is a plain runtime-permission request.
+
+**One bucketed read serves a whole backfill.** `AggregateGroupByDurationRequest` accepts a *mixed* metric
+set — it has no `recordType` parameter — so steps, active calories, total calories, distance and resting
+heart rate travel in one request and come back as `List<AggregationResultGroupedByDuration>`, each with
+`startTime` and a `result` to index by metric. A 30-day backfill is **one** round trip, not 30. The
+bucket duration is 60 minutes, and `:core` maps buckets to *our* days (which start at the profile's
+day-start hour) instead of trusting Health Connect's calendar-day grouping.
+
+**Two manifest traps, both fatal and both silent until something reads:**
+
+| Trap | Symptom | Fix |
+| --- | --- | --- |
+| `android.permission.health.READ_*` not declared | `pm grant` refuses, and the permission dialog has nothing to show for those permissions | declare all five uses in the manifest |
+| no activity handling `VIEW_PERMISSION_USAGE` + category `HEALTH_PERMISSIONS` | every read throws `IllegalStateException: Incorrect health permission state, likely because the calling application's manifest does not specify handling android.intent.action.VIEW_PERMISSION_USAGE with android.intent.category.HEALTH_PERMISSIONS` **even with all permissions granted** | add the intent-filter; the androidx `ACTION_SHOW_PERMISSIONS_RATIONALE` filter alone is the ≤ Android 13 flavour |
+
+**The permission dialog is killed on this phone.** Tapping the request button launches
+`com.google.android.permissioncontroller/...GrantPermissionsActivity`, and MagicOS's memory manager kills
+that process within a second (`iAwareR[LowMemPsi]`), so the dialog flashes and vanishes — it is not a
+bug in the app and it cannot be fixed from the app. Verified state was reached with
+`adb shell pm grant com.balancecalories android.permission.health.READ_*` (with the owner's consent),
+which produces the same grants the dialog would.
+
+**Two data-origin facts that change what "measured" means.** Health Connect merges every writer into
+one aggregate, and `AggregationResult.getDataOrigins()` is the only way to tell them apart:
+
+- the **Honor's platform layer writes a constant 1858.25 kcal/day** with no steps, no active calories
+  and no distance — 29 consecutive days of it, identical to 7 decimals. It carries an **empty** origin
+  set, which is what makes it identifiable: no app wrote it;
+- **Gadgetbridge does export real history**, but not continuously: observed days 2026-10-10..13 with
+  10 860 / 11 483 steps and 1 858–1 956 kcal, then a multi-week gap, then 2026-11-08 with 98 steps.
+  These days carry `nodomain.freeyourgadget.gadgetbridge` in the origin set.
+
+So `daily_activity.data_origins` is not decoration: without it a phone baseline and a band day are
+indistinguishable, and both would honestly report "data present". Schema **v5** stores the joined
+package names (null = platform-written, non-null = an app wrote it).
+
+**Sleep and basal metabolic rate are not read.** Sleep is not part of the energy balance, and a
+device-supplied BMR would compete with the app's own BMR formula, which is the number the target is built
+from. Both columns exist in `daily_activity` and stay null until there is a reason.
+
 ## 3. OpenFoodFacts
 
 ### 3.1 API version and endpoint

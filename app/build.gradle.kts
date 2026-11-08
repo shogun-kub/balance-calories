@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.compose.ui.graphics)
     implementation(libs.compose.material3)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
     // Scanning: CameraX for frames, zxing-cpp for decoding. One engine only - no flavour split until an

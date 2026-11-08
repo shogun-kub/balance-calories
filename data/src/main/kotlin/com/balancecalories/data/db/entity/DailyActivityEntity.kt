@@ -57,6 +57,15 @@ data class DailyActivityEntity(
     @ColumnInfo(name = "quality")
     val quality: String,
 
+    /**
+     * Which apps contributed, comma-separated (`DataOrigin.packageName`), or null when unknown.
+     *
+     * Health Connect merges every writer into one aggregate, so without this a band day and a phone-written
+     * baseline day are indistinguishable — observed on the Honor as 29 days of exactly 1858.25 kcal.
+     */
+    @ColumnInfo(name = "data_origins")
+    val dataOrigins: String? = null,
+
     @ColumnInfo(name = "updated_at")
     val updatedAt: Long,
 )

@@ -31,9 +31,15 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.PermissionController
 import com.balancecalories.app.AppContainer
 import com.balancecalories.app.R
+import com.balancecalories.core.activity.ActivityQuality
+import com.balancecalories.core.activity.BurnSource
+import com.balancecalories.core.activity.DailyBurn
+import com.balancecalories.data.repo.DailyActivityRepository
 import com.balancecalories.core.energy.TargetCalculator
 import com.balancecalories.core.energy.TargetLimit
 import com.balancecalories.core.food.DailyIntake
@@ -42,7 +48,12 @@ import com.balancecalories.core.food.LoggedEntry
 import com.balancecalories.core.profile.Profile
 import com.balancecalories.data.health.HealthConnectState
 import com.balancecalories.data.health.HealthConnectSupport
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 /**
@@ -72,6 +83,14 @@ fun TodayScreen(
     var editingEntry by remember { mutableStateOf<LoggedEntry?>(null) }
     var editGrams by remember { mutableStateOf("") }
 
+    // The burn half of the balance. Null until the first read, and null is rendered as "not loaded", never
+    // as zero calories burned.
+    var burn by remember(profile.id) { mutableStateOf<DailyBurn?>(null) }
+    var hasActivityPermission by remember(profile.id) { mutableStateOf(false) }
+    var lastSyncMillis by remember(profile.id) { mutableStateOf<Long?>(null) }
+    var syncResult by remember(profile.id) { mutableStateOf<DailyActivityRepository.SyncResult?>(null) }
+    var syncing by remember(profile.id) { mutableStateOf(false) }
+
     LaunchedEffect(profile.id, refresh) {
         val weight = container.body.latestWeightKg(profile.id)
         weightKg = weight
@@ -83,12 +102,34 @@ fun TodayScreen(
             )
             intake = container.food.day(profile.id, today, target.kcal)
             yesterdayCount = container.food.countForDay(profile.id, today.minusDays(1))
+            burn = container.activity.burn(profile.id, today, target.bmrKcal, target.tdeeKcal)
         }
+    }
+
+    LaunchedEffect(profile.id, refresh) {
+        hasActivityPermission = container.hasActivityPermission()
+        lastSyncMillis = container.activity.lastSyncAt(profile.id)
     }
 
     val context = LocalContext.current
     val hcState = remember(context) { HealthConnectSupport.state(context) }
     val loadedIntake = intake
+    val loadedBurn = burn
+
+    // The Health Connect contract, not ACTION_REQUEST_PERMISSIONS: the store owns the dialog and the result.
+    val permissionLauncher = rememberLauncherForActivityResult(
+        PermissionController.createRequestPermissionResultContract(),
+    ) { granted ->
+        hasActivityPermission = granted.containsAll(container.activityPermissions)
+        if (hasActivityPermission) {
+            scope.launch {
+                syncing = true
+                syncResult = container.activity.sync(profile, zone = ZoneId.systemDefault())
+                syncing = false
+                refresh++
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -129,6 +170,82 @@ fun TodayScreen(
             stringResource(R.string.today_remaining),
             stringResource(R.string.kcal_decimal, loadedIntake.remainingKcal),
         )
+        loadedBurn?.let { dayBurn ->
+            MetricRow(
+                stringResource(R.string.today_burned),
+                stringResource(R.string.kcal_int, dayBurn.burnedKcal.roundToInt()),
+            )
+            MetricRow(
+                // A balance built on a formula estimate must not look like one built on the band, and the
+                // whole-day estimate against a half-finished day is a projection, not a measurement.
+                stringResource(
+                    if (dayBurn.burnedIsMeasured) R.string.today_balance else R.string.today_balance_estimate,
+                ),
+                stringResource(R.string.kcal_int, (loadedIntake.eatenKcal - dayBurn.burnedKcal).roundToInt()),
+            )
+            Text(
+                text = dayBurn.localizedNote(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+            val steps = dayBurn.steps
+            if (steps != null) {
+                Text(
+                    text = stringResource(R.string.today_steps_value, steps),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+        if (profile.bandEnabled) {
+            if (hcState != HealthConnectState.AVAILABLE) {
+                Text(
+                    text = stringResource(R.string.today_health_connect_missing),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            } else if (!hasActivityPermission) {
+                Text(
+                    text = stringResource(R.string.today_burn_permission),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                OutlinedButton(
+                    onClick = { permissionLauncher.launch(container.activityPermissions) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.action_allow_activity))
+                }
+            } else {
+                OutlinedButton(
+                    onClick = {
+                        scope.launch {
+                            syncing = true
+                            syncResult = container.activity.sync(profile, zone = ZoneId.systemDefault())
+                            syncing = false
+                            refresh++
+                        }
+                    },
+                    enabled = !syncing,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.action_sync_band))
+                }
+                Text(
+                    text = lastSyncMillis?.let { millis ->
+                        stringResource(
+                            R.string.today_last_synced,
+                            remember(millis) { formatSyncTime(millis) },
+                        )
+                    } ?: stringResource(R.string.today_never_synced),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                syncResult?.let { result ->
+                    Text(
+                        text = result.localizedText(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                    )
+                }
+            }
+        }
         if (loadedIntake.hasEstimates) {
             Text(
                 text = stringResource(R.string.product_estimated),
@@ -337,3 +454,32 @@ private fun HealthConnectState.localized(): String = stringResource(
         HealthConnectState.NOT_SUPPORTED -> R.string.hc_not_supported
     },
 )
+
+/**
+ * The one-line statement of where the burn figure came from.
+ *
+ * Ordered by what a reader needs to know first: "this is not a measurement at all" outranks "the measurement
+ * is unfinished", which outranks "half of it is a formula", which outranks "this is measured".
+ */
+@Composable
+private fun DailyBurn.localizedNote(): String = when {
+    quality == ActivityQuality.ESTIMATED || !burnedIsMeasured -> stringResource(R.string.today_burn_estimated)
+    quality == ActivityQuality.PARTIAL -> stringResource(R.string.today_burn_partial)
+    source == BurnSource.BAND_ACTIVE_PLUS_BMR -> stringResource(R.string.today_burn_bmr_mix)
+    else -> stringResource(R.string.today_burn_from_band)
+}
+
+/** What the last sync attempt did, in words the user can act on. */
+@Composable
+private fun DailyActivityRepository.SyncResult.localizedText(): String = when (this) {
+    is DailyActivityRepository.SyncResult.Synced -> stringResource(R.string.sync_result_synced, days)
+    DailyActivityRepository.SyncResult.NoPermission -> stringResource(R.string.sync_result_no_permission)
+    DailyActivityRepository.SyncResult.Unavailable -> stringResource(R.string.sync_result_unavailable)
+    is DailyActivityRepository.SyncResult.Failed -> stringResource(R.string.sync_result_failed, reason)
+}
+
+/** Local date and time of the last sync, in the phone's locale and zone. */
+private fun formatSyncTime(millis: Long): String = DateTimeFormatter
+    .ofLocalizedDateTime(FormatStyle.SHORT)
+    .withZone(ZoneId.systemDefault())
+    .format(Instant.ofEpochMilli(millis))

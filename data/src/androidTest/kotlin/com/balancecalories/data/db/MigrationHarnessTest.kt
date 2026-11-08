@@ -125,6 +125,33 @@ class MigrationHarnessTest {
         }
     }
 
+    /**
+     * 4 → 5 adds `daily_activity.data_origins` and must leave existing day rows readable, with the column null
+     * because nobody recorded the origin before this version existed.
+     */
+    @Test
+    fun migration4To5AddsDataOriginsAndKeepsExistingDays() {
+        helper.createDatabase(TEST_DB, 4).use { db ->
+            db.execSQL(
+                "INSERT INTO `profile` (`id`,`name`,`sex`,`birth_date`,`height_cm`,`activity_level`," +
+                    "`goal_rate_kg_per_week`,`day_start_hour`,`unit_system`,`created_at`) " +
+                    "VALUES (1,'Owner','MALE','1990-01-01',180.0,'MODERATE',-0.5,4,'METRIC',1)",
+            )
+            db.execSQL(
+                "INSERT INTO `daily_activity` (`profile_id`,`local_date`,`steps`,`quality`,`updated_at`) " +
+                    "VALUES (1,'2026-11-07',4321,'complete',5)",
+            )
+        }
+        helper.runMigrationsAndValidate(TEST_DB, 5, true, Migrations.MIGRATION_4_5).use { db ->
+            db.query("SELECT profile_id, local_date, steps, quality, data_origins FROM daily_activity").use { c ->
+                assertTrue("the day row must survive the migration", c.moveToFirst())
+                assertEquals(4321, c.getInt(2))
+                assertEquals("complete", c.getString(3))
+                assertTrue("nothing recorded an origin before v5", c.isNull(4))
+            }
+        }
+    }
+
     private fun androidx.sqlite.db.SupportSQLiteDatabase.tableNames(): List<String> {
         val names = mutableListOf<String>()
         query("SELECT name FROM sqlite_master WHERE type = 'table'").use { cursor ->

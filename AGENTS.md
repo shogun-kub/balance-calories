@@ -14,12 +14,14 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1, M2 and M3 complete.** `:core` (57 JVM tests) and `:data` (schema **v4**, 10 DAOs,
-8 repositories: OFF client, product persistence, food logging, recipes) build green, and `:app` has the
-full food loop: Today with target/eaten/remaining/macros/meal sections, product list and search, a product
-screen with portion preview, manual product form, entry edit, repeat-yesterday, recipes, and a working
-**barcode scanner** (CameraX 1.6.2 + zxing-cpp 3.1.1, single FOSS build). 57 :core + 42 :data + 10 :app JVM
-tests and **65 device tests** (61 :data, 4 :app) pass. Next: M4 band data and the daily balance.
+Current state: **M1-M4 complete**, except Onboarding steps 4-5. `:core` (75 JVM tests) and `:data` (schema
+**v5**, 10 DAOs, 9 repositories: OFF client, product persistence, food logging, recipes, band activity)
+build green, and `:app` has the whole loop: Today with target/eaten/remaining/macros/meal sections plus
+**burned, balance and a quality line**, product list and search, a product screen with portion preview,
+manual product form, entry edit, repeat-yesterday, recipes, a working **barcode scanner** (CameraX 1.6.2 +
+zxing-cpp 3.1.1, single FOSS build), and **band activity from Health Connect** with a WorkManager sync.
+75 :core + 42 :data + 10 :app JVM tests and **79 device tests** (75 :data, 4 :app) pass.
+Next: M5 history, trends and adaptive TDEE.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -179,6 +181,55 @@ tests and **65 device tests** (61 :data, 4 :app) pass. Next: M4 band data and th
 5. Next: **M4** — band data through Health Connect and the real daily balance.
 
 
+## M4 progress (band data and the daily balance)
+
+1. ~~Health Connect read path~~ — `HealthConnectActivitySource` reads **one** bucketed request for a whole
+   range: `AggregateGroupByDurationRequest` takes a mixed metric set (it has no `recordType`), so steps,
+   active and total calories, distance and resting heart rate arrive together as hourly buckets. A 30-day
+   backfill is one round trip. Measured behaviour, the two manifest traps and the phone's constant
+   1858.25 kcal/day are written up in docs/02-research.md §2.1.
+2. ~~Day mapping and upserts~~ — `:core` owns the boundary: `ActivityBucketMapper` folds buckets into the
+   profile's day-start hour, and `DailyActivityRepository` upserts one row per day (a day with no readings
+   becomes `no_band`, never a zero). Today's window is clipped to *now*, which is why `isToday` feeds the
+   quality rule.
+3. ~~Quality and the burn precedence~~ — `ActivityQuality.complete|partial|no_band|estimated`, decided by two
+   observable facts (is there data; was the day fetched after it closed) rather than a coverage threshold
+   that would read a sleeping user as a missing band. `DailyBurn` keeps the origin: band total → band active
+   + our BMR → PAL estimate (ADR-021).
+4. ~~Today v2~~ — burned, `Balance` (or `Balance (estimate)` when the burn is a formula), a one-line note
+   naming the origin, steps, an "Allow activity access" button when the permission is missing, a "Sync band"
+   button and "Last synced …". Verified on the Honor: 962 kcal burned, −555 balance, 98 steps.
+5. ~~Background sync~~ — `ActivitySyncWorker` (WorkManager 2.10.5) every 3 h plus an expedited attempt on
+   app start. A denied permission or a storeless phone returns `success` (retrying cannot fix either); only a
+   real read failure returns `retry`.
+6. ~~Schema v5~~ — `daily_activity.data_origins`, nullable and additive, because Health Connect merges every
+   writer and the Honor's platform layer contributes a constant daily total with an *empty* origin set.
+   Migrated in place on the Honor with its rows intact; migration tested.
+7. Tests: 11 new `:core` cases (burn precedence, quality rules, bucket folding, origins) and 13 device cases
+   for the repository.
+8. Next: **M5** — history, trends, adaptive TDEE.
+
+### Health Connect: the traps that cost this milestone
+
+1. **Declare `android.permission.health.READ_*` in the manifest.** Without the declarations the dialog has
+   nothing to offer and `pm grant` refuses; the app compiles and looks finished.
+2. **Android 14 needs an activity handling `VIEW_PERMISSION_USAGE` with category `HEALTH_PERMISSIONS`.**
+   Without it every read throws `Incorrect health permission state …` *even with all permissions granted*.
+   The androidx `ACTION_SHOW_PERMISSIONS_RATIONALE` filter alone covers Android 11–13 only, so declare both.
+3. **MagicOS kills the permission dialog.** Tapping the request button launches
+   `GrantPermissionsActivity`, and the phone's memory manager kills that process within a second — the dialog
+   flashes and closes, every time. It is not an app bug and cannot be fixed from the app. With the owner's
+   consent, `adb shell pm grant com.balancecalories android.permission.health.READ_*` produced the same state.
+4. **`Get-Content`/`>` corrupts a pulled SQLite file.** PowerShell's text redirection turns the database into
+   UTF-16. Use `Start-Process -RedirectStandardOutput` and pull both `balancecalories.db` and its `-wal`;
+   the DB is `balancecalories.db`, not `balance_calories.db`.
+5. **After a schema bump, rebuild `:app` before believing a device test.** `installDebug` of a stale
+   `app-debug.apk` keeps the old `:data` classes, so `PRAGMA user_version` stays behind and the "migration
+   was verified" claim is false. The 4 → 5 run was only real once the app APK was rebuilt.
+6. **`:data` device tests cannot use backticked method names.** D8 rejects the generated lambda classes
+   (`Space characters in SimpleName … not allowed prior to DEX version 040`) because `minSdk` is 28; the
+   module's convention is camelCase test names.
+
 ## Toolchain (installed 2026-11-07, verified)
 
 | Item | Location / version |
@@ -326,7 +377,7 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (61 tests) — database behaviour, migrations, repositories, starter pack, products, food entries, recipes
+# OK (75 tests) — database behaviour, migrations, repositories, starter pack, products, food, recipes, band activity
 ```
 
 ### The scanner: two traps that cost an hour each (2026-11-08)

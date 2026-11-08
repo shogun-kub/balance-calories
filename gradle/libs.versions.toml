@@ -20,6 +20,8 @@ androidx-lifecycle = "2.10.0"
 # minCompileSdk 35. Newer BOMs pull ui 1.12.x, which demands compileSdk 37 (not installed).
 compose-bom = "2026.06.01"
 health-connect = "1.1.0"
+# WorkManager: periodic band sync. 2.10.x because compileSdk is 36 (see AGENTS.md build notes).
+work = "2.10.5"
 room = "2.8.5"
 ksp = "2.3.13"
 androidx-test-runner = "1.7.0"
@@ -53,6 +55,7 @@ androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-ru
 # Health Connect client. The platform store exists from Android 14; on Android 11 the standalone
 # app supplies it (see docs/02-research.md §2).
 androidx-health-connect-client = { module = "androidx.health.connect:connect-client", version.ref = "health-connect" }
+androidx-work-runtime = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
 
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }

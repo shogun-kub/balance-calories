@@ -183,14 +183,27 @@ Exit criteria: a full day of eating can be logged faster than with a notes app, 
 
 ## M4 — Band data + daily balance (6 d)
 
-- [ ] `HealthConnectDataSource`: permission flow, 30 d backfill, 7 d incremental, SDK status handling
-- [ ] Interval clipping + local-day aggregation (midnight split, DST) + upserts
-- [ ] `quality` classification (`complete/partial/no_band/estimated`) and the PAL fallback for `no_band`
-- [ ] "Sync band" via GB intents + timeout path + status line ("last synced …")
-- [ ] Today screen v2: burned (so far / final), remaining, confidence banner, refresh
-- [ ] WorkManager periodic sync + expedited on app open
+- [x] `HealthConnectDataSource`: permission flow, 30 d backfill, 7 d incremental, SDK status handling
+- [x] Interval clipping + local-day aggregation (midnight split, DST) + upserts
+- [x] `quality` classification (`complete/partial/no_band/estimated`) and the PAL fallback for `no_band`
+- [x] "Sync band" (Health Connect pull; the GB intent path is not needed — see the note below) + status line ("last synced …")
+- [x] Today screen v2: burned, balance, quality line, permission/sync control, last-synced
+- [x] WorkManager periodic sync + expedited on app open
 - [ ] Onboarding steps 4–5: GB detection, HC permission, live verification, deep links
-- [ ] Aggregation tests with synthetic HC records
+- [x] Aggregation tests with synthetic HC records
+
+Done 2026-11-08 on the Honor X7c: burned 962 kcal, balance −555 kcal, 98 steps, 30 days synced, and the
+schema migrated 4 → 5 on a real database with its rows intact.
+
+Still open in M4:
+
+- [ ] Onboarding steps 4–5: Gadgetbridge detection, Health Connect permission, live verification, deep
+  links. Not started: the band chain on the owner's phone was completed by hand, and onboarding for a
+  *new* phone (the Redmi) is what these steps are for.
+- [ ] "Sync band" via **Gadgetbridge intents**. Health Connect is pulled instead (`ActivitySyncWorker`),
+  because GB's export runs on its own schedule and a pull reads whatever has arrived. The intent path
+  ("start export now") is a separate, unverified convenience: the GB intent contract needs measuring on
+  the device before it is written down as working.
 
 Exit criteria: the number on the Today screen survives a day of real use, including a band that syncs
 at 21:00 and a day where the band stayed home.

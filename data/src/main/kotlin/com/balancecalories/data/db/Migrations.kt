@@ -44,5 +44,17 @@ object Migrations {
         }
     }
 
-    val all: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+    /**
+     * 4 → 5: `daily_activity.data_origins`.
+     *
+     * Additive and nullable, so every existing row stays valid with "we do not know who wrote this day", which
+     * is the truthful answer for rows written before the column existed. The next sync fills them in.
+     */
+    val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `daily_activity` ADD COLUMN `data_origins` TEXT")
+        }
+    }
+
+    val all: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
 }

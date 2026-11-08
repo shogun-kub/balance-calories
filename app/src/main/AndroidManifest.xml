@@ -11,6 +11,34 @@
         android:name="android.hardware.camera"
         android:required="false" />
 
+    <!--
+      Health Connect read permissions. Declaring them is what makes the store offer them in its own dialog; the
+      client's contract turns them into the permission strings it asks for. Only the five record types the
+      balance reads: steps, active and total calories, distance and resting heart rate. Nothing is written.
+    -->
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_DISTANCE" />
+    <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE" />
+
+    <!--
+      Health Connect. On Android 11 the store is a separate app that must be installable and findable; without
+      this <queries> entry the client cannot see it and every read looks like "not supported" (the same trap
+      as Gadgetbridge in AGENTS.md).
+    -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+        <!-- Gadgetbridge: the band-to-Health-Connect exporter, and not installed on every phone. -->
+        <package android:name="nodomain.freeyourgadget.gadgetbridge" />
+    </queries>
+
+    <!--
+      WorkManager runs the periodic band sync; a phone that reboots must reschedule it, hence RECEIVE_BOOT_COMPLETED.
+      No other background permission is added: the sync is a local database read plus a Health Connect query.
+    -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <!-- Health data is not allowed to drift into a cloud backup (AGENTS.md, data and privacy). -->
     <application
         android:name=".BalanceCaloriesApp"
@@ -26,7 +54,29 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!--
+              Health Connect's permission contract. Two flavours, and the platform one is not optional:
+
+              - Android 14 (platform store) requires an activity that handles VIEW_PERMISSION_USAGE with the
+                HEALTH_PERMISSIONS category. Without it every read fails with "Incorrect health permission state,
+                likely because the calling application's manifest does not specify handling
+                android.intent.action.VIEW_PERMISSION_USAGE with android.intent.category.HEALTH_PERMISSIONS" —
+                even when every permission is granted.
+              - Android 11-13 (standalone Health Connect app) uses the androidx action instead.
+
+              Both are declared so one APK works on both phones. This screen has nothing to add visually; the
+              activity simply receives the intent and stays on Today.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
         </activity>
+
     </application>
 
 </manifest>
