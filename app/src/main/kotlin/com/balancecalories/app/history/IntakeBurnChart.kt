@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.balancecalories.app.R
 import com.balancecalories.app.ui.ChartPalette
+import com.balancecalories.app.ui.LegendSwatch
+import com.balancecalories.app.ui.SwatchShape
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.data.repo.DaySummary
 import java.time.format.DateTimeFormatter
@@ -170,7 +172,7 @@ fun IntakeBurnChart(
         WrappingRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             LegendSwatch(color = burnColor) { stringResource(R.string.chart_legend_burn) }
             LegendSwatch(color = estimateColor) { stringResource(R.string.chart_legend_burn_estimate) }
-            LegendSwatch(color = axisColor, line = true) { stringResource(R.string.chart_legend_target, targetKcal) }
+            LegendSwatch(color = axisColor, shape = SwatchShape.Dashed) { stringResource(R.string.chart_legend_target, targetKcal) }
         }
 
         // The same sentence a screen reader gets, printed for everyone: the chart should be readable without
@@ -406,31 +408,5 @@ private fun MacroLegend(
         if (hasOther) {
             LegendSwatch(color = otherColor) { stringResource(R.string.chart_legend_other, share(other)) }
         }
-    }
-}
-
-@Composable
-private fun LegendSwatch(color: Color, line: Boolean = false, label: @Composable () -> String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        if (line) {
-            Canvas(modifier = Modifier.width(16.dp).height(10.dp)) {
-                drawLine(
-                    color = color,
-                    start = Offset(0f, size.height / 2f),
-                    end = Offset(size.width, size.height / 2f),
-                    strokeWidth = 1.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 3f)),
-                )
-            }
-        } else {
-            Canvas(modifier = Modifier.width(10.dp).height(10.dp)) {
-                drawRect(color = color)
-            }
-        }
-        Text(
-            text = label(),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }

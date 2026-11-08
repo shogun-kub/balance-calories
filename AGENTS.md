@@ -14,11 +14,11 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1-M5, M7.1, M7.2 and M7.2b complete, M6 half done.** `:core` (121 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
+Current state: **M1-M5, M7.1-M7.3 complete, M6 half done.** `:core` (131 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
 repositories) build green, and `:app` has the whole loop: Today with burned/balance/quality, the food side
 (products, search, scanning, logging, recipes) and **History** with the adaptive TDEE, the weekly recap,
-a weight trend line and a projection, plus a backup screen. 121 :core + 42 :data + 10 :app JVM tests and
-**119 device tests** (115 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split. Next: M7.3 (the weight chart), then M7.4 the icon, M7.5 the dark theme, then the rest of M6 and the release; see docs/04-plan.md.
+a weight trend line and a projection, plus a backup screen. 131 :core + 42 :data + 10 :app JVM tests and
+**119 device tests** (115 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split and `Вес` carries the **weight chart** (dots, trend, dashed goal). Next: M7.4 the launcher icon, then M7.5 the dark theme, then the rest of M6 and the release; see docs/04-plan.md.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -356,8 +356,30 @@ a weight trend line and a projection, plus a backup screen. 121 :core + 42 :data
     `create` now grants the band only when no active profile has it, and the profiles screen has a
     **Читать браслет** action, so moving it is one deliberate tap. Three device tests pin the rule.
     ADR-030.
-19. Tests: 121 :core, 42 :data, 10 :app JVM; **115 :data, 4 :app device** (119 device). Strings **314/314**.
-20. Next: **M7.3** — the weight chart (raw dots, EWMA line, dashed goal), the only piece of `Вес` still missing.
+19. ~~**M7.3 — the weight chart**~~ — dots for what the scale said, the EWMA through them, the goal
+    dashed across, over 30/90/365 days. `WeightAxis` in `:core` (10 cases) gives the range a **2 kg
+    floor** and rounds bounds to half kilos — or whole pounds — because the axis is where a weight
+    chart lies: rescaling to a 0.2 kg week turns water retention into a cliff. The **data sets the
+    range, not the goal**: folded in, a 5 kg window became 8 and flattened the fortnight the person
+    was looking at, so an off-range goal is *named* in the legend ("Цель 75 кг · ниже графика")
+    instead of drawn. A swatch promises something on the canvas, so with one weigh-in the trend
+    entry disappears and a sentence says why. ADR-031.
+20. **Three things the chart taught:**
+    - **Gutters must be measured, not fixed.** A 46 dp label gutter overflowed at `font_scale 2.0`;
+      the axis numbers and the date row are now measured with `TextMeasurer` and the plot sizes
+      around them. The ADR-026 family again, this time inside a Canvas.
+    - **A format string and its call site can drift apart and still pass every test.**
+      `IllegalFormatConversionException: d != java.lang.String` crashed the tab on the device: the
+      string was `%1$d … %2$d … %3$s %4$s` and the call passed `(count, first, last, days)`.
+      `StringResourceParityTest` compares the two string files, not the call. Launch the tab.
+    - **A seeded history is the only way to see a chart.** One weigh-in draws one dot, so 47
+      synthetic weigh-ins went into a copy of the live database, were pushed with `run-as`, and the
+      device was restored afterwards. That copy is why **`tmp/` is now git-ignored** — a pulled
+      database sat in the working tree as an untracked file, which is the accident hard rule 1 is
+      about.
+21. Tests: 131 :core, 42 :data, 10 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**.
+22. Next: **M7.4** — the launcher icon (balance with a piece of pie and a dumbbell), then M7.5 the dark
+    theme, then the rest of M6 and the release.
 
 ## Toolchain (installed 2026-11-07, verified)
 

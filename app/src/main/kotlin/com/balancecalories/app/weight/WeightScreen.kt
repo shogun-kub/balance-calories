@@ -50,8 +50,9 @@ import kotlinx.coroutines.launch
  * `body_measurement` rows the rest of the app reads, written with `source = manual` so a typed number outranks
  * anything a band or Health Connect inferred.
  *
- * The chart lands in M7.3. This screen deliberately stops at "today's weight, the rate, and the last readings"
- * rather than shipping a tab that says "coming soon".
+ * Below the entry: the chart (dots for what the scale said, a line for the trend, the goal dashed) over 30, 90 or
+ * 365 days, then the recent readings as numbers. The chart answers "is this working" at a glance; the list answers
+ * "what did I weigh on the 14th".
  */
 @Composable
 fun WeightScreen(
@@ -70,16 +71,17 @@ fun WeightScreen(
     var latest by remember(profile.id) { mutableStateOf<Double?>(null) }
     var trend by remember(profile.id) { mutableStateOf<List<Pair<LocalDate, Double>>>(emptyList()) }
     var points by remember(profile.id) { mutableStateOf<List<Pair<LocalDate, Double>>>(emptyList()) }
+    var rangeDays by remember(profile.id) { mutableIntStateOf(30) }
     var text by remember(profile.id) { mutableStateOf("") }
     var saved by remember(profile.id) { mutableStateOf<Double?>(null) }
     var error by remember(profile.id) { mutableStateOf<Int?>(null) }
     var refresh by remember(profile.id) { mutableIntStateOf(0) }
 
-    LaunchedEffect(profile.id, refresh) {
+    LaunchedEffect(profile.id, refresh, rangeDays) {
         val weight = container.body.latestWeightKg(profile.id)
         latest = weight
-        trend = container.history.weightTrend(profile.id, today, days = 30)
-        points = container.history.weightPoints(profile.id, today, days = 30)
+        trend = container.history.weightTrend(profile.id, today, days = rangeDays)
+        points = container.history.weightPoints(profile.id, today, days = rangeDays)
         // Prefill with the last reading: the usual case is the same weight, or a little different.
         if (refresh == 0 && weight != null) {
             text = trimNumber(Units.weightFromKg(weight, profile.unitSystem))
@@ -105,14 +107,6 @@ fun WeightScreen(
             } ?: stringResource(R.string.weight_none),
             style = MaterialTheme.typography.titleMedium,
         )
-
-        ratePerWeek(trend, profile.unitSystem)?.let { rate ->
-            Text(
-                text = stringResource(R.string.weight_rate, signed(rate), unitLabel),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary,
-            )
-        }
 
         HorizontalDivider()
 
@@ -177,6 +171,30 @@ fun WeightScreen(
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
+            )
+        }
+
+        HorizontalDivider()
+
+        WeightChart(
+            points = points,
+            trend = trend,
+            goalKg = profile.goalWeightKg,
+            today = today,
+            rangeDays = rangeDays,
+            onRangeChange = { rangeDays = it },
+            system = profile.unitSystem,
+            unitLabel = unitLabel,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        // The rate belongs to the chart, not to the header: it is computed over the range the chips select, so
+        // it changes when the range does and should be read next to the line it describes.
+        ratePerWeek(trend, profile.unitSystem)?.let { rate ->
+            Text(
+                text = stringResource(R.string.weight_rate, signed(rate), unitLabel),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary,
             )
         }
 

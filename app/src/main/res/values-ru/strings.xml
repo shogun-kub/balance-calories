@@ -344,4 +344,10 @@
     <string name="gauge_description">Сегодня: съедено %1$d из %2$d ккал, белки %3$d г, жиры %4$d г, углеводы %5$d г</string>
     <string name="gauge_description_empty">Сегодня: ничего не записано при цели %1$d ккал</string>
     <string name="action_read_band">Читать браслет</string>
+    <string name="weight_chart_legend_points">Взвешивания</string>
+    <string name="weight_chart_legend_goal">Цель %1$s</string>
+    <string name="weight_chart_description">Вес: %1$d взвешиваний за %2$d дн., с %3$s до %4$s</string>
+    <string name="weight_chart_legend_trend">Тренд</string>
+    <string name="weight_chart_goal_below">Цель %1$s · ниже графика</string>
+    <string name="weight_chart_goal_above">Цель %1$s · выше графика</string>
 </resources>

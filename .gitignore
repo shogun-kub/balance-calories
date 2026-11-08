@@ -40,3 +40,9 @@ Desktop.ini
 # --- Python tooling (tools/ generators) ---
 __pycache__/
 *.pyc
+
+# --- Scratch: pulled databases, seeded copies, experiment output ---
+# A pulled SQLite file is the owner's real health data. Nothing here is ever committed (hard rule 1),
+# and this line is what makes that a rule instead of a habit: M7.3 seeded a weight history into a copy
+# of the live database to look at the chart, and that copy sat in the working tree as an untracked file.
+tmp/

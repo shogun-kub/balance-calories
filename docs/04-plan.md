@@ -342,15 +342,16 @@ makes the app's central number arrive sooner and refuse less often.
 - [x] Writes `body_measurement` with `source = 'manual'`, which outranks scale, Gadgetbridge and Health
       Connect in the canonical ranking — a number the person typed on purpose should win over a number
       something else inferred.
-- [ ] Chart: **raw points as small dots**, the **EWMA line** on top, and the **goal weight as a dashed
+- [x] Chart: **raw points as small dots**, the **EWMA line** on top, and the **goal weight as a dashed
       horizontal line** when one is set. The dots matter because hiding them behind a smooth line implies a
       precision the scale does not have; showing both is honest about the noise.
-- [ ] Range selector 30/90/365 days, and the trend line labelled with its current rate (`-0.35 kg/week`).
+- [x] Range selector 30/90/365 days, and the trend line labelled with its current rate (`-0.35 kg/week`).
 - [x] Currently weight can only be recorded by **editing the profile form**, which is why this needs its own
+      place: an action you take twice a week should not be four taps deep in a settings-shaped screen.
 
 **Entry half landed with M7.1 (2026-11-08)**, because a fourth tab cannot be a placeholder: the `Вес`
-tab ships with the field, the prefill, the rate line, the recent readings and the save path, and only
-the chart is left here. Two things it exposed, both fixed:
+tab ships with the field, the prefill, the rate line, the recent readings and the save path; the chart
+followed in the M7.3 block below.
 
 - **Saving twice in one day appended a second row.** Typing 79.5 an hour after 80 left both, so
   "last reading" said 79.5 while the list said 80 — two screens disagreeing about one body. A source
@@ -363,7 +364,26 @@ the chart is left here. Two things it exposed, both fixed:
 
 Verified on the Honor X7c: 80 to 79.5 to 78.2 left exactly one `manual` row for the day, the list and
 the heading agreed at every step, and the seed target followed the weight (1924 to 1904).
-      place: an action you take twice a week should not be four taps deep in a settings-shaped screen.
+
+
+**Built 2026-11-08.** The chart draws what the scale said (dots) and the EWMA through it (line), with the goal
+dashed across when one is set. Three decisions the device forced:
+
+- **The axis has a floor of 2 kg and the data sets it, not the goal.** With the goal folded into the range, a
+  5 kg window became 8 kg and four months of movement collapsed into a band a few pixels tall — the goal was
+  making the data unreadable. `WeightAxis` lives in `:core` with 10 cases, and scales to whole pounds in the
+  imperial setting because a pound scale does not display 172.6.
+- **An off-range goal is named, not drawn.** The legend says "Цель 75 кг · ниже графика" and shows no swatch,
+  because a swatch promises a line on the canvas. Same rule for the trend: with one weigh-in the legend drops
+  "Тренд" and the sentence "для тренда нужно минимум два взвешивания" explains why.
+- **Gutters are measured, not assumed.** A fixed 46 dp label gutter overflowed at `font_scale 2.0`; the axis
+  numbers and the date row are now measured with `TextMeasurer` and the plot is sized around them.
+
+Verified on the Honor X7c at 1.0 and 2.0 on all three ranges, and with one weigh-in. The chart was looked at
+with a **seeded copy** of the database (47 synthetic weigh-ins over 120 days, then a goal inside the range), and
+the device was restored to its real state afterwards — one weigh-in, goal 75 kg. That copy is why `tmp/` is now
+ignored: it was a pulled database sitting untracked in the working tree, which is the accident hard rule 1 exists
+to prevent.
 
 ### M7.4 — Launcher icon (0.5 d)
 

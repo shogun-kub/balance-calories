@@ -344,4 +344,10 @@
     <string name="gauge_description">Today: %1$d of %2$d kcal eaten, protein %3$d g, fat %4$d g, carbs %5$d g</string>
     <string name="gauge_description_empty">Today: nothing logged against a target of %1$d kcal</string>
     <string name="action_read_band">Read the band</string>
+    <string name="weight_chart_legend_points">Weigh-ins</string>
+    <string name="weight_chart_legend_goal">Goal %1$s</string>
+    <string name="weight_chart_description">Weight: %1$d weigh-ins in %2$d days, from %3$s to %4$s</string>
+    <string name="weight_chart_legend_trend">Trend</string>
+    <string name="weight_chart_goal_below">Goal %1$s · below the chart</string>
+    <string name="weight_chart_goal_above">Goal %1$s · above the chart</string>
 </resources>
