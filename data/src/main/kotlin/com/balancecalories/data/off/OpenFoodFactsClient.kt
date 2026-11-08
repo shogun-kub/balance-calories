@@ -89,15 +89,7 @@ class OpenFoodFactsClient(
                 "serving_quantity_unit,nutriments,image_url,image_front_url,last_modified_t," +
                 "nutrition_data_per,no_nutrition_data"
 
-        private const val MIN_LENGTH = 8
-        private const val MAX_LENGTH = 14
-
-        /** Digits only, 8–14 long; anything else is not a retail barcode and is rejected locally. */
-        fun normalizeBarcode(raw: String): String? {
-            val trimmed = raw.trim().replace(" ", "").replace("-", "")
-            if (trimmed.length !in MIN_LENGTH..MAX_LENGTH) return null
-            if (!trimmed.all { it in '0'..'9' }) return null
-            return trimmed
-        }
+        /** Delegates to [com.balancecalories.core.food.Barcode]; kept here for callers that already have it. */
+        fun normalizeBarcode(raw: String): String? = com.balancecalories.core.food.Barcode.normalize(raw)
     }
 }

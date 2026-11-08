@@ -102,9 +102,11 @@ Exit criteria: I can create two profiles and see a defensible daily target with 
 - [x] OFF client: `OpenFoodFactsClient` on v3 with our User-Agent, a 6-second request throttle (OFF sends no
       rate-limit headers, so we choose to be slow), bounded retries for network errors/429/5xx, no retry for
       404, and local barcode validation. Parser understands both v3 (`status: "success"`) and v2 (`status: 1`).
-- [ ] OFF → `product` mapper incl. kJ-only, serving-string parsing, `energy_estimated`: energy precedence
-      (`LabelEnergy`) and quantity parsing are done and tested; persisting into `product`/`pending_lookup`
-      is next.
+- [x] OFF → `product` persistence: `ProductRepository` + `ProductMappers`; the row id stays stable across a
+      refresh because food entries and recipe items point at it, a user correction (`is_override`) is never
+      overwritten, an OFF product OFF has not revised is not rewritten, and a product with no energy is
+      refused rather than stored as zero calories. `BarcodeResolver` runs the decision tree — local hit →
+      cached miss → fetch → unusable/offline — with the fetch injected so it is testable without a network.
 - [ ] Product screen (per-100 g table, portion input, meal picker, log)
 - [ ] Manual product creation + local override flow
 - [ ] Scanner screen: CameraX + zxing-cpp, overlay, torch, haptics, manual entry, debounce

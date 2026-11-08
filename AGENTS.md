@@ -118,8 +118,15 @@ screen, scanner and food entries.
    rate-limit headers. Junk codes really exist in OFF (`9999999999999` is a cucumber), so a found product
    can still be unusable — `OffProduct.isUsable` says why. No new shipping dependency: `HttpURLConnection`
    plus `org.json`; `org.json:json` is test-only, because Android's version is a stub on the JVM.
-3. Next: OFF → `product` persistence (`pending_lookup` for 404s and offline scans), then product screen and
-   scanner.
+3. ~~OFF → `product` persistence~~ — `ProductRepository` (local first, OFF second, user above both) and
+   `BarcodeResolver` (cache → cached miss → fetch → unusable/offline, with the fetch injected so the tree is
+   testable without a network). Three properties are pinned by device tests: the row **id survives a
+   refresh** (entries and recipe items point at it), an **`is_override` correction is never overwritten**
+   by a later scan, and a product with **no energy is refused** rather than stored as zero calories.
+   `pending_lookup` does double duty — offline retry queue and cached 404 — separated by the `not_found`
+   marker (ADR-015). Domain maths lives in `:core`: `Product` (with `displayName(languageTag)` and
+   `hasEnergy`), `FoodMath.portion` (linear, missing stays missing, negative grams throws), `Barcode`.
+4. Next: product screen + manual entry, then the scanner, then food entries and Today v1.
 
 
 ## Toolchain (installed 2026-11-07, verified)

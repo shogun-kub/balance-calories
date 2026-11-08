@@ -166,6 +166,64 @@ interface ProductDao {
 
     @Query("SELECT * FROM product WHERE name = :name LIMIT 1")
     suspend fun byName(name: String): com.balancecalories.data.db.entity.ProductEntity?
+
+    @Query("SELECT * FROM product WHERE barcode = :barcode LIMIT 1")
+    suspend fun byBarcode(barcode: String): com.balancecalories.data.db.entity.ProductEntity?
+
+    @Query("SELECT * FROM product WHERE id = :id")
+    suspend fun byId(id: Long): com.balancecalories.data.db.entity.ProductEntity?
+
+    @Insert
+    suspend fun insert(product: com.balancecalories.data.db.entity.ProductEntity): Long
+
+    /** Updates by primary key, so a refresh keeps the row id that entries and recipes point at. */
+    @Update
+    suspend fun update(product: com.balancecalories.data.db.entity.ProductEntity)
+
+    @Query(
+        "SELECT * FROM product WHERE name LIKE '%' || :query || '%' " +
+            "OR name_ru LIKE '%' || :query || '%' OR brand LIKE '%' || :query || '%' " +
+            "ORDER BY name LIMIT :limit",
+    )
+    suspend fun search(query: String, limit: Int): List<com.balancecalories.data.db.entity.ProductEntity>
+}
+
+/**
+ * Barcodes that could not be resolved.
+ *
+ * One table serves two purposes, separated by [MISS_MARKER] in `last_error`: a row with the marker is a
+ * **cached miss** ("OpenFoodFacts does not have this product"), anything else is an **offline queue** entry
+ * to retry when connectivity returns. They share a life cycle — both are cleared once the barcode resolves —
+ * so a second table would only add a way for them to disagree.
+ */
+@Dao
+interface PendingLookupDao {
+
+    @Insert(onConflict = androidx.room.OnConflictStrategy.REPLACE)
+    suspend fun put(row: com.balancecalories.data.db.entity.PendingLookupEntity)
+
+    @Query("SELECT * FROM pending_lookup WHERE barcode = :barcode")
+    suspend fun byBarcode(barcode: String): com.balancecalories.data.db.entity.PendingLookupEntity?
+
+    @Query(
+        "SELECT * FROM pending_lookup WHERE last_error IS NULL OR last_error != :missMarker " +
+            "ORDER BY created_at LIMIT :limit",
+    )
+    suspend fun retryable(missMarker: String, limit: Int): List<com.balancecalories.data.db.entity.PendingLookupEntity>
+
+    @Query("SELECT * FROM pending_lookup ORDER BY created_at")
+    suspend fun all(): List<com.balancecalories.data.db.entity.PendingLookupEntity>
+
+    @Query("DELETE FROM pending_lookup WHERE barcode = :barcode")
+    suspend fun delete(barcode: String)
+
+    @Query("SELECT COUNT(*) FROM pending_lookup")
+    suspend fun count(): Int
+
+    companion object {
+        /** Stored in `last_error` to mark "the server says this product does not exist". */
+        const val MISS_MARKER = "not_found"
+    }
 }
 
 /** App-level key-value state (schema v2), such as which profile is currently shown. */

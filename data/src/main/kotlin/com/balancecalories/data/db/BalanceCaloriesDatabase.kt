@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 import com.balancecalories.data.db.dao.BodyMeasurementDao
 import com.balancecalories.data.db.dao.DailyActivityDao
 import com.balancecalories.data.db.dao.DebugDao
+import com.balancecalories.data.db.dao.PendingLookupDao
 import com.balancecalories.data.db.dao.ProductDao
 import com.balancecalories.data.db.dao.ProfileDao
 import com.balancecalories.data.db.dao.SettingsDao
@@ -63,6 +64,7 @@ abstract class BalanceCaloriesDatabase : RoomDatabase() {
     abstract fun settingsDao(): SettingsDao
     abstract fun debugDao(): DebugDao
     abstract fun productDao(): ProductDao
+    abstract fun pendingLookupDao(): PendingLookupDao
 
     companion object {
         const val NAME = "balancecalories.db"
