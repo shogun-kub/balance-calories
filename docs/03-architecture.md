@@ -182,6 +182,21 @@ Design rules:
   and idempotent.
 - **Soft delete** for entries (`deleted_at`), hard purge after 30 days.
 
+### 3.1 Room implementation notes (schema v1, 2026-11-08)
+
+The SQL above is the intent; Room forces three mechanical differences, all recorded in
+`BalanceCaloriesDatabase` as well:
+
+| Intent | Room reality | Consequence |
+| --- | --- | --- |
+| `CHECK (sex IN ('male','female'))` | Room cannot declare CHECK constraints | `TypeConverters` map the enum to `male`/`female` and fail loudly on an unknown value instead of accepting it |
+| `CREATE INDEX … ON food_entry(…) WHERE deleted_at IS NULL` | No partial-index support | Plain composite index on `(profile_id, local_date)`; negligible at one-person volume |
+| `CREATE VIRTUAL TABLE product_fts USING fts4(…)` | Declared as `@Fts4(contentEntity = product)` | Room owns the sync triggers that the hand-written SQL would need explicitly |
+
+Schemas are exported to `data/schemas/` and committed. `MigrationHarnessTest` replays the v1 JSON with
+`MigrationTestHelper` on a device, so the harness exists before the first migration does; every future
+version adds its migration test to that file.
+
 ## 4. Health Connect mapping
 
 | HC record | Field | Destination |

@@ -16,10 +16,11 @@ Two outputs, everything else supports them:
 
 Current state: **M1 in progress.** `docs/` is complete through the plan, the toolchain is installed,
 `:core` — the pure Kotlin energy maths — builds and tests green (27 tests), and the module skeleton
-now exists: `:data` (Health Connect client, status probe) and `:app` (Compose screen showing a target
-computed by `:core`). `assembleDebug` succeeds and the debug APK installs and runs on the Honor X7c.
-What is still missing from M1: Room schema v1 and DAOs, the profile model and onboarding, target
-history, settings, the debug screen.
+exists: `:data` (Health Connect status probe, Room schema v1 with 11 tables and 4 DAOs) and `:app`
+(Compose screen showing a target computed by `:core`). `assembleDebug` succeeds and the debug APK
+installs and runs on the Honor X7c; the 7 Room instrumentation tests pass there. What is still missing
+from M1: repositories and mappers over the DAOs, the profile model and onboarding, target history
+writes, settings, the debug screen.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -43,10 +44,12 @@ history, settings, the debug screen.
 
 1. ~~`local.properties` with `sdk.dir`~~ — written; untracked.
 2. ~~Create `:data` and `:app`~~ — both exist and build.
-3. Room schema v1: entities, DAOs, `exportSchema = true`, and a `MigrationTestHelper` harness.
-4. Profile model (create/edit/switch/archive, `band_enabled` enforced once per device) and onboarding
+3. ~~Room schema v1~~ — 11 entities, 4 DAOs, schema JSON committed under `data/schemas/`, and a
+   `MigrationTestHelper` harness proven by `MigrationHarnessTest`.
+4. Repositories and mappers over the DAOs; Product/Food/Recipe DAOs when M2 needs them.
+5. Profile model (create/edit/switch/archive, `band_enabled` enforced once per device) and onboarding
    steps 1–3.
-5. Target calculation writing `target_history`; settings (units, day start, language); debug screen.
+6. Target calculation writing `target_history`; settings (units, day start, language); debug screen.
 
 
 ## Toolchain (installed 2026-11-07, verified)
@@ -175,6 +178,24 @@ in the same command.
   `Couldn't open current thread, error = 5`. Run builds with `GRADLE_USER_HOME` pointing at a writable
   directory, and set `org.gradle.vfs.watch=false` there to silence the file-watcher. A normal shell
   (no sandbox) needs neither workaround.
+
+### Instrumentation tests: install and instrument by hand
+
+`:data:connectedDebugAndroidTest` **reports BUILD SUCCESSFUL while running nothing** on this machine.
+AGP's test engine talks to a different adb server than the private port, prints
+`Failed to get device API level … device not found`, and leaves an empty results XML. Do not trust its
+exit code; check that the XML has a `tests=` count.
+
+Run the tests explicitly instead:
+
+```powershell
+$env:ANDROID_ADB_SERVER_PORT = '5039'
+adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
+.\gradlew.bat :data:assembleDebugAndroidTest
+& $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
+& $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
+# OK (7 tests)
+```
 
 ## Devices and how to test on them
 

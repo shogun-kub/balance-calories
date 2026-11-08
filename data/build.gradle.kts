@@ -10,11 +10,17 @@ android {
 
     defaultConfig {
         minSdk = 28
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    sourceSets {
+        // Exported schemas become test assets so MigrationTestHelper can replay old versions.
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
     }
 }
 
@@ -32,4 +38,10 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+
+    // Room's schema and migration test helpers run on a device: they need a real SQLite, and the
+    // Redmi/Honor pair is what the app actually ships to.
+    androidTestImplementation(libs.room.testing)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
 }
