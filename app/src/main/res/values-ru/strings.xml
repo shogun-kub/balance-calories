@@ -278,4 +278,9 @@
         <string name="history_trend_empty">для тренда нужно минимум два взвешивания</string>
     <string name="history_projection">До %1$s кг: примерно %2$d дн., около %3$s</string>
     <string name="history_projection_note">это оценка при текущем темпе, а не обещание</string>
+
+    <!-- M5: переключатель автоматизации. По умолчанию приложение спрашивает; меньше вопросов — это выбор. -->
+    <string name="history_auto_apply">Применять измеренную цель автоматически</string>
+    <string name="history_auto_apply_help">только если данных достаточно; иначе приложение ждёт вашего нажатия</string>
+    <string name="history_applied_auto">цель обновлена автоматически: %1$d ккал</string>
 </resources>

@@ -213,7 +213,7 @@ at 21:00 and a day where the band stayed home.
 - [x] History list (per-day: balance, intake, burn, weight, quality)
 - [x] Charts: 7-day balance bars + weight EWMA line (the 30-day bar view is not built; the line covers 30 days of weigh-ins)
 - [x] Weight entry + `body_measurement` merge (manual vs HC vs scale, one canonical point per day — preference order manual > scale > GB > HC)
-- [x] Adaptive TDEE: window, guards, confidence, clamped change, `target_history` update
+- [x] Adaptive TDEE: window, guards, confidence, clamped change, `target_history` update; applying it is opt-in (default: ask), with a per-profile switch on the History card (ADR-024)
 - [x] "Target updated" explanation with the two numbers that produced it (inline card, not a sheet)
 - [x] Weekly recap: predicted vs actual weight change, streak of logged days
 - [x] Projection to goal weight (with "estimate, not a promise" framing); needs `profile.goal_weight_kg`, schema **v6**

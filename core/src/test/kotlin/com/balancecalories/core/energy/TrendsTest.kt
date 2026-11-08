@@ -2,8 +2,10 @@ package com.balancecalories.core.energy
 
 import java.time.LocalDate
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -156,5 +158,39 @@ class TrendsTest {
     @Test
     fun `the projection date is the today plus the days`() {
         assertEquals(start.plusDays(70), Projection.dateToGoal(start, 70))
+    }
+}
+
+/**
+ * The automation rule: the default is to ask, and confidence gates the rest.
+ *
+ * These are the four combinations a person can actually be in, so they are the four cases.
+ */
+class TdeeApplyPolicyTest {
+
+    @Test
+    fun `by default nothing is applied without a tap`() {
+        assertFalse(TdeeApplyPolicy.shouldApplyAutomatically(TdeeConfidence.HIGH, autoApplyEnabled = false))
+        assertFalse(TdeeApplyPolicy.shouldApplyAutomatically(TdeeConfidence.MEDIUM, autoApplyEnabled = false))
+    }
+
+    @Test
+    fun `opting in applies a medium estimate`() {
+        assertTrue(TdeeApplyPolicy.shouldApplyAutomatically(TdeeConfidence.MEDIUM, autoApplyEnabled = true))
+        assertTrue(TdeeApplyPolicy.shouldApplyAutomatically(TdeeConfidence.HIGH, autoApplyEnabled = true))
+    }
+
+    @Test
+    fun `a low estimate never moves a target, even when opted in`() {
+        // Four logged days describe a logging habit, not a metabolism.
+        assertFalse(TdeeApplyPolicy.shouldApplyAutomatically(TdeeConfidence.LOW, autoApplyEnabled = true))
+        assertFalse(TdeeApplyPolicy.shouldApplyAutomatically(TdeeConfidence.NONE, autoApplyEnabled = true))
+    }
+
+    @Test
+    fun `only an estimate with some evidence is offered at all`() {
+        assertTrue(TdeeApplyPolicy.isOfferable(TdeeConfidence.LOW))
+        assertTrue(TdeeApplyPolicy.isOfferable(TdeeConfidence.MEDIUM))
+        assertFalse(TdeeApplyPolicy.isOfferable(TdeeConfidence.NONE))
     }
 }

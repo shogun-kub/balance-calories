@@ -26,6 +26,24 @@ class AppSettingsRepository(private val database: BalanceCaloriesDatabase) {
     suspend fun clearActiveProfile() = dao.remove(KEY_ACTIVE_PROFILE_ID)
 
     /** Which starter pack version was imported; null means "never imported". */
+    /**
+     * Whether the adaptive target may be applied without asking, per profile.
+     *
+     * Default **false**: asking is the default in the app as a whole, and a preference one person sets must not
+     * silently govern the other profile on the same phone.
+     */
+    suspend fun tdeeAutoApply(profileId: Long): Boolean =
+        dao.value(TDEE_AUTO_APPLY_PREFIX + profileId)?.toBooleanStrictOrNull() ?: false
+
+    suspend fun setTdeeAutoApply(profileId: Long, enabled: Boolean) {
+        dao.put(
+            com.balancecalories.data.db.entity.AppSettingEntity(
+                key = TDEE_AUTO_APPLY_PREFIX + profileId,
+                value = enabled.toString(),
+            ),
+        )
+    }
+
     suspend fun starterPackVersion(): Int? = dao.value(KEY_STARTER_PACK_VERSION)?.toIntOrNull()
 
     suspend fun setStarterPackVersion(version: Int) {
@@ -34,6 +52,7 @@ class AppSettingsRepository(private val database: BalanceCaloriesDatabase) {
 
     companion object {
         const val KEY_ACTIVE_PROFILE_ID = "active_profile_id"
+        const val TDEE_AUTO_APPLY_PREFIX = "tdee_auto_apply_"
         const val KEY_STARTER_PACK_VERSION = "starter_pack_version"
     }
 }

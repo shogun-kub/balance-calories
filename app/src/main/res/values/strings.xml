@@ -278,4 +278,9 @@
         <string name="history_trend_empty">a trend needs at least two weigh-ins</string>
     <string name="history_projection">To %1$s kg: about %2$d days, around %3$s</string>
     <string name="history_projection_note">an estimate at the planned rate, not a promise</string>
+
+    <!-- M5: the automation switch. Asking is the default; less asking is a choice, not a surprise. -->
+    <string name="history_auto_apply">Apply the measured target automatically</string>
+    <string name="history_auto_apply_help">only when the evidence is at least medium; otherwise it waits for your tap</string>
+    <string name="history_applied_auto">target updated automatically to %1$d kcal</string>
 </resources>

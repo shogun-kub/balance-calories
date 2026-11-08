@@ -48,7 +48,12 @@ class ActivitySyncWorker(
             zone = ZoneId.systemDefault(),
         )
         return when (result) {
-            is DailyActivityRepository.SyncResult.Synced -> Result.success()
+            is DailyActivityRepository.SyncResult.Synced -> {
+                // The adaptive target follows the sync, so an opted-in profile gets its update without opening
+                // the app. Whether it applies is the policy's call, not the worker's.
+                runCatching { container.adaptiveUpdater.applyIfAllowed(profile, ZoneId.systemDefault()) }
+                Result.success()
+            }
             DailyActivityRepository.SyncResult.NoPermission -> Result.success()
             DailyActivityRepository.SyncResult.Unavailable -> Result.success()
             is DailyActivityRepository.SyncResult.Failed -> Result.retry()

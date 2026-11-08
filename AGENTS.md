@@ -14,11 +14,11 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1-M5 complete.** `:core` (103 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
+Current state: **M1-M5 complete.** `:core` (107 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
 repositories) build green, and `:app` has the whole loop: Today with burned/balance/quality, the food side
 (products, search, scanning, logging, recipes) and **History** with the adaptive TDEE, the weekly recap,
-a weight trend line and a projection. 103 :core + 42 :data + 10 :app JVM tests and **88 device tests**
-(84 :data, 4 :app) pass. Next: M6 hardening, export and release.
+a weight trend line and a projection. 107 :core + 42 :data + 10 :app JVM tests and **92 device tests**
+(88 :data, 4 :app) pass. Next: M6 hardening, export and release.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -243,16 +243,24 @@ a weight trend line and a projection. 103 :core + 42 :data + 10 :app JVM tests a
    the numbers behind it, a 7-day balance bar row, and the last 30 days with eaten/burned/balance/weight. A day with
    no food log says "нет записей" and prints **no balance** — "eaten 0" would be a claim about a person, not a
    missing entry.
-5. ~~Trends and recap~~ — `WeightTrend.ewma` smooths per **measurement** (a gap does not weight the next reading
+5. ~~Applying it without asking, if you want that~~ — `TdeeApplyPolicy` in `:core` holds the rule: the default is to
+   ask, a per-profile switch (`app_setting.tdee_auto_apply_<id>`) opts into automation, and the confidence gate
+   applies in **both** directions, so a `LOW` estimate never moves a target even with the switch on (ADR-024).
+   `AdaptiveTargetUpdater` is the single implementation, called by both the History screen and `ActivitySyncWorker`
+   so the target cannot change on one route and not the other. The switch renders in the refusal state too — a
+   preference should be settable before there is anything to apply. Verified on the Honor: the switch is off by
+   default, survives a restart, and stays per profile. The **applied** path is not yet observed end to end, because
+   the test profile has one logged day and refuses; the first real observation will be on a profile with ten.
+6. ~~Trends and recap~~ — `WeightTrend.ewma` smooths per **measurement** (a gap does not weight the next reading
    more), `RecapCalculator` prints predicted and actual change side by side, and `Projection` refuses a horizon
    past two years rather than dating a number nobody believes (ADR-023). The History screen draws the 30-day
    trend line and the recap; the projection needs a goal weight.
-6. ~~Goal weight~~ — `profile.goal_weight_kg`, schema **v6**, nullable and additive: empty means "no goal", so
+7. ~~Goal weight~~ — `profile.goal_weight_kg`, schema **v6**, nullable and additive: empty means "no goal", so
    the projection says nothing instead of guessing a destination. Migration 5 → 6 tested on device.
-7. Tests: 16 new `:core` cases for trends, the recap and the projection; 20 new device cases across the adaptive
-   repository and the v5/v6 migrations. Totals: 103 :core, 42 :data, 10 :app JVM; 84 :data, 4 :app device.
-   Strings 255/255.
-8. Next: **M6** — hardening, export, release.
+8. Tests: 20 new `:core` cases for trends, the recap, the projection and the apply policy; 24 new device cases
+   across the adaptive repository, the settings table and the v5/v6 migrations. Totals: 107 :core, 42 :data,
+   10 :app JVM; 88 :data, 4 :app device. Strings 257/257.
+9. Next: **M6** — hardening, export, release.
 
 ## Toolchain (installed 2026-11-07, verified)
 
@@ -401,7 +409,7 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (84 tests) — database behaviour, migrations, repositories, starter pack, products, food, recipes, band activity, adaptive TDEE
+# OK (88 tests) — database behaviour, migrations, repositories, starter pack, products, food, recipes, band activity, adaptive TDEE
 ```
 
 ### The scanner: two traps that cost an hour each (2026-11-08)

@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -16,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -82,10 +85,15 @@ fun HistoryScreen(
     var tdee by remember(profile.id) { mutableStateOf<AdaptiveTdeeRepository.Outcome?>(null) }
     var appliedTarget by remember(profile.id) { mutableStateOf<Int?>(null) }
     var recap by remember(profile.id) { mutableStateOf<WeeklyRecap?>(null) }
+    var autoApply by remember(profile.id) { mutableStateOf(false) }
+    var autoApplied by remember(profile.id) { mutableStateOf<Int?>(null) }
     var trend by remember(profile.id) { mutableStateOf<List<Pair<LocalDate, Double>>>(emptyList()) }
     var refresh by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(profile.id, refresh) {
+        autoApply = container.settings.tdeeAutoApply(profile.id)
+        // Opted in means the target may move without a tap — including right now, before the numbers are drawn.
+        autoApplied = container.adaptiveUpdater.applyIfAllowed(profile, zone)
         val weight = container.body.latestWeightKg(profile.id)
         if (weight == null) return@LaunchedEffect
         val current = TargetCalculator.seed(
@@ -126,6 +134,12 @@ fun HistoryScreen(
             AdaptiveCard(
                 outcome = outcome,
                 appliedTarget = appliedTarget,
+                autoAppliedTarget = autoApplied,
+                autoApply = autoApply,
+                onAutoApplyChange = { enabled ->
+                    autoApply = enabled
+                    scope.launch { container.settings.setTdeeAutoApply(profile.id, enabled) }
+                },
                 onApply = {
                     scope.launch {
                         val on = today
@@ -157,6 +171,9 @@ fun HistoryScreen(
 private fun AdaptiveCard(
     outcome: AdaptiveTdeeRepository.Outcome,
     appliedTarget: Int?,
+    autoAppliedTarget: Int?,
+    autoApply: Boolean,
+    onAutoApplyChange: (Boolean) -> Unit,
     onApply: () -> Unit,
 ) {
     val estimate = outcome.estimate
@@ -185,6 +202,10 @@ private fun AdaptiveCard(
                 },
                 style = MaterialTheme.typography.bodySmall,
             )
+            // The preference is offered even before there is an estimate to apply: someone who wants fewer
+            // questions should be able to say so now, not months later at the first prompt.
+            HorizontalDivider()
+            AutoApplyRow(autoApply = autoApply, onAutoApplyChange = onAutoApplyChange)
             return@Column
         }
 
@@ -213,6 +234,11 @@ private fun AdaptiveCard(
                 text = stringResource(R.string.history_target_applied, applied),
                 style = MaterialTheme.typography.bodyMedium,
             )
+            autoAppliedTarget != null -> Text(
+                // Distinct wording: the person should be able to tell what moved the target and why.
+                text = stringResource(R.string.history_applied_auto, autoAppliedTarget),
+                style = MaterialTheme.typography.bodyMedium,
+            )
             outcome.changesTarget -> OutlinedButton(onClick = onApply, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.history_apply_target, outcome.proposedTargetKcal))
             }
@@ -221,6 +247,37 @@ private fun AdaptiveCard(
                 style = MaterialTheme.typography.bodySmall,
             )
         }
+
+        HorizontalDivider()
+        AutoApplyRow(autoApply = autoApply, onAutoApplyChange = onAutoApplyChange)
+    }
+}
+
+/**
+ * The automation switch and the one line that says what it actually does.
+ *
+ * It lives beside the evidence it governs rather than in a settings screen three levels away, because the answer
+ * only makes sense next to the numbers that would move.
+ */
+@Composable
+private fun AutoApplyRow(autoApply: Boolean, onAutoApplyChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = stringResource(R.string.history_auto_apply), style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = stringResource(R.string.history_auto_apply_help),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+        }
+        // A gap, so a long help line never runs into the control it explains — measured in English, whose
+        // wording here is longer than the Russian one.
+        Spacer(modifier = Modifier.width(12.dp))
+        Switch(checked = autoApply, onCheckedChange = onAutoApplyChange)
     }
 }
 

@@ -10,6 +10,7 @@ import com.balancecalories.data.health.HealthConnectSupport
 import com.balancecalories.data.off.HttpUrlOffTransport
 import com.balancecalories.data.off.OpenFoodFactsClient
 import com.balancecalories.app.sync.ActivitySyncWorker
+import com.balancecalories.app.sync.AdaptiveTargetUpdater
 import com.balancecalories.data.repo.AppSettingsRepository
 import com.balancecalories.data.repo.BarcodeResolver
 import com.balancecalories.data.repo.BodyMeasurementRepository
@@ -44,6 +45,8 @@ class AppContainer(context: Context) {
     val food: FoodEntryRepository = FoodEntryRepository(database)
     val recipes: RecipeRepository = RecipeRepository(database)
     val history: HistoryRepository = HistoryRepository(database)
+    /** Applies an adaptive target when the profile has opted into automation. */
+    val adaptiveUpdater: AdaptiveTargetUpdater by lazy { AdaptiveTargetUpdater(this) }
     val adaptiveTdee: AdaptiveTdeeRepository = AdaptiveTdeeRepository(database)
 
     /** One client for the whole process, so its throttle paces every screen together, not per screen. */
