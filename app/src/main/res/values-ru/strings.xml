@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">BalanceCalories</string>
+    <string name="app_name">Баланс Калорий</string>
 
     <string name="target_title">Цель по калориям</string>
     <string name="target_note">Демонстрационные данные тела до появления онбординга — пока ничего не сохраняется.</string>

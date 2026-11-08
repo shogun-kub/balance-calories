@@ -46,4 +46,7 @@ dependencies {
 
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
+
+    // Guards the two string files against drifting apart; runs on the JVM, not a device.
+    testImplementation(libs.junit4)
 }

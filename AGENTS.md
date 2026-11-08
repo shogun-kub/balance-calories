@@ -40,6 +40,28 @@ writes, settings, the debug screen.
    generates `*_Impl.kt` and exports `schemas/…/<version>.json`. The alternative — KAPT — works but is
    slower and deprecated; it is not needed. Revisit when KSP ships a 2.4.x build.
 
+### Naming and localisation (2026-11-08)
+
+- **Display name:** `Balance Calories` (English) and `Баланс Калорий` (Russian), both from
+  `app_name`. The repository, Kotlin packages and `applicationId` stay `BalanceCalories` /
+  `com.balancecalories`; only the label the user sees is renamed. See ADR-010 and ADR-011 in
+  `docs/03-architecture.md` §13.
+- **Every user-visible string is a resource**, in both files, added in the same commit. The UI follows
+  the system locale; an in-app language switch is deferred to settings (M2), not forgotten.
+- **`StringResourceParityTest` is the guard** (`.\gradlew.bat :app:testDebugUnitTest`): it compares the
+  key sets and the format arguments of every `strings.xml` against `values/`, and pins the two app
+  names. It runs on the JVM, so it is fast enough to run every time.
+- **Previewing English on a Russian phone** without touching system settings, then undo the override:
+
+  ```powershell
+  adb shell "cmd locale set-app-locales com.balancecalories --locales en"
+  adb shell "cmd locale get-app-locales com.balancecalories"   # expect [en]
+  # ... screenshot / test ...
+  adb shell "cmd locale set-app-locales com.balancecalories --locales ''"
+  ```
+
+  The Honor's system locale is `ru-US`; both screens were checked this way (2026-11-08).
+
 ## Remaining setup (M1)
 
 1. ~~`local.properties` with `sdk.dir`~~ — written; untracked.
@@ -123,6 +145,10 @@ from machine-wide `ANDROID_HOME`.
     with no network. Any feature that cannot is a design bug.
 12. **The day boundary and time zone logic lives in `:core` and only there.** If two screens compute a
     "day" differently, the numbers will disagree and nobody will trust the app.
+13. **Two languages, always both, in the same commit.** A new string lands in `values/strings.xml` and
+    `values-ru/strings.xml` together. `StringResourceParityTest` (`:app:testDebugUnitTest`) fails when a
+    key or a format argument exists in only one file, so drift is a red build, not a Russian screen with
+    English sentences in it.
 
 ## Environment
 

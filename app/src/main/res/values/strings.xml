@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">BalanceCalories</string>
+    <string name="app_name">Balance Calories</string>
 
     <string name="target_title">Energy target</string>
     <string name="target_note">Demo body data until onboarding exists — nothing here is stored yet.</string>
