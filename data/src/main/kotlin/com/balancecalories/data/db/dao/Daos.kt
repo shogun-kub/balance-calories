@@ -1,6 +1,7 @@
 package com.balancecalories.data.db.dao
 
-import androidx.room.Dao
+import androidx.room.Dao
+import com.balancecalories.data.repo.DayMacroTotals
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
@@ -231,6 +232,22 @@ interface FoodEntryDao {
             "WHERE profile_id = :profileId AND local_date = :localDate AND deleted_at IS NULL",
     )
     suspend fun kcalForDay(profileId: Long, localDate: String): Double
+
+    /**
+     * Energy and macros per day for a whole window, in one query.
+     *
+     * The chart needs thirty days at once, and asking per day would be thirty round trips to draw one
+     * picture. GROUP BY local_date returns only the days that have entries, so a day with no log is
+     * absent — which is what tells the chart to leave a gap instead of drawing a zero-height bar.
+     */
+    @Query(
+        "SELECT local_date AS local_date, COALESCE(SUM(kcal), 0) AS kcal, " +
+            "COALESCE(SUM(protein_g), 0) AS protein_g, COALESCE(SUM(fat_g), 0) AS fat_g, " +
+            "COALESCE(SUM(carbs_g), 0) AS carbs_g FROM food_entry " +
+            "WHERE profile_id = :profileId AND local_date BETWEEN :from AND :to " +
+            "AND deleted_at IS NULL GROUP BY local_date ORDER BY local_date",
+    )
+    suspend fun macroTotalsBetween(profileId: Long, from: String, to: String): List<DayMacroTotals>
 
     @Query("SELECT * FROM food_entry WHERE id = :id")
     suspend fun byId(id: Long): com.balancecalories.data.db.entity.FoodEntryEntity?

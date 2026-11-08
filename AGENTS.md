@@ -14,11 +14,11 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1-M5 and M7.1 complete, M6 half done.** `:core` (107 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
+Current state: **M1-M5, M7.1 and M7.2 complete, M6 half done.** `:core` (115 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
 repositories) build green, and `:app` has the whole loop: Today with burned/balance/quality, the food side
 (products, search, scanning, logging, recipes) and **History** with the adaptive TDEE, the weekly recap,
-a weight trend line and a projection, plus a backup screen. 107 :core + 42 :data + 10 :app JVM tests and
-**115 device tests** (111 :data, 4 :app) pass, and the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear. Next: M7.2 (the intake/burn chart), then the rest of M6 and the release; see docs/04-plan.md.
+a weight trend line and a projection, plus a backup screen. 115 :core + 42 :data + 10 :app JVM tests and
+**117 device tests** (113 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split. Next: M7.3 (the weight chart), then M7.4 the icon, M7.5 the dark theme, then the rest of M6 and the release; see docs/04-plan.md.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -316,7 +316,25 @@ a weight trend line and a projection, plus a backup screen. 107 :core + 42 :data
     - **The readings list printed the EWMA** instead of the readings; it now uses `weightPoints` (unsmoothed).
     The chart is still M7.3. Two device tests pin the replace rule and the canonical preference.
 12. Tests: 107 :core, 42 :data, 10 :app JVM; **111 :data, 4 :app device** (115 device). Strings **296/296**.
-13. Next: **M7.2** — the intake/burn chart with the macro split.
+13. ~~**M7.2 — the intake/burn chart**~~ — one Canvas on `История`: eaten as a stacked macro bar (protein/fat/
+    carbs from `MacroEnergy` in `:core`, in `:app/history/IntakeBurnChart.kt`), burned as a second bar, one
+    baseline and one scale, the target dashed across both; a 7/30/90 selector where 90 scrolls sideways and
+    opens at the newest day. `MacroEnergy.split` guarantees the segments fill the bar exactly — macros below
+    the logged energy leave an "unlabelled energy" segment, macros above it are scaled down — and a property
+    test over 500 random days pins that. The window query is one `GROUP BY local_date`
+    (`FoodEntryDao.macroTotalsBetween`), so a day with no log is **absent**, which is what makes the chart draw
+    a gap instead of a zero bar. ADR-028.
+14. **Three things the chart taught, worth remembering:**
+    - **An estimated burn is an outline, not a fill.** Thirty days of `PAL_ESTIMATE` drawn solid reads as thirty
+      measurements. Shape carries the measured/estimated distinction that colour cannot.
+    - **A total over estimates is a lie of emphasis.** The first summary said "сожжено 68 322 ккал" for 30 days;
+      true arithmetic, wrong sentence. It now gives an average per day and counts the estimated days.
+    - **`fillMaxWidth()` inside `horizontalScroll` collapses to zero.** The 90-day chart was blank until the
+      canvas got an explicit width, and `rememberScrollState(initial = …)` cannot open at the end — the maximum
+      is only known after layout, so scroll in a `LaunchedEffect(scrollState.maxValue)`.
+15. Tests: 115 :core, 42 :data, 10 :app JVM; **113 :data, 4 :app device** (117 device). Strings **306/306**.
+16. Next: **M7.3** — the weight chart (raw dots, EWMA line, dashed goal), the only piece of `Вес` still missing.
+
 ## Toolchain (installed 2026-11-07, verified)
 
 | Item | Location / version |

@@ -1,6 +1,9 @@
 package com.balancecalories.data.repo
 
+import androidx.room.ColumnInfo
 import com.balancecalories.core.activity.ActivityQuality
+import com.balancecalories.core.food.MacroEnergy
+import com.balancecalories.core.food.MacroSplit
 import com.balancecalories.core.energy.DayEnergy
 import com.balancecalories.core.energy.RecapCalculator
 import com.balancecalories.core.energy.WeeklyRecap
@@ -26,10 +29,27 @@ data class DaySummary(
     val burnIsMeasured: Boolean,
     val quality: ActivityQuality,
     val weightKg: Double?,
+    /** Grams eaten that day; zero when the day has no log, which the chart reads as `logged == false`. */
+    val proteinG: Double = 0.0,
+    val fatG: Double = 0.0,
+    val carbsG: Double = 0.0,
 ) {
     /** Positive = surplus. The sign convention of the whole app. */
     val balanceKcal: Double get() = intakeKcal - burnKcal
+
+    /** The energy behind the day's macros, split for the intake bar. See `MacroEnergy` in `:core`. */
+    val macroSplit: MacroSplit
+        get() = MacroEnergy.split(proteinG, fatG, carbsG, intakeKcal)
 }
+
+/** One row of `food_entry` summed per day, before the day's burn and weight are attached. */
+data class DayMacroTotals(
+    @ColumnInfo(name = "local_date") val localDate: String,
+    @ColumnInfo(name = "kcal") val kcal: Double,
+    @ColumnInfo(name = "protein_g") val proteinG: Double,
+    @ColumnInfo(name = "fat_g") val fatG: Double,
+    @ColumnInfo(name = "carbs_g") val carbsG: Double,
+)
 
 /**
  * Reads a window of days for history, charts and the weekly recap.
@@ -115,12 +135,17 @@ class HistoryRepository(
             .filter { it.weightKg != null }
             .associate { it.localDate to it.weightKg!! }
 
+        // One query for the window: the chart asks for 90 days and a per-day loop would be 90 round trips.
+        val macrosByDay = food.macroTotalsBetween(profileId, from.toString(), today.toString())
+            .associateBy { it.localDate }
+
         val summaries = ArrayList<DaySummary>(days)
         var date = today
         while (!date.isAfter(today) && !date.isBefore(from)) {
             val dayKey = date.toString()
-            val logged = food.countForDay(profileId, dayKey) > 0
-            val intake = if (logged) food.kcalForDay(profileId, dayKey) else 0.0
+            val macros = macrosByDay[dayKey]
+            val logged = macros != null
+            val intake = macros?.kcal ?: 0.0
             val row = activities.forDay(profileId, dayKey)
             val hasEnergy = row != null && (row.totalKcal != null || row.activeKcal != null)
             val measured = hasEnergy && !row!!.dataOrigins.isNullOrBlank()
@@ -143,6 +168,9 @@ class HistoryRepository(
                 burnIsMeasured = measured,
                 quality = quality,
                 weightKg = weights[dayKey],
+                proteinG = macros?.proteinG ?: 0.0,
+                fatG = macros?.fatG ?: 0.0,
+                carbsG = macros?.carbsG ?: 0.0,
             )
             date = date.minusDays(1)
         }

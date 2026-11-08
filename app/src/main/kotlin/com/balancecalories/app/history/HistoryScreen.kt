@@ -81,6 +81,8 @@ fun HistoryScreen(
     val dateFormatter = remember { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
 
     var days by remember(profile.id) { mutableStateOf<List<DaySummary>>(emptyList()) }
+    // 30 days by default: a week is too short to show a trend and 90 flattens every bar into one pixel.
+    var rangeDays by remember(profile.id) { mutableIntStateOf(30) }
     var target by remember(profile.id) { mutableStateOf<Int?>(null) }
     var tdee by remember(profile.id) { mutableStateOf<AdaptiveTdeeRepository.Outcome?>(null) }
     var appliedTarget by remember(profile.id) { mutableStateOf<Int?>(null) }
@@ -90,7 +92,7 @@ fun HistoryScreen(
     var trend by remember(profile.id) { mutableStateOf<List<Pair<LocalDate, Double>>>(emptyList()) }
     var refresh by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(profile.id, refresh) {
+    LaunchedEffect(profile.id, refresh, rangeDays) {
         autoApply = container.settings.tdeeAutoApply(profile.id)
         // Opted in means the target may move without a tap — including right now, before the numbers are drawn.
         autoApplied = container.adaptiveUpdater.applyIfAllowed(profile, zone)
@@ -105,7 +107,7 @@ fun HistoryScreen(
         days = container.history.summaries(
             profileId = profile.id,
             today = today,
-            days = 30,
+            days = rangeDays,
             bmrKcal = current.bmrKcal,
             palKcal = current.tdeeKcal,
         )
@@ -152,8 +154,14 @@ fun HistoryScreen(
         recap?.let { RecapBlock(recap = it, trend = trend, profile = profile, today = today) }
 
         HorizontalDivider()
-        Text(text = stringResource(R.string.history_week), style = MaterialTheme.typography.titleSmall)
-        WeekBars(days = days.take(7).reversed())
+        // Replaces the seven-day balance row: the same days, more information, and one scale for both
+        // quantities. The ranges belong to the chart, because a week is too short to show a trend.
+        IntakeBurnChart(
+            days = days.reversed(),
+            targetKcal = target ?: 0,
+            rangeDays = rangeDays,
+            onRangeChange = { rangeDays = it },
+        )
 
         HorizontalDivider()
         Text(text = stringResource(R.string.history_recent), style = MaterialTheme.typography.titleSmall)
@@ -280,51 +288,8 @@ private fun AutoApplyRow(autoApply: Boolean, onAutoApplyChange: (Boolean) -> Uni
     }
 }
 
-/**
- * Seven bars, one per day, above and below a baseline: negative is a deficit, which is the direction the plan
- * wants. A hand-drawn row of boxes instead of a chart library — one picture is not worth a dependency, and this
- * keeps the numbers in the accessibility tree as text rather than pixels.
- */
 @Composable
-private fun WeekBars(days: List<DaySummary>) {
-    val logged = days.filter { it.logged }
-    if (logged.isEmpty()) {
-        Text(text = stringResource(R.string.history_week_empty), style = MaterialTheme.typography.bodySmall)
-        return
-    }
-    val maxAbs = logged.maxOf { kotlin.math.abs(it.balanceKcal) }.coerceAtLeast(1.0)
-    val barColor = MaterialTheme.colorScheme.primary
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(96.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        for (day in days) {
-            val fraction = if (day.logged) (kotlin.math.abs(day.balanceKcal) / maxAbs) else 0.0
-            val height = (fraction * 80.0).roundToInt().coerceAtLeast(if (day.logged) 2 else 0)
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(16.dp)
-                        .height(height.dp)
-                        .background(if (day.logged) barColor else Color.Transparent),
-                )
-                Text(
-                    text = day.date.dayOfMonth.toString(),
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
-        }
-    }
-}
 
-@Composable
 private fun DayRow(day: DaySummary, label: String) {
     Column {
         // Wrapping, not SpaceBetween: at a 200% font scale the date and the balance together exceed the width,

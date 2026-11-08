@@ -271,23 +271,52 @@ from an overlay, at font scales 1.0, 1.3 and 2.0. ADR-027.
 
 ### M7.2 — Intake/burn chart with macro split (2 d)
 
-- [ ] One chart on `История`: per day, **eaten** as a stacked bar and **burned** as a second bar on the same
+- [x] One chart on `История`: per day, **eaten** as a stacked bar and **burned** as a second bar on the same
       baseline and the same scale. Both numbers on one scale is the entire point — a chart where the two
       quantities have different axes cannot answer "did I eat less than I burned".
-- [ ] Macro split inside the eaten bar: **green = protein, yellow = fat, red = carbs**, in fixed order, plus
+- [x] Macro split inside the eaten bar: **green = protein, yellow = fat, red = carbs**, in fixed order, plus
       a legend that is always visible and never collapses to colour alone.
-- [ ] **Colour is never the only channel.** Green/red is the classic red-green confusion (~8% of men), so:
+- [x] **Colour is never the only channel.** Green/red is the classic red-green confusion (~8% of men), so:
       every segment is labelled in the legend with its name and grams, the segments are separated by a 1 dp
       divider so they are distinguishable in greyscale, and each bar carries a content description naming
       all three values. If that makes the legend carry the meaning, the colour is decoration — which is the
       correct hierarchy for a health app.
-- [ ] A day with no food log draws **no eaten bar** (a gap), never a zero-height bar: the app's oldest rule
+- [x] A day with no food log draws **no eaten bar** (a gap), never a zero-height bar: the app's oldest rule
       is that an unlogged day is missing, not empty.
-- [ ] Target line across the chart at the current target, dashed, so the person can see the target rather
+- [x] Target line across the chart at the current target, dashed, so the person can see the target rather
       than infer it.
-- [ ] Replaces the 7-day balance bar row, which shows the same days with less information.
-- [ ] 30 days by default with a 7/30/90 selector; horizontal scroll for 90, since squeezing 90 bars into
+- [x] Replaces the 7-day balance bar row, which shows the same days with less information.
+- [x] 30 days by default with a 7/30/90 selector; horizontal scroll for 90, since squeezing 90 bars into
       360 dp is a texture, not a chart.
+
+**Done 2026-11-08.** One Canvas chart on `История`, replacing the seven-day balance row: eaten as a
+stacked macro bar, burned as a second bar, one baseline and one scale, the target dashed across both.
+7/30/90 selector; 90 days scrolls sideways, opens **at the newest day** (`rememberScrollState` cannot
+do that — the maximum is only known after layout, so the chart scrolls once it is).
+
+Four decisions the device forced, each of which changed what the chart says:
+
+- **The legend shows shares of energy, not grams.** Grams summed over thirty days are a number nobody
+  can act on ("28.8 g of protein" without the day count), while a share is the same answer for any
+  range — and explaining the colours is the legend's job. The plan asked for grams; shares turned out
+  to be the honest version of that idea.
+- **An estimated burn is drawn as an outline, not a fill.** Thirty days of `PAL_ESTIMATE` rendered as
+  solid bars read as thirty measurements; as outlines the measured days are the ones the eye finds.
+  This is the chart's version of hard rule 4.
+- **The summary reports an average burn per day, not a total.** A first version printed "сожжено
+  68 322 ккал" over 30 days, which is arithmetically true and rhetorically a lie: two thirds of those
+  days are the same formula estimate. It now reads "в среднем сожжено 2346 ккал в день, из них оценка
+  за 85 дн.".
+- **`MacroEnergy.split` always fills the bar exactly.** Macros below the logged energy leave an
+  "unlabelled energy" segment (alcohol, fibre, label rounding); macros above it are scaled down. A
+  stacked bar whose parts do not add up to its height is a lie drawn in colour, so there is a property
+  test over 500 random days, not just examples.
+
+Two layout traps found at a 200% font scale, both the ADR-026 failure in a new place: the legend row
+was a plain `Row`, so the target swatch squeezed into a vertical column of letters ("Ц е л ь 1 9"),
+and `fillMaxWidth()` inside a `horizontalScroll` resolves against an unbounded width and collapses
+the canvas to zero — the 90-day chart was blank until it got an explicit width. Verified on the
+Honor X7c at 1.0 and 2.0 in Russian, on all three ranges. ADR-028.
 
 ### M7.3 — Weight: manual entry and a proper chart (1.5 d)
 

@@ -262,8 +262,6 @@
     <string name="history_burn_estimate">оценка</string>
     <string name="history_day_intake">съедено %1$s</string>
     <string name="history_day_burn">сожжено %1$s</string>
-    <string name="history_week">Последние 7 дней: съедено минус сожжено</string>
-    <string name="history_week_empty">за 7 дней ничего не записано</string>
     <string name="history_weight">вес %1$s кг</string>
     <string name="weight_kg">%1$s кг</string>
     <string name="history_surplus">+%1$s</string>
@@ -326,4 +324,16 @@
     <string name="weight_error_number">Введите число</string>
     <string name="weight_error_range">Вне диапазона 20–400 кг: проверьте число</string>
     <string name="unit_kilograms">кг</string>
-    <string name="unit_pounds">фунт</string></resources>
+    <string name="unit_pounds">фунт</string>    <!-- M7.2: the intake/burn chart. Colour is decoration; the legend and the dividers carry the meaning. -->
+    <string name="chart_title">Съедено и сожжено</string>
+    <string name="chart_range_days">%1$d дн.</string>
+    <string name="chart_legend_protein">Белки %1$d%%</string>
+    <string name="chart_legend_fat">Жиры %1$d%%</string>
+    <string name="chart_legend_carbs">Углеводы %1$d%%</string>
+    <string name="chart_legend_other">Нераспознанная энергия %1$d%%</string>
+    <string name="chart_legend_burn">Сожжено</string>
+    <string name="chart_legend_burn_estimate">Сожжено (оценка)</string>
+    <string name="chart_legend_target">Цель %1$d ккал</string>
+    <string name="chart_summary">Записано %1$d из %2$d дн.: съедено %3$d ккал; в среднем сожжено %4$d ккал в день, из них оценка за %5$d дн.</string>
+    <string name="chart_no_data">В этом диапазоне нет записанных дней, показывать нечего.</string>
+    <string name="chart_last_logged">Последний записанный день: %1$s, %2$d ккал</string></resources>

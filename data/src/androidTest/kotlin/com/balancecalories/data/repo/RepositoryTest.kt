@@ -5,6 +5,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.balancecalories.core.energy.ActivityLevel
 import com.balancecalories.core.energy.Sex
+import com.balancecalories.core.food.Meal
+import com.balancecalories.core.food.Product
+import com.balancecalories.core.food.ProductSource
 import com.balancecalories.core.profile.Profile
 import com.balancecalories.data.db.BalanceCaloriesDatabase
 import java.time.LocalDate
@@ -225,4 +228,94 @@ class RepositoryTest {
 
         val perDay = CanonicalWeights(db).perDay(profileId, today, today)
         assertEquals(79.5, perDay.getValue(today), 0.001)
+    }    /**
+     * The chart's window query: energy and macros per day, and no row for a day without a log.
+     *
+     * A day with no entries must be **absent** rather than a zero row, because that is what tells the chart to
+     * leave a gap instead of drawing a bar at zero — an unlogged day is missing, not empty.
+     */
+    @Test
+    fun macroTotalsCoverOnlyLoggedDays() = runBlocking {
+        val profileId = profiles.create(profile("Macro window")).id
+        val store = ProductRepository(db) { 1_760_000_000_000 }
+        val foods = FoodEntryRepository(db) { 1_760_000_000_000 }
+
+        val oats = store.saveUserProduct(
+            Product(
+                name = "Oats, dry",
+                source = ProductSource.USER,
+                kcal100g = 389.0,
+                protein100g = 16.9,
+                fat100g = 6.9,
+                carbs100g = 66.3,
+                fiber100g = 10.6,
+                sugar100g = 1.0,
+                salt100g = 0.0,
+            ),
+        )
+
+        val twoDaysAgo = today.minusDays(2)
+        foods.log(
+            profileId = profileId,
+            product = oats,
+            grams = 100.0,
+            meal = Meal.BREAKFAST,
+            on = twoDaysAgo,
+        )
+        foods.log(
+            profileId = profileId,
+            product = oats,
+            grams = 50.0,
+            meal = Meal.BREAKFAST,
+            on = today,
+        )
+        // yesterday has no entry on purpose
+
+        val rows = db.foodEntryDao().macroTotalsBetween(
+            profileId,
+            today.minusDays(6).toString(),
+            today.toString(),
+        )
+
+        assertEquals("only the logged days come back", 2, rows.size)
+        val byDate = rows.associateBy { it.localDate }
+        assertNull("an unlogged day must be absent, not zero", byDate[today.minusDays(1).toString()])
+
+        val twoAgo = byDate.getValue(twoDaysAgo.toString())
+        assertEquals(389.0, twoAgo.kcal, 0.01)
+        assertEquals(16.9, twoAgo.proteinG, 0.01)
+        assertEquals(6.9, twoAgo.fatG, 0.01)
+        assertEquals(66.3, twoAgo.carbsG, 0.01)
+
+        val todayRow = byDate.getValue(today.toString())
+        assertEquals(194.5, todayRow.kcal, 0.01)
+        assertEquals(8.45, todayRow.proteinG, 0.01)
+    }
+
+    /** Soft-deleted entries are not eaten: the chart must not draw a bar for a meal that was removed. */
+    @Test
+    fun macroTotalsIgnoreDeletedEntries() = runBlocking {
+        val profileId = profiles.create(profile("Macro deleted")).id
+        val store = ProductRepository(db) { 1_760_000_000_000 }
+        val foods = FoodEntryRepository(db) { 1_760_000_000_000 }
+
+        val apple = store.saveUserProduct(
+            Product(
+                name = "Apple",
+                source = ProductSource.USER,
+                kcal100g = 52.0,
+                protein100g = 0.3,
+                fat100g = 0.2,
+                carbs100g = 14.0,
+                fiber100g = 2.4,
+                sugar100g = 10.4,
+                salt100g = 0.0,
+            ),
+        )
+
+        val logged = foods.log(profileId = profileId, product = apple, grams = 200.0, meal = Meal.SNACK, on = today)
+        foods.delete(logged.id)
+
+        val rows = db.foodEntryDao().macroTotalsBetween(profileId, today.toString(), today.toString())
+        assertTrue("a deleted meal leaves no day row behind", rows.isEmpty())
     }}

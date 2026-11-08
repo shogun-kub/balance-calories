@@ -262,8 +262,6 @@
     <string name="history_burn_estimate">estimate</string>
     <string name="history_day_intake">eaten %1$s</string>
     <string name="history_day_burn">burned %1$s</string>
-    <string name="history_week">Last 7 days, eaten minus burned</string>
-    <string name="history_week_empty">last 7 days: nothing logged</string>
     <string name="history_weight">weight %1$s kg</string>
     <string name="weight_kg">%1$s kg</string>
     <string name="history_surplus">+%1$s</string>
@@ -326,4 +324,16 @@
     <string name="weight_error_number">Enter a number</string>
     <string name="weight_error_range">Outside 20-400 kg: check the number</string>
     <string name="unit_kilograms">kg</string>
-    <string name="unit_pounds">lb</string></resources>
+    <string name="unit_pounds">lb</string>    <!-- M7.2: the intake/burn chart. Colour is decoration; the legend and the dividers carry the meaning. -->
+    <string name="chart_title">Eaten and burned</string>
+    <string name="chart_range_days">%1$d d</string>
+    <string name="chart_legend_protein">Protein %1$d%%</string>
+    <string name="chart_legend_fat">Fat %1$d%%</string>
+    <string name="chart_legend_carbs">Carbs %1$d%%</string>
+    <string name="chart_legend_other">Unlabelled energy %1$d%%</string>
+    <string name="chart_legend_burn">Burned</string>
+    <string name="chart_legend_burn_estimate">Burned (estimate)</string>
+    <string name="chart_legend_target">Target %1$d kcal</string>
+    <string name="chart_summary">%1$d of %2$d days logged: %3$d kcal eaten; burns average %4$d kcal a day, and %5$d of those days are estimates</string>
+    <string name="chart_no_data">No logged days in this range, so there is nothing to draw yet.</string>
+    <string name="chart_last_logged">Last logged day: %1$s, %2$d kcal</string></resources>
