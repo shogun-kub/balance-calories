@@ -14,12 +14,12 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1 complete, M2 nearly done.** `:core` (46 JVM tests) and `:data` (schema **v4**, 9 DAOs,
+Current state: **M1 complete, M2 complete.** `:core` (46 JVM tests) and `:data` (schema **v4**, 9 DAOs,
 7 repositories, OFF client, product persistence, food logging) build green, and `:app` has the full food
 loop: Today with target/eaten/remaining/macros/meal sections, product list and search, product screen with
 portion preview, manual product form, entry edit, repeat-yesterday, and a working **barcode scanner**
-(CameraX 1.6.2 + zxing-cpp 3.1.1, single FOSS build). 46 :core + 42 :data + 10 :app JVM tests and **53 device tests**
-(49 :data, 4 :app) pass. Next in M2: recents/frequents in the food list, then M3 recipes.
+(CameraX 1.6.2 + zxing-cpp 3.1.1, single FOSS build). 46 :core + 42 :data + 10 :app JVM tests and **56 device tests**
+(52 :data, 4 :app) pass. Next: M3 recipes.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -152,7 +152,10 @@ portion preview, manual product form, entry edit, repeat-yesterday, and a workin
    corrected numbers; a correction to a starter or OFF row sets `is_override`. Prefilling exposed float noise
    (`7.6899999999999995`), fixed by `NumberText.trimNumber` (3 decimals, no exponent, no trailing zeros, 6
    unit tests).
-9. Next: recents/frequents in the food list, then M3 recipes.
+9. ~~Recents in the food list~~ — an empty query lists **Recently eaten** (newest first, `2×` when logged more
+   than once) above the browse list. One query serves recency and habit; soft-deleted entries are excluded
+   and a row whose product vanished is dropped. Tapping opens the product, not a logged portion.
+10. Next: **M3 recipes.** M2 is complete: products, search, scanning, logging, Today, editing.
 
 
 ## Toolchain (installed 2026-11-07, verified)
@@ -302,7 +305,7 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (49 tests) — database behaviour, migrations, repositories, starter pack, products, food entries
+# OK (52 tests) — database behaviour, migrations, repositories, starter pack, products, food entries
 ```
 
 ### The scanner: two traps that cost an hour each (2026-11-08)

@@ -223,7 +223,31 @@ interface FoodEntryDao {
     /** Soft delete: history stays answerable, and a purge can happen later. */
     @Query("UPDATE food_entry SET deleted_at = :at WHERE id = :id")
     suspend fun softDelete(id: Long, at: Long)
+
+    /**
+     * What this profile eats, most recent first.
+     *
+     * Grouping by `product_id` and counting gives recency and habit in one pass. Soft-deleted entries are
+     * excluded (deleting a row means it was not a real meal), and the join drops entries whose product no
+     * longer exists, because a "recent" row that cannot be logged again is not a shortcut.
+     *
+     * `product_id` is nullable on the entry, so the join is what filters those out too.
+     */
+    @Query(
+        "SELECT e.product_id AS productId, COUNT(*) AS times, MAX(e.consumed_at) AS lastEatenAt " +
+            "FROM food_entry e JOIN product p ON p.id = e.product_id " +
+            "WHERE e.profile_id = :profileId AND e.deleted_at IS NULL " +
+            "GROUP BY e.product_id ORDER BY lastEatenAt DESC LIMIT :limit",
+    )
+    suspend fun recentlyEaten(profileId: Long, limit: Int): List<ProductUsage>
 }
+
+/** One row of [FoodEntryDao.recentlyEaten]: a product, how many times, and when last. */
+data class ProductUsage(
+    val productId: Long,
+    val times: Int,
+    val lastEatenAt: Long,
+)
 
 /**
  * Barcodes that could not be resolved.

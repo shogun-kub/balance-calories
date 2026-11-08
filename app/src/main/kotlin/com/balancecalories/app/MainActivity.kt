@@ -142,8 +142,9 @@ private fun Root() {
             onBack = { screen = Screen.SETTINGS },
         )
 
-        screen == Screen.FOOD -> ProductsScreen(
+        screen == Screen.FOOD && active != null -> ProductsScreen(
             container = container,
+            profileId = active.id,
             onBack = { screen = Screen.TODAY },
             onPick = { product ->
                 openedProduct = product

@@ -146,7 +146,14 @@ Exit criteria: I can create two profiles and see a defensible daily target with 
       `/cgi/search.pl` never answered and is not used.
       Verified on the Honor X7c: "nutella" → `В OpenFoodFacts найдено: 631`, tapping the first hit stored
       product id 72 (`source='off'`, revision recorded, no override) and opened it at 519.2 kcal.
-- [ ] Recents and frequents in the food list: what was eaten lately should not need a search at all.
+- [x] Recents in the food list: an empty query shows **Recently eaten** above the browse list, newest first,
+      with a `2×` marker once a product has been logged more than once. One query does both jobs
+      (`GROUP BY product_id` with `COUNT(*)` and `MAX(consumed_at)`), soft-deleted rows are excluded, and an
+      entry whose product is gone is dropped — a shortcut that cannot be tapped is not a shortcut. Tapping
+      opens the product screen rather than logging at once: portion and meal are choices, not guesses.
+      Verified on the Honor X7c with the real log: `Недавно съеденное → Перец болгарский 26 ккал 2×`, and
+      tapping it opened the product. Device tests: 52 in `:data` (3 new — ordering and counts, deleted rows
+      excluded, another profile's plate does not leak in, limit honoured, empty before anything is logged).
 - [x] Golden tests for OFF payloads (`fixtures/off/`, captured live on 2026-11-08); fake-clock tests for the
       rate limiter and a scripted transport for the retry state machine.
 

@@ -4,10 +4,12 @@ import com.balancecalories.core.food.DailyIntake
 import com.balancecalories.core.food.FoodMath
 import com.balancecalories.core.food.LoggedEntry
 import com.balancecalories.core.food.Meal
+import com.balancecalories.core.food.RecentlyEaten
 import com.balancecalories.core.food.Product
 import androidx.room.withTransaction
 import com.balancecalories.data.db.BalanceCaloriesDatabase
 import com.balancecalories.data.db.entity.FoodEntryEntity
+import com.balancecalories.data.mapper.toDomain
 import java.time.LocalDate
 
 /**
@@ -22,6 +24,7 @@ class FoodEntryRepository(
 ) {
 
     private val entries = database.foodEntryDao()
+    private val products = database.productDao()
 
     /**
      * Logs [grams] of [product] and returns the stored entry.
@@ -74,6 +77,18 @@ class FoodEntryRepository(
 
     suspend fun eatenKcal(profileId: Long, on: LocalDate): Double =
         entries.kcalForDay(profileId, on.toString())
+
+    /**
+     * What this profile has eaten, most recent first — the shortcut for the second time a food is logged.
+     *
+     * Rows whose product row has disappeared are dropped rather than shown: a recents list exists to be
+     * tapped, and there is nothing left to log. Nothing is inferred here; an empty log returns an empty list.
+     */
+    suspend fun recentlyEaten(profileId: Long, limit: Int = 8): List<RecentlyEaten> =
+        entries.recentlyEaten(profileId, limit).mapNotNull { usage ->
+            val product = products.byId(usage.productId)?.toDomain() ?: return@mapNotNull null
+            RecentlyEaten(product = product, times = usage.times, lastEatenAt = usage.lastEatenAt)
+        }
 
     suspend fun countForDay(profileId: Long, on: LocalDate): Int =
         entries.countForDay(profileId, on.toString())

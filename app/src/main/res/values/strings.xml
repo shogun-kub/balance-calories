@@ -189,4 +189,6 @@
     <string name="food_search_off_failed">OpenFoodFacts did not answer: %1$s</string>
     <string name="food_search_off_no_energy">No calorie data — cannot log it</string>
     <string name="food_search_off_note">Crowd-sourced values, not a lab measurement. Check the pack if the number looks wrong.</string>
+    <string name="food_recent">Recently eaten</string>
+    <string name="food_recent_times">%1$d×</string>
 </resources>

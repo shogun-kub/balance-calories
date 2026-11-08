@@ -189,4 +189,6 @@
     <string name="food_search_off_failed">OpenFoodFacts не ответил: %1$s</string>
     <string name="food_search_off_no_energy">Нет данных о калориях — нельзя записать</string>
     <string name="food_search_off_note">Значения собраны пользователями, это не лабораторное измерение. Проверьте упаковку, если число выглядит странным.</string>
+    <string name="food_recent">Недавно съеденное</string>
+    <string name="food_recent_times">%1$d×</string>
 </resources>

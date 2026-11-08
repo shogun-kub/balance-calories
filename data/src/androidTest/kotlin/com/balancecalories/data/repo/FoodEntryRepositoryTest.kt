@@ -240,4 +240,53 @@ class FoodEntryRepositoryTest {
         assertTrue("the day can then say it contains estimates", entry.wasEstimated)
         assertTrue(food.day(1L, today, 2000).hasEstimates)
     }
+    /**
+     * Recents are a shortcut, so their shape has to be right: newest first, count excluding deleted rows,
+     * and nothing whose product is gone.
+     */
+    @Test
+    fun recentlyEatenOrdersByRecencyAndSkipsDeletedRows() = runBlocking {
+        val oats = oats()
+        val banana = products.saveUserProduct(
+            Product(name = "Banana", source = ProductSource.USER, kcal100g = 89.0),
+        )
+
+        now = 1_000L
+        food.log(1L, oats, 50.0, Meal.BREAKFAST)
+        now = 2_000L
+        food.log(1L, banana, 120.0, Meal.SNACK)
+        now = 3_000L
+        food.log(1L, oats, 60.0, Meal.BREAKFAST)
+        // A deleted row is not a meal the user ate; it must not count towards the habit either.
+        val deleted = food.log(1L, banana, 100.0, Meal.SNACK)
+        food.delete(deleted.id)
+        // Someone else's plate never leaks into these recents.
+        food.log(2L, banana, 90.0, Meal.LUNCH)
+
+        val recents = food.recentlyEaten(1L)
+
+        assertEquals(listOf("Oats, dry", "Banana"), recents.map { it.product.name })
+        assertEquals("oats were logged twice", 2, recents[0].times)
+        assertEquals("one banana survived the delete", 1, recents[1].times)
+        assertEquals(3_000L, recents[0].lastEatenAt)
+        assertEquals(2_000L, recents[1].lastEatenAt)
+    }
+
+    @Test
+    fun recentlyEatenIsEmptyBeforeAnythingIsLogged() = runBlocking {
+        assertTrue(food.recentlyEaten(1L).isEmpty())
+    }
+
+    @Test
+    fun recentlyEatenRespectsTheLimit() = runBlocking {
+        repeat(3) { index ->
+            val product = products.saveUserProduct(
+                Product(name = "Product $index", source = ProductSource.USER, kcal100g = 100.0),
+            )
+            now += 1_000L
+            food.log(1L, product, 100.0, Meal.LUNCH)
+        }
+
+        assertEquals(2, food.recentlyEaten(1L, limit = 2).size)
+    }
 }

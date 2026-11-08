@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -28,6 +29,7 @@ import com.balancecalories.app.AppContainer
 import com.balancecalories.app.R
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.ProductSource
+import com.balancecalories.core.food.RecentlyEaten
 import com.balancecalories.data.off.OffProduct
 import com.balancecalories.data.off.OffSearch
 import kotlinx.coroutines.launch
@@ -48,6 +50,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ProductsScreen(
     container: AppContainer,
+    profileId: Long,
     onBack: () -> Unit,
     onPick: (Product) -> Unit,
     onAddManual: () -> Unit,
@@ -56,6 +59,7 @@ fun ProductsScreen(
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<Product>>(emptyList()) }
     var remote by remember { mutableStateOf<RemoteState>(RemoteState.Idle) }
+    var recents by remember { mutableStateOf<List<RecentlyEaten>>(emptyList()) }
     val languageTag = LocalConfiguration.current.locales[0]?.toLanguageTag()
     val scope = rememberCoroutineScope()
 
@@ -64,6 +68,10 @@ fun ProductsScreen(
             container.products.browse()
         } else {
             container.products.search(query)
+        }
+        // Only meaningful on an empty query: once the user types, their words outrank their habits.
+        if (query.isBlank()) {
+            recents = runCatching { container.food.recentlyEaten(profileId) }.getOrDefault(emptyList())
         }
         // A new query makes the old answer look like an answer to the new question.
         remote = RemoteState.Idle
@@ -117,6 +125,16 @@ fun ProductsScreen(
         }
 
         LazyColumn(modifier = Modifier.weight(1f)) {
+            if (query.isBlank() && recents.isNotEmpty()) {
+                item("recent-header") {
+                    Text(text = stringResource(R.string.food_recent), style = MaterialTheme.typography.titleSmall)
+                }
+                items(recents, key = { "recent-${it.product.id}" }) { recent ->
+                    RecentRow(recent = recent, languageTag = languageTag, onClick = { onPick(recent.product) })
+                }
+                item("recent-divider") { HorizontalDivider() }
+            }
+
             items(results, key = { "local-${it.id}" }) { product ->
                 ProductRow(product = product, languageTag = languageTag, onClick = { onPick(product) })
             }
@@ -199,6 +217,32 @@ private fun ProductRow(product: Product, languageTag: String?, onClick: () -> Un
             if (product.energyEstimated) {
                 Text(
                     text = stringResource(R.string.product_estimated),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * One product from the log, with how often it was eaten.
+ *
+ * Tapping opens the product screen rather than logging straight away: the portion and the meal are choices,
+ * and guessing them would silently put a number on the plate the user did not pick.
+ */
+@Composable
+private fun RecentRow(recent: RecentlyEaten, languageTag: String?, onClick: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp)) {
+        Text(text = recent.product.displayName(languageTag), style = MaterialTheme.typography.bodyLarge)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = stringResource(R.string.kcal_decimal, recent.product.kcal100g ?: 0.0),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            if (recent.times > 1) {
+                Text(
+                    text = stringResource(R.string.food_recent_times, recent.times),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary,
                 )
