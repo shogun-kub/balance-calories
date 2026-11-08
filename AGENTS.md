@@ -14,14 +14,15 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1 in progress.** `docs/` is complete through the plan, the toolchain is installed,
-`:core` — the pure Kotlin energy maths — builds and tests green (27 tests), and the module skeleton
-exists: `:data` (Health Connect status probe, Room schema v1 with 11 tables and 4 DAOs, plus Profile /
-BodyMeasurement / Target repositories behind domain mappers) and `:app` (Application container,
-onboarding that writes profile + first weight + seed target, target screen reading the database).
-`assembleDebug` succeeds and the APK installs and runs on the Honor X7c, creating `balancecalories.db`;
-12 instrumentation tests pass there, and onboarding plus profile deletion were exercised by hand through
-the UI. What is still missing from M1: profile edit and switch, settings, the debug screen.
+Current state: **M1 nearly done.** `docs/` is complete through the plan, the toolchain is installed,
+`:core` — the pure Kotlin energy maths — builds and tests green (27 tests), and the modules exist:
+`:data` (Health Connect status probe, Room schema **v2** with 12 tables and 5 DAOs, Profile /
+BodyMeasurement / Target / AppSettings repositories behind domain mappers) and `:app` (Application
+container, create/edit/delete/switch profiles, target screen reading the database). `assembleDebug`
+succeeds and the APK installs and runs on the Honor X7c, where the v1 → v2 migration ran against a real
+database; 16 instrumentation tests pass there and the profile flows were exercised by hand through the
+UI. What is still missing from M1: settings (units, day start, language), the debug screen, and an
+archive action.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -40,6 +41,12 @@ the UI. What is still missing from M1: profile edit and switch, settings, the de
    processor. Measured, not assumed: with Kotlin **2.3.20** + KSP **2.3.13** + Room **2.8.5**, Room
    generates `*_Impl.kt` and exports `schemas/…/<version>.json`. The alternative — KAPT — works but is
    slower and deprecated; it is not needed. Revisit when KSP ships a 2.4.x build.
+4. **After a schema version bump, rebuild the androidTest APK with `--rerun-tasks` once.** The exported
+   `N.json` becomes a test asset, but AGP keeps a stale asset merge and the new file never reaches the
+   APK, so `MigrationTestHelper` fails with *"Cannot find the schema file in the assets folder"*. The
+   tell is a test APK containing only the previous version: check with
+   `python -c "import zipfile;print([n for n in zipfile.ZipFile(p).namelist() if n.endswith('.json')])"`.
+   `.\gradlew.bat :data:assembleDebugAndroidTest --rerun-tasks` fixes it.
 
 ### Naming and localisation (2026-11-08)
 
@@ -78,9 +85,14 @@ the UI. What is still missing from M1: profile edit and switch, settings, the de
    cascades through weights, food and target history (ADR-012). Verified on device: after deleting the
    last profile the app returns to onboarding and every dependent table is empty. `archived_at` stays
    for the reversible case, but archive has no UI yet.
-7. Profile **edit** and **switch**: both need a stored "active profile" setting, so they land together
-   with a schema v2 (the first real migration) rather than pretending the first row is the chosen one.
-8. Settings (units, day start, language); debug screen.
+7. ~~Profile edit and switch~~ — `ProfileFormScreen` serves create and edit (prefilled, records a new
+   weight only when it actually changed, upserts today's target). The current profile is stored in
+   `app_setting` (schema **v2**, migrated on a real v1 database: `user_version = 2`, rows preserved),
+   and tapping a profile card switches to it. Edit verified on device: goal −0.25 → −0.5 made the target
+   2130 → 1924, where the safety floor (1.1 × BMR = 1923.6) engaged and the screen said so.
+8. Archive has no UI yet (`archived_at` and `ProfileRepository.archive` exist); deletion is the
+   user-facing destructive action for now.
+9. Settings (units, day start, language); debug screen.
 
 
 ## Toolchain (installed 2026-11-07, verified)
@@ -229,7 +241,7 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (12 tests) — database behaviour, migration harness, repositories
+# OK (16 tests) — database behaviour, migration harness, repositories
 ```
 
 ## Devices and how to test on them

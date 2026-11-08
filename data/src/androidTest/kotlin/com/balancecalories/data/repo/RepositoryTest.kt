@@ -31,6 +31,7 @@ class RepositoryTest {
     private lateinit var profiles: ProfileRepository
     private lateinit var body: BodyMeasurementRepository
     private lateinit var targets: TargetRepository
+    private lateinit var settings: AppSettingsRepository
 
     private val today = LocalDate.of(2026, 11, 8)
 
@@ -43,6 +44,7 @@ class RepositoryTest {
         profiles = ProfileRepository(db) { 1_760_000_000_000 }
         body = BodyMeasurementRepository(db) { 1_760_000_000_000 }
         targets = TargetRepository(db)
+        settings = AppSettingsRepository(db)
     }
 
     @After
@@ -117,8 +119,7 @@ class RepositoryTest {
     }
 
     @Test
-    fun seedTargetIsWrittenToHistoryAndReadableByDate() = runBlocking {
-        val created = profiles.create(profile())
+    fun seedTargetIsWrittenToHistoryAndReadableByDate() = runBlocking {        val created = profiles.create(profile())
 
         val computed = targets.recordSeed(created, weightKg = 80.0, on = today)
 
@@ -134,5 +135,50 @@ class RepositoryTest {
         assertEquals(TargetRepository.CONFIDENCE_NONE, stored.tdeeConfidence)
 
         assertNull(targets.effectiveOn(created.id, today.minusDays(1)))
+    }
+
+    @Test
+    fun activeProfileIsRememberedAndClearedWhenThatProfileIsDeleted() = runBlocking {
+        val first = profiles.create(profile("First"))
+        val second = profiles.create(profile("Second"))
+
+        settings.setActiveProfile(second.id)
+        assertEquals(second.id, settings.activeProfileId())
+
+        profiles.delete(second.id)
+        // The stored selection must not point at a row that no longer exists.
+        assertNull(settings.activeProfileId())
+
+        settings.setActiveProfile(first.id)
+        profiles.delete(first.id)
+        assertNull(settings.activeProfileId())
+    }
+
+    @Test
+    fun deletingAnotherProfileKeepsTheStoredSelection() = runBlocking {
+        val kept = profiles.create(profile("Kept"))
+        val other = profiles.create(profile("Other"))
+        settings.setActiveProfile(kept.id)
+
+        profiles.delete(other.id)
+
+        assertEquals(kept.id, settings.activeProfileId())
+    }
+
+    @Test
+    fun updatingAProfileRewritesFieldsAndLeavesTargetHistoryAlone() = runBlocking {
+        val created = profiles.create(profile("Before"))
+        targets.recordSeed(created, weightKg = 80.0, on = today)
+
+        val updated = created.copy(name = "After", heightCm = 180.0, goalRateKgPerWeek = -0.5)
+        profiles.update(updated)
+
+        val stored = profiles.byId(created.id)!!
+        assertEquals("After", stored.name)
+        assertEquals(180.0, stored.heightCm, 0.001)
+        assertEquals(-0.5, stored.goalRateKgPerWeek, 0.0)
+
+        // Editing does not delete history: yesterday's target is still what the app said.
+        assertEquals(2033, targets.effectiveOn(created.id, today)!!.kcal)
     }
 }

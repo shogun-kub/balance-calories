@@ -48,6 +48,9 @@
     <string name="delete_dialog_title">Удалить профиль?</string>
     <string name="delete_dialog_text">%1$s будет удалён вместе с записями веса, дневником еды и историей цели. Отменить это нельзя.</string>
     <string name="delete_dialog_confirm">Удалить</string>
+    <string name="current_badge">текущий</string>
+    <string name="action_edit">Изменить</string>
+    <string name="profile_edit_title">Изменить профиль</string>
 
     <string name="target_title">Цель по калориям</string>
     <string name="target_note">Рассчитано по вашему профилю и последнему весу. Ничего не покидает телефон.</string>

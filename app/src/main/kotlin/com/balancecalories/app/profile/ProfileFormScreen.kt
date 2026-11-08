@@ -1,4 +1,4 @@
-package com.balancecalories.app.onboarding
+package com.balancecalories.app.profile
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +48,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 private data class GoalOption(val rateKgPerWeek: Double, @StringRes val label: Int)
 
@@ -66,37 +68,55 @@ private val activityOptions = listOf(
 )
 
 /**
- * Onboarding in one scrollable screen: identity, body, goal. It writes three things in order — the
- * profile, its first weight reading and the seed target — because a profile without a weight cannot
- * produce a number, and a target that was never stored cannot be explained later.
+ * One screen for both creating and editing a profile: the fields are identical, and having two forms
+ * would guarantee that validation drifts apart.
  *
- * Validation happens before anything touches the database; a half-written profile is worse than an
- * error message.
+ * Creating writes three rows (profile, first weight, seed target). Editing updates the profile and only
+ * records a new weight when the number actually changed, so a rename does not litter the weight history
+ * with a duplicate reading.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OnboardingScreen(
+fun ProfileFormScreen(
     container: AppContainer,
+    existing: Profile?,
     onSaved: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
     val today = remember { LocalDate.now() }
     val oldestAllowed = remember(today) { today.minusYears(14) }
+    val isEditing = existing != null
 
-    var name by remember { mutableStateOf("") }
-    var sex by remember { mutableStateOf(Sex.MALE) }
-    var birthDate by remember { mutableStateOf<LocalDate?>(null) }
-    var heightText by remember { mutableStateOf("") }
-    var weightText by remember { mutableStateOf("") }
-    var activity by remember { mutableStateOf(ActivityLevel.LIGHT) }
-    var goal by remember { mutableStateOf(goalOptions[1]) }
+    var name by remember(existing?.id) { mutableStateOf(existing?.name ?: "") }
+    var sex by remember(existing?.id) { mutableStateOf(existing?.sex ?: Sex.MALE) }
+    var birthDate by remember(existing?.id) { mutableStateOf(existing?.birthDate) }
+    var heightText by remember(existing?.id) {
+        mutableStateOf(existing?.heightCm?.roundToInt()?.toString() ?: "")
+    }
+    var weightText by remember(existing?.id) { mutableStateOf("") }
+    var activity by remember(existing?.id) {
+        mutableStateOf(existing?.activityLevel ?: ActivityLevel.LIGHT)
+    }
+    var goal by remember(existing?.id) {
+        mutableStateOf(
+            goalOptions.firstOrNull { it.rateKgPerWeek == existing?.goalRateKgPerWeek } ?: goalOptions[1],
+        )
+    }
+    var originalWeight by remember(existing?.id) { mutableStateOf<Double?>(null) }
     var validationError by remember { mutableStateOf<Int?>(null) }
     var saveError by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
     var pickerOpen by remember { mutableStateOf(false) }
     var activityMenuOpen by remember { mutableStateOf(false) }
     var goalMenuOpen by remember { mutableStateOf(false) }
+
+    LaunchedEffect(existing?.id) {
+        val id = existing?.id ?: return@LaunchedEffect
+        val latest = container.body.latestWeightKg(id)
+        originalWeight = latest
+        if (weightText.isEmpty()) weightText = latest?.roundToInt()?.toString() ?: ""
+    }
 
     val height = heightText.toDoubleOrNull()
     val weight = weightText.toDoubleOrNull()
@@ -131,26 +151,47 @@ fun OnboardingScreen(
         saving = true
         scope.launch {
             try {
-                val created = container.profiles.create(
-                    Profile(
+                if (existing == null) {
+                    val created = container.profiles.create(
+                        Profile(
+                            name = name.trim(),
+                            sex = sex,
+                            birthDate = dob,
+                            heightCm = height,
+                            activityLevel = activity,
+                            goalRateKgPerWeek = goal.rateKgPerWeek,
+                            bandEnabled = container.healthConnectAvailable,
+                            createdAt = System.currentTimeMillis(),
+                        ),
+                    )
+                    container.body.record(
+                        profileId = created.id,
+                        weightKg = weight,
+                        localDate = today,
+                        source = BodyMeasurementRepository.SOURCE_MANUAL,
+                    )
+                    container.targets.recordSeed(created, weightKg = weight, on = today)
+                    container.settings.setActiveProfile(created.id)
+                } else {
+                    val updated = existing.copy(
                         name = name.trim(),
                         sex = sex,
                         birthDate = dob,
                         heightCm = height,
                         activityLevel = activity,
                         goalRateKgPerWeek = goal.rateKgPerWeek,
-                        // This phone is the one with the band until a second profile claims it.
-                        bandEnabled = container.healthConnectAvailable,
-                        createdAt = System.currentTimeMillis(),
-                    ),
-                )
-                container.body.record(
-                    profileId = created.id,
-                    weightKg = weight,
-                    localDate = today,
-                    source = BodyMeasurementRepository.SOURCE_MANUAL,
-                )
-                container.targets.recordSeed(created, weightKg = weight, on = today)
+                    )
+                    container.profiles.update(updated)
+                    if (originalWeight == null || originalWeight!!.roundToInt() != weight.roundToInt()) {
+                        container.body.record(
+                            profileId = updated.id,
+                            weightKg = weight,
+                            localDate = today,
+                            source = BodyMeasurementRepository.SOURCE_MANUAL,
+                        )
+                    }
+                    container.targets.recordSeed(updated, weightKg = weight, on = today)
+                }
                 onSaved()
             } catch (failure: Exception) {
                 saveError = failure.message ?: failure::class.java.simpleName
@@ -168,8 +209,13 @@ fun OnboardingScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
-        Text(stringResource(R.string.onboarding_title), style = MaterialTheme.typography.titleMedium)
-        Text(stringResource(R.string.onboarding_note), style = MaterialTheme.typography.bodySmall)
+        Text(
+            text = stringResource(if (isEditing) R.string.profile_edit_title else R.string.onboarding_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        if (!isEditing) {
+            Text(stringResource(R.string.onboarding_note), style = MaterialTheme.typography.bodySmall)
+        }
 
         OutlinedTextField(
             value = name,

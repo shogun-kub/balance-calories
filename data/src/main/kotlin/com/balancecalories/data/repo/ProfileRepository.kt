@@ -52,5 +52,14 @@ class ProfileRepository(
 
     suspend fun archive(id: Long) = dao.archive(id, clock())
 
-    suspend fun delete(id: Long) = dao.delete(id)
+    /**
+     * Removes the profile and, by cascade, its weights, activity, food and target history. If it was the
+     * one being shown, the stored selection is cleared so the app cannot point at a deleted row.
+     */
+    suspend fun delete(id: Long) = database.withTransaction {
+        dao.delete(id)
+        val settings = database.settingsDao()
+        val active = settings.value(AppSettingsRepository.KEY_ACTIVE_PROFILE_ID)?.toLongOrNull()
+        if (active == id) settings.remove(AppSettingsRepository.KEY_ACTIVE_PROFILE_ID)
+    }
 }

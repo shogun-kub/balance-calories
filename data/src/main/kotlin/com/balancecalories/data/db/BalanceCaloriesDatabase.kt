@@ -6,7 +6,9 @@ import androidx.room.TypeConverters
 import com.balancecalories.data.db.dao.BodyMeasurementDao
 import com.balancecalories.data.db.dao.DailyActivityDao
 import com.balancecalories.data.db.dao.ProfileDao
+import com.balancecalories.data.db.dao.SettingsDao
 import com.balancecalories.data.db.dao.TargetHistoryDao
+import com.balancecalories.data.db.entity.AppSettingEntity
 import com.balancecalories.data.db.entity.BodyMeasurementEntity
 import com.balancecalories.data.db.entity.DailyActivityEntity
 import com.balancecalories.data.db.entity.FoodEntryEntity
@@ -44,8 +46,9 @@ import com.balancecalories.data.db.entity.TargetHistoryEntity
         TargetHistoryEntity::class,
         PendingLookupEntity::class,
         SyncStateEntity::class,
+        AppSettingEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -55,6 +58,7 @@ abstract class BalanceCaloriesDatabase : RoomDatabase() {
     abstract fun bodyMeasurementDao(): BodyMeasurementDao
     abstract fun dailyActivityDao(): DailyActivityDao
     abstract fun targetHistoryDao(): TargetHistoryDao
+    abstract fun settingsDao(): SettingsDao
 
     companion object {
         const val NAME = "balancecalories.db"

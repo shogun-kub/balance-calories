@@ -197,6 +197,13 @@ Schemas are exported to `data/schemas/` and committed. `MigrationHarnessTest` re
 `MigrationTestHelper` on a device, so the harness exists before the first migration does; every future
 version adds its migration test to that file.
 
+**Schema v2 (2026-11-08)** adds `app_setting(key TEXT PRIMARY KEY, value TEXT NOT NULL)`, a small
+key-value store for state that belongs to the phone rather than to a person. Its first key is
+`active_profile_id`, which records *which* profile the app is showing. This is deliberately not inferred
+from row order: with two profiles in a household, "the first row" would eventually show one person's
+numbers under another's name. `ProfileRepository.delete` clears the key when the deleted profile was the
+current one, so the stored selection can never point at a missing row.
+
 ## 4. Health Connect mapping
 
 | HC record | Field | Destination |

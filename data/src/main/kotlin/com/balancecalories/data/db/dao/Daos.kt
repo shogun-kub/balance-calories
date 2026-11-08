@@ -98,7 +98,6 @@ interface DailyActivityDao {
 
 @Dao
 interface TargetHistoryDao {
-
     @Upsert
     suspend fun upsert(target: TargetHistoryEntity)
 
@@ -108,4 +107,21 @@ interface TargetHistoryDao {
             "AND effective_from <= :localDate ORDER BY effective_from DESC LIMIT 1",
     )
     suspend fun effectiveOn(profileId: Long, localDate: String): TargetHistoryEntity?
+}
+
+/** App-level key-value state (schema v2), such as which profile is currently shown. */
+@Dao
+interface SettingsDao {
+
+    @Query("SELECT value FROM app_setting WHERE `key` = :key")
+    suspend fun value(key: String): String?
+
+    @Query("SELECT value FROM app_setting WHERE `key` = :key")
+    fun observe(key: String): Flow<List<String>>
+
+    @Insert(onConflict = androidx.room.OnConflictStrategy.REPLACE)
+    suspend fun put(setting: com.balancecalories.data.db.entity.AppSettingEntity)
+
+    @Query("DELETE FROM app_setting WHERE `key` = :key")
+    suspend fun remove(key: String)
 }

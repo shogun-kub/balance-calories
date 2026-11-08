@@ -32,17 +32,19 @@ import com.balancecalories.core.profile.Profile
 import kotlinx.coroutines.launch
 
 /**
- * Lists the household's profiles and is the only place that can destroy one.
+ * Profiles for this phone: which one is shown, which one reads the band, and the two destructive or
+ * structural actions — edit and delete.
  *
- * Deletion is hard, not archival, because the user asked to delete: the foreign keys cascade through
- * weights, activity, food, recipes and target history. That is why the confirmation spells out exactly
- * what disappears and says it cannot be undone.
+ * Tapping a card selects that profile as the current one, which is the "switch" the plan asks for.
  */
 @Composable
 fun ProfilesScreen(
     container: AppContainer,
     profiles: List<Profile>,
+    activeProfileId: Long?,
     onAddProfile: () -> Unit,
+    onEditProfile: (Profile) -> Unit,
+    onSelectProfile: (Profile) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -64,34 +66,52 @@ fun ProfilesScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(profiles, key = { it.id }) { profile ->
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Row(
+                val isCurrent = profile.id == activeProfileId
+                Card(
+                    onClick = { onSelectProfile(profile) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
                             Text(profile.name, style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                text = stringResource(
-                                    when (profile.sex) {
-                                        Sex.MALE -> R.string.sex_male
-                                        Sex.FEMALE -> R.string.sex_female
-                                    },
-                                ),
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                            if (profile.bandEnabled) {
+                            if (isCurrent) {
                                 Text(
-                                    text = stringResource(R.string.band_owner_badge),
-                                    style = MaterialTheme.typography.labelSmall,
+                                    text = stringResource(R.string.current_badge),
+                                    style = MaterialTheme.typography.labelMedium,
                                 )
                             }
                         }
-                        TextButton(onClick = { pendingDelete = profile }) {
-                            Text(stringResource(R.string.action_delete))
+                        Text(
+                            text = stringResource(
+                                when (profile.sex) {
+                                    Sex.MALE -> R.string.sex_male
+                                    Sex.FEMALE -> R.string.sex_female
+                                },
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        if (profile.bandEnabled) {
+                            Text(
+                                text = stringResource(R.string.band_owner_badge),
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { onEditProfile(profile) }) {
+                                Text(stringResource(R.string.action_edit))
+                            }
+                            TextButton(onClick = { pendingDelete = profile }) {
+                                Text(stringResource(R.string.action_delete))
+                            }
                         }
                     }
                 }

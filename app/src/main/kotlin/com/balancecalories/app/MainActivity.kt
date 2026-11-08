@@ -17,13 +17,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.balancecalories.app.onboarding.OnboardingScreen
+import com.balancecalories.app.profile.ProfileFormScreen
 import com.balancecalories.app.profiles.ProfilesScreen
 import com.balancecalories.core.energy.TargetCalculator
 import com.balancecalories.core.energy.TargetLimit
@@ -31,8 +32,9 @@ import com.balancecalories.core.profile.Profile
 import com.balancecalories.data.health.HealthConnectState
 import com.balancecalories.data.health.HealthConnectSupport
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
-private enum class Screen { TODAY, PROFILES, ONBOARDING }
+private enum class Screen { TODAY, PROFILES, FORM }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,38 +50,77 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * Navigation is two enum states and a nullable profile list: no Navigation Compose yet, because three
- * destinations do not justify the dependency. What the app shows follows the database, so deleting the
- * last profile returns to onboarding without any explicit navigation call.
+ * Routing is three enum states and the stored "current profile" id: no Navigation Compose yet, because
+ * four destinations do not justify the dependency.
+ *
+ * Which profile is shown comes from the database, not from list order. If the stored id points at a
+ * profile that no longer exists, the first available one is adopted, so a deleted selection cannot leave
+ * the app pointing at nothing.
  */
 @Composable
 private fun Root() {
     val container = (LocalContext.current.applicationContext as BalanceCaloriesApp).container
+    val scope = rememberCoroutineScope()
+
     val profiles by container.profiles.observeActive()
         .collectAsStateWithLifecycle(initialValue = emptyList())
+    val activeId by container.settings.observeActiveProfileId()
+        .collectAsStateWithLifecycle(initialValue = null)
+
     var screen by remember { mutableStateOf(Screen.TODAY) }
+    var editing by remember { mutableStateOf<Profile?>(null) }
+
+    LaunchedEffect(profiles, activeId) {
+        if (profiles.isNotEmpty() && profiles.none { it.id == activeId }) {
+            container.settings.setActiveProfile(profiles.first().id)
+        }
+    }
+
+    val active = profiles.firstOrNull { it.id == activeId } ?: profiles.firstOrNull()
 
     when {
-        // No profiles means onboarding, whichever screen was open — deleting the last profile lands here.
-        profiles.isEmpty() -> OnboardingScreen(
+        profiles.isEmpty() -> ProfileFormScreen(
             container = container,
+            existing = null,
             onSaved = { screen = Screen.TODAY },
         )
 
         screen == Screen.PROFILES -> ProfilesScreen(
             container = container,
             profiles = profiles,
-            onAddProfile = { screen = Screen.ONBOARDING },
+            activeProfileId = active?.id,
+            onAddProfile = {
+                editing = null
+                screen = Screen.FORM
+            },
+            onEditProfile = {
+                editing = it
+                screen = Screen.FORM
+            },
+            onSelectProfile = { profile ->
+                scope.launch { container.settings.setActiveProfile(profile.id) }
+                screen = Screen.TODAY
+            },
             onBack = { screen = Screen.TODAY },
         )
 
-        screen == Screen.ONBOARDING -> OnboardingScreen(
+        screen == Screen.FORM -> ProfileFormScreen(
             container = container,
+            existing = editing,
+            onSaved = {
+                editing = null
+                screen = Screen.TODAY
+            },
+        )
+
+        active == null -> ProfileFormScreen(
+            container = container,
+            existing = null,
             onSaved = { screen = Screen.TODAY },
         )
 
         else -> ProfileTarget(
-            profile = profiles.first(),
+            profile = active,
             container = container,
             onOpenProfiles = { screen = Screen.PROFILES },
         )
@@ -88,8 +129,7 @@ private fun Root() {
 
 /**
  * Reads the profile's latest weight and computes the target with `:core`. Nothing is written here: a
- * target enters `target_history` at onboarding or when the user explicitly recalculates, not every time
- * a screen is opened.
+ * target enters `target_history` at onboarding, at an explicit edit, or when the user recalculates.
  */
 @Composable
 private fun ProfileTarget(profile: Profile, container: AppContainer, onOpenProfiles: () -> Unit) {

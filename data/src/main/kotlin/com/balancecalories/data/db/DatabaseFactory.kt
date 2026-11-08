@@ -14,4 +14,5 @@ fun createDatabase(
     context.applicationContext,
     BalanceCaloriesDatabase::class.java,
     name,
-).build()
+).addMigrations(*Migrations.all)
+    .build()

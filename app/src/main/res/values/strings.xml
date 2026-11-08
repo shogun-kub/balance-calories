@@ -48,6 +48,9 @@
     <string name="delete_dialog_title">Delete this profile?</string>
     <string name="delete_dialog_text">%1$s will be deleted together with its weight readings, food log and target history. This cannot be undone.</string>
     <string name="delete_dialog_confirm">Delete</string>
+    <string name="current_badge">current</string>
+    <string name="action_edit">Edit</string>
+    <string name="profile_edit_title">Edit profile</string>
 
     <string name="target_title">Energy target</string>
     <string name="target_note">Computed from your profile and latest weight. Nothing leaves the phone.</string>

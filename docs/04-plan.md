@@ -79,8 +79,8 @@ it exists.
       instrumentation tests green on the Honor X7c
 - [x] `:core` energy module: Mifflin–St Jeor and Harris–Benedict BMR, PAL seed, deficit cap, safety
       floors, weekly clamp, DST-aware day bucketing — 27 tests green (`.\gradlew.bat :core:test`)
-- [ ] Universal profile model: **create, delete and the one-band-per-device rule are done and verified
-      on device**; edit, switch and archive have repository support but no UI yet
+- [x] Universal profile model: create, edit, switch and delete are done and verified on device, and
+      `band_enabled` is enforced one-per-device. Archive has repository support but no UI yet.
 - [x] Profile create, onboarding step 1–3 (profile, body data, goal rate) — verified by hand on the
       Honor: a typed profile wrote `profile`, `body_measurement` and `target_history` rows and survived
       a restart
