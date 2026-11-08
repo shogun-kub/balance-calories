@@ -1,8 +1,13 @@
 # Implementation plan
 
 Estimates are **dev-days** for one developer working alone, including tests but excluding app-store
-bureaucracy. Total: **~38 dev-days of feature work + ~4 days of spikes**, i.e. roughly 9 weeks
-part-time or 8 weeks full-time with normal life interference.
+bureaucracy. Total: **~44.5 dev-days of feature work + ~4 days of spikes**, i.e. roughly 11 weeks
+part-time with normal life interference.
+
+Milestones: M0 spikes · M1 skeleton · M2 food · M3 recipes · M4 band data · M5 trends · M6 hardening ·
+**M7 interface** · M8 optional v1.1. M7 was added after M5, at the owner's request and before the release
+build, because the app worked but the three things people look at daily lived in three different screens
+reached by a column of text buttons.
 
 The order is deliberate: every unknown that can invalidate the product is resolved in M0, before any
 UI exists.
@@ -231,7 +236,113 @@ at 21:00 and a day where the band stayed home.
 - [ ] ProGuard rules and release signing (no flavours: ADR-017 dropped the split)
 - [ ] README for the household: how to install GB, pair, enable HC, pair the second phone
 
-## M7 — Optional v1.1 (post-release)
+## M7 — Interface (6.5 d)
+
+Planned before release, not after: the app currently works but it is driven by a column of text buttons at
+the bottom of the Today screen, and the three things people actually want to see — today's balance, the
+week, their weight — are buried in three different screens. Navigation is the difference between a working
+prototype and something two people open every day, so it lands before the release build, not in v1.1.
+
+### M7.1 — Navigation by tabs (2 d)
+
+- [ ] Bottom `NavigationBar` with **four destinations** — `Сегодня` · `Еда` · `История` · `Вес` — and the
+      profile/settings/data/debug screens behind a gear icon in the top bar, not in the tab row.
+      Rationale: a tab is a *place you return to*, and settings is a place you visit. Five tabs force a
+      "More" tab, which is a drawer with extra steps.
+- [ ] Icons: hand-written vector drawables (a plate, a bowl, a chart, a scale) rather than
+      `material-icons-extended`. That artifact is ~4 MB of vectors to use four of them, and the four we need
+      are the four definitions of the app. `material-icons-core` (~100 KB, includes the gear and back arrow)
+      is the one dependency worth adding.
+- [ ] Keep the screens themselves unchanged in this step: tabs are a container, and mixing an IA change with
+      a redesign makes it impossible to say which one broke something.
+- [ ] `Back` behaviour: tab switches do not stack; `back` from a tab returns to `Сегодня`, `back` on
+      `Сегодня` leaves the app. Sub-screens (product, recipe, weight entry) keep the existing back arrow.
+- [ ] Remember the last tab across process death (`rememberSaveable`), so a phone that kills the app
+      overnight does not send the person somewhere else.
+
+### M7.2 — Intake/burn chart with macro split (2 d)
+
+- [ ] One chart on `История`: per day, **eaten** as a stacked bar and **burned** as a second bar on the same
+      baseline and the same scale. Both numbers on one scale is the entire point — a chart where the two
+      quantities have different axes cannot answer "did I eat less than I burned".
+- [ ] Macro split inside the eaten bar: **green = protein, yellow = fat, red = carbs**, in fixed order, plus
+      a legend that is always visible and never collapses to colour alone.
+- [ ] **Colour is never the only channel.** Green/red is the classic red-green confusion (~8% of men), so:
+      every segment is labelled in the legend with its name and grams, the segments are separated by a 1 dp
+      divider so they are distinguishable in greyscale, and each bar carries a content description naming
+      all three values. If that makes the legend carry the meaning, the colour is decoration — which is the
+      correct hierarchy for a health app.
+- [ ] A day with no food log draws **no eaten bar** (a gap), never a zero-height bar: the app's oldest rule
+      is that an unlogged day is missing, not empty.
+- [ ] Target line across the chart at the current target, dashed, so the person can see the target rather
+      than infer it.
+- [ ] Replaces the 7-day balance bar row, which shows the same days with less information.
+- [ ] 30 days by default with a 7/30/90 selector; horizontal scroll for 90, since squeezing 90 bars into
+      360 dp is a texture, not a chart.
+
+### M7.3 — Weight: manual entry and a proper chart (1.5 d)
+
+The wife's request, and the one item on this list that is more than cosmetic: the adaptive TDEE needs
+weigh-ins to work at all (`MIN_WEIGHT_POINTS = 3`, `MIN_WEIGHT_SPAN_DAYS = 7`), so a first-class entry point
+makes the app's central number arrive sooner and refuse less often.
+
+- [ ] A `Вес` tab with today's weight, a one-field entry (keypad, 0.1 kg step), and the last reading as the
+      prefill so the usual case is "same as yesterday, adjusted".
+- [ ] Writes `body_measurement` with `source = 'manual'`, which outranks scale, Gadgetbridge and Health
+      Connect in the canonical ranking — a number the person typed on purpose should win over a number
+      something else inferred.
+- [ ] Chart: **raw points as small dots**, the **EWMA line** on top, and the **goal weight as a dashed
+      horizontal line** when one is set. The dots matter because hiding them behind a smooth line implies a
+      precision the scale does not have; showing both is honest about the noise.
+- [ ] Range selector 30/90/365 days, and the trend line labelled with its current rate (`-0.35 kg/week`).
+- [ ] Currently weight can only be recorded by **editing the profile form**, which is why this needs its own
+      place: an action you take twice a week should not be four taps deep in a settings-shaped screen.
+
+### M7.4 — Launcher icon (0.5 d)
+
+- [ ] The app has **no icon at all** today: `AndroidManifest.xml` declares no `android:icon`, so it shows the
+      platform's default robot. Any icon is an improvement; this one is *the* improvement, because it is the
+      only part of the app seen on the home screen.
+- [ ] Design brief from the owner: **scales (balance) with food on one pan and a dumbbell on the other** —
+      energy in, energy out, in one glyph. That is the product's thesis and it survives being 48 dp wide.
+- [ ] Constraint worth stating early: at 48 dp a cake and a dumbbell are two smudges. The icon must work as a
+      **silhouette** — thick strokes, no fine detail, two colours plus the background — and it must be
+      checked at 24, 48 and 108 dp before it is called done. A vector drawable keeps it crisp at all three.
+- [ ] Deliver the full adaptive-icon set: `mipmap-anydpi-v26` foreground + background layers, a **monochrome
+      layer** for Android 13 themed icons (an app without one looks broken in a themed launcher), and a
+      legible fallback for pre-26 devices.
+
+### M7.5 — Dark theme and contrast (0.5 d)
+
+- [ ] `MaterialTheme {}` currently resolves to a **light-only** scheme; there is no `darkColorScheme`. The
+      macro colours make this urgent: green, yellow and red chosen for a white background are not the same
+      colours on a near-black one.
+- [ ] Follow the system setting, keep the three macro hues recognisable, and check the chart's contrast
+      against both surfaces. A colour that fails contrast is a number the person cannot read.
+
+### M7.6 — Strings, verification, and what this breaks
+
+- [ ] New strings in both files in the same commit (`nav_today`, `nav_food`, `nav_history`, `nav_weight`,
+      chart legend and range labels, weight entry labels): 20–25 keys, parity test covers them.
+- [ ] Verified on the Honor at 100% and 200% font scale, in Russian and English: four tabs at 200% must
+      still fit or wrap without a per-character column (ADR-026).
+- [ ] Gallery: the Today tab, the History chart with a real week, the weight chart with the goal line, and
+      the icon at three sizes.
+
+### What it costs and what it buys
+
+| Piece | Days | Risk |
+| --- | --- | --- |
+| Tabs + icons | 2 | Navigation rewiring touches every `onOpen*` callback; one screen at a time, verified after each |
+| Intake/burn chart | 2 | Stacked bars per day over 90 days is where a naive Compose `Canvas` starts dropping frames on the Redmi; measure on the floor device, not the Honor |
+| Weight tab and chart | 1.5 | Duplicates chart maths with History; extract one `DayChart` before writing the second |
+| Launcher icon | 0.5 | Silhouette legibility at 24 dp; iterate at real sizes, not at 512 px |
+| Dark theme | 0.5 | Contrast of the three macro hues; verify on a dark surface, not by eye |
+| **Total** | **6.5** | |
+
+Nothing here changes stored data or the schema, which is deliberate: an interface milestone that also
+migrates the database cannot be reviewed or rolled back cleanly.
+## M8 — Optional v1.1 (post-release)
 
 Adaptive-TDEE refinements, HC write-back (`NutritionRecord`, `WeightRecord`), widget, notifications,
 sleep/workout screens, shared recipe export, micronutrients.
@@ -249,7 +360,8 @@ sleep/workout screens, shared recipe export, micronutrients.
 | M4 band data | 6 | 26 |
 | M5 trends | 6 | 32 |
 | M6 hardening | 6 | 38 |
-| Buffer (20%) | 8 | **46** |
+| **M7 interface** | **6.5** | **44.5** |
+| Buffer (20%) | 9 | **53.5** |
 
 If only one thing can be built: **M0 + M2 + M4** (food + band + one number). Recipes and trends are
 what make it pleasant, not what make it work.

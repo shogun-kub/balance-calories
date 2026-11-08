@@ -18,7 +18,7 @@ Current state: **M1-M5 complete, M6 half done.** `:core` (107 JVM tests) and `:d
 repositories) build green, and `:app` has the whole loop: Today with burned/balance/quality, the food side
 (products, search, scanning, logging, recipes) and **History** with the adaptive TDEE, the weekly recap,
 a weight trend line and a projection, plus a backup screen. 107 :core + 42 :data + 10 :app JVM tests and
-**113 device tests** (109 :data, 4 :app) pass. Next: the rest of M6 — device matrix, accessibility, release.
+**113 device tests** (109 :data, 4 :app) pass. Next: the rest of M6 (device matrix, TalkBack, release) then **M7 interface** — tabs, charts, weight, icon; see docs/04-plan.md.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -295,6 +295,10 @@ a weight trend line and a projection, plus a backup screen. 107 :core + 42 :data
 7. Tests: 21 new device cases (11 backup round-trip, 10 CSV). Totals: 107 :core, 42 :data, 10 :app JVM; 109 :data,
    4 :app device. Strings 280/280.
 8. Next: the rest of M6 — device matrix on both phones, TalkBack and contrast, release signing, README.
+9. **M7 — Interface is planned and not started** (`docs/04-plan.md`): bottom tabs with four destinations, an
+   intake/burn chart with the macro split, a `Вес` tab with manual entry and a chart, a launcher icon (the app
+   currently has **none**, so the home screen shows the platform's robot), and a dark theme. Ordered before the
+   release build, not after it.
 ## Toolchain (installed 2026-11-07, verified)
 
 | Item | Location / version |
