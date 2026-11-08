@@ -284,6 +284,46 @@ Conclusions, now measured rather than inferred:
 
 ---
 
+### 1.7 What the band still does besides activity (2026-11-08)
+
+Taking the band away from Huawei Health costs its two non-data jobs — **notifications** and
+**weather**. Both were restored through Gadgetbridge and verified.
+
+| Job | How it works now |
+| --- | --- |
+| Notifications | Gadgetbridge's `NotificationListener` receives everything; default policy forwards **only while the phone screen is off** — observed as `Not forwarding notification, screen seems to be on and settings do not allow this`. Enabled per device. Also available: canned replies, notification app icons, call accept/reject, disconnect alert. |
+| Weather | Gadgetbridge carries the full Huawei stack (`packets/Weather$WeatherSupport{Request,Response}`, `$CurrentWeatherRequest`, `$WeatherForecastData{Hourly,DayData}`, `$SunMoonSupport`, `HuaweiWeatherManager`), and **negotiates support with the band at runtime** — hence the docs' "not supported by all devices". |
+
+Weather needs a second app, because Gadgetbridge deliberately has **no network permission**:
+
+1. Installed `org.breezyweather` **6.2.2** (F-Droid) and granted location.
+2. Breezy: *Виджеты и живые обои → Передавать мои данные о погоде в другие приложения →
+   Отправить данные о погоде в Gadgetbridge*.
+3. Gadgetbridge received it and forwarded it to the band:
+
+```
+GenericWeatherReceiver: Got generic weather for 1 locations
+HuaweiWeatherManager: Moon set for … out of bounds: …
+Saved weather specs to cache: …/weatherCache.bin
+```
+
+Breezy talks to Gadgetbridge over the broadcast
+`nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER`, carrying current conditions, hourly and
+daily forecast, air quality, and sun/moon times.
+
+Two harmless observations worth remembering so they are not mistaken for bugs later:
+
+- `Moon set … out of bounds` is `HuaweiWeatherManager` clamping sun/moon times that fall outside the
+  day it is encoding. Cosmetic.
+- Gadgetbridge is on the Doze whitelist (`user,nodomain.freeyourgadget.gadgetbridge,10462`), so the
+  notification listener survives Honor's battery manager.
+
+Gadgetbridge's own *Погода → Местоположение погоды (для провайдера погоды LineageOS)* field can stay
+empty: the location arrives inside Breezy's broadcast (the log line says how many locations it
+carried).
+
+---
+
 ## 2. Health Connect
 
 **What it is:** a database plus a permission system that lives on the phone. Health apps *write*
