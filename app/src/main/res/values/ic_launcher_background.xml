@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      The adaptive icon's background: the app's cream, so the ink beam and the two coloured objects sit on the
+      same surface as every screen. A colour rather than a drawable keeps the icon flat and cheap to render.
+    -->
+    <color name="ic_launcher_background">#F3EDE1</color>
+</resources>

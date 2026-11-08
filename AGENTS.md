@@ -14,11 +14,11 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1-M5, M7.1-M7.3 complete, M6 half done.** `:core` (131 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
+Current state: **M1-M5, M7.1-M7.4 complete, M6 half done.** `:core` (131 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
 repositories) build green, and `:app` has the whole loop: Today with burned/balance/quality, the food side
 (products, search, scanning, logging, recipes) and **History** with the adaptive TDEE, the weekly recap,
 a weight trend line and a projection, plus a backup screen. 131 :core + 42 :data + 10 :app JVM tests and
-**119 device tests** (115 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split and `Вес` carries the **weight chart** (dots, trend, dashed goal). Next: M7.4 the launcher icon, then M7.5 the dark theme, then the rest of M6 and the release; see docs/04-plan.md.
+**119 device tests** (115 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split and `Вес` carries the **weight chart** (dots, trend, dashed goal). The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie on one side and a steel-blue dumbbell on the other. Next: M7.5 the dark theme, then the rest of M6 and the release; see docs/04-plan.md.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -378,8 +378,26 @@ a weight trend line and a projection, plus a backup screen. 131 :core + 42 :data
       database sat in the working tree as an untracked file, which is the accident hard rule 1 is
       about.
 21. Tests: 131 :core, 42 :data, 10 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**.
-22. Next: **M7.4** — the launcher icon (balance with a piece of pie and a dumbbell), then M7.5 the dark
-    theme, then the rest of M6 and the release.
+22. ~~**M7.4 — the launcher icon**~~ — a vector **adaptive icon**: an ink balance beam with a slice of pie on
+    one side and a steel-blue dumbbell on the other. The owner's brief was a balance *with pans*; three
+    sketches at 24/48/108 dp showed that at 24 dp each pan and its food merge into one blob, so he picked the
+    reduced structure (beam and objects) after seeing exactly that failure. The slice is a wedge with a flat
+    crust bar and an extruded dark side, in two tones — golden crust over berry filling — and the dumbbell is
+    `#4682B4`. Shipped as `res/drawable/ic_launcher_foreground.xml` (13 paths), a cream background colour and
+    a `<monochrome>` layer; no PNG densities, because `minSdk` 28 makes the adaptive icon the only form any
+    phone can use. `tools/icon_design.py` is the source of the geometry — it renders the review previews and
+    prints the exact `pathData` the drawable carries. Verified on the Honor: Settings → *О приложении*, the
+    recents card, and the third home page. ADR-032.
+23. **Two things the icon taught:**
+    - **At 24 dp an icon is a silhouette test, not a drawing.** Everything that survived was outline — a
+      wedge with a flat crust bar against a bar with two plates. Everything that failed was detail: pans, a
+      domed crust, one flat colour with no internal edge.
+    - **`docs/03-architecture.md` had two ADR rows glued in front of its own title**, left by an earlier
+      append. Nothing caught it because Markdown renders the damage as a table at the top of the page, and no
+      test reads the docs. Repaired and both rows moved into §13; when appending to a table, check the first
+      line of the file after the write, not just that the text landed somewhere.
+24. Tests: 131 :core, 42 :data, 10 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**.
+25. Next: **M7.5** — the dark theme, then the rest of M6 and the release.
 
 ## Toolchain (installed 2026-11-07, verified)
 

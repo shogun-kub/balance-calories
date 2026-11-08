@@ -385,24 +385,40 @@ the device was restored to its real state afterwards — one weigh-in, goal 75 k
 ignored: it was a pulled database sitting untracked in the working tree, which is the accident hard rule 1 exists
 to prevent.
 
-### M7.4 — Launcher icon (0.5 d)
+### M7.4 — Launcher icon — done 2026-11-08
 
-- [ ] The app has **no icon at all** today: `AndroidManifest.xml` declares no `android:icon`, so it shows the
-      platform's default robot. Any icon is an improvement; this one is *the* improvement, because it is the
-      only part of the app seen on the home screen.
-- [x] **Decided (owner, 2026-11-08, restated in Russian): a balance scale with two pans — a piece of pie in one
-      pan, a dumbbell in the other.** `Кусок пирога в одной чаше весов, и гантеля — в другой.` The pans are the
-      balance's own, and the pie sits *inside* its pan; there is no separate plate, no hand, no third object.
-      One glyph for the whole product: what you eat weighed against what you spend.
-- [ ] Silhouette rule, because two pans plus two objects is four shapes inside 48 dp: the **beam and the two
-      pans** carry the meaning, so they are drawn as flat two-tone shapes with **negative space** between the
-      beam and each pan, not as outlines. The pie and the dumbbell must differ in **outline** — a wedge sitting
-      low in its pan against a bar with two square ends — so they stay distinguishable in greyscale and at 24 dp.
-- [ ] Three sketches before the final one: full balance with objects inside the pans; a reduced beam with the
-      objects hanging directly (no pan outlines); and a front-on balance with pans drawn as straight lines. The
-      owner picks from images at 24, 48 and 108 dp, because the choice is legibility, not taste — objects inside
-      pans is the target, and if pans do not survive 24 dp the agreed fallback is the hanging version, which
-      keeps the pie and the dumbbell as the two readable masses.### M7.5 — Dark theme and contrast (0.5 d)
+- [x] The app had **no icon at all**: `AndroidManifest.xml` declared no `android:icon`, so it showed the
+      platform's default robot. It now declares `@mipmap/ic_launcher` and `@mipmap/ic_launcher_round`.
+- [x] **Brief (owner, 2026-11-08, restated in Russian): a balance scale with a piece of pie in one pan and a
+      dumbbell in the other.** `Кусок пирога в одной чаше весов, и гантеля — в другой.` One glyph for the whole
+      product: what you eat weighed against what you spend.
+- [x] Three sketches first, at 24, 48 and 108 dp: a full balance with the food inside its pans; a reduced beam
+      with the two objects hanging; and a front-on balance whose pans are straight lines. The sheet is the point
+      of the exercise — at 24 dp the pans of the first sketch merged with the food into one blob, which is exactly
+      the failure the sketches existed to expose.
+- [x] **The owner chose the reduced structure** (beam and objects, no pans) after seeing all three, then asked for
+      three changes on it: the slice **rotated with depth** because it read as a flat triangle, the dumbbell in
+      **steel blue `#4682B4`**, and the pie in **two tones** because one flat amber read as a blob.
+- [x] Shipped as an **adaptive icon**: `res/drawable/ic_launcher_foreground.xml` (13 vector paths over a 108 × 108
+      viewport), the cream background as a colour resource, and a `<monochrome>` layer for Android 13+ themed
+      icons. No PNG densities and no legacy square icon — `minSdk` 28 means an adaptive icon is the only form any
+      supported phone can use.
+- [x] `tools/icon_design.py` is the **source of the geometry**, not a sketchbook: it renders the 24/48/108
+      previews and prints the exact `pathData` the drawable carries, so the approved picture and the shipped
+      vector cannot drift apart.
+- [x] **Verified on the Honor X7c** (ALT-LX1, Android 14 / SDK 34): the system paints it in Settings → *О
+      приложении*, in the recents card, and on the launcher's third home page as **Баланс Калорий**.
+
+Two things the icon taught:
+
+- **At 24 dp an icon is a silhouette test, not a drawing.** Every decision that survived was about outline —
+  a wedge with a flat crust bar against a bar with two plates. Every decision that failed was about detail: pans,
+  a domed crust, a single colour with no internal edge.
+- **A generated icon has to be checkable.** Because the vectors come out of the same script as the previews, the
+  only way they disagree is if the script is edited without re-rendering — which is a `git diff` on a PNG no one
+  commits. The path data is printed, never hand-typed.
+
+### M7.5 — Dark theme and contrast (0.5 d)
 
 - [ ] `MaterialTheme {}` currently resolves to a **light-only** scheme; there is no `darkColorScheme`. The
       macro colours make this urgent: green, yellow and red chosen for a white background are not the same
