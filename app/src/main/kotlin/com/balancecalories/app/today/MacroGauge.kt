@@ -61,6 +61,12 @@ fun MacroGauge(
     val split = intake.macroSplit
     val fill = CalorieGauge.of(intake.eatenKcal, targetKcal.toDouble(), split)
     val trackColor = ChartPalette.track()
+    // Read before the Canvas: a DrawScope lambda is not a composable, and the palette is theme-aware now, so
+    // the tones have to be resolved here and handed in rather than looked up while drawing.
+    val proteinColor = ChartPalette.protein
+    val fatColor = ChartPalette.fat
+    val carbsColor = ChartPalette.carbs
+    val otherColor = ChartPalette.other
     // At a 200% font scale the centre numbers are twice as wide and twice as tall; shrinking the headline and
     // letting the phrases wrap keeps them inside the arc instead of across it.
     val largeType = LocalDensity.current.fontScale >= 1.5f
@@ -127,10 +133,10 @@ fun MacroGauge(
 
                 if (fill.used > 0.0) {
                     val segments = listOf(
-                        fill.protein to ChartPalette.protein,
-                        fill.fat to ChartPalette.fat,
-                        fill.carbs to ChartPalette.carbs,
-                        fill.other to ChartPalette.other,
+                        fill.protein to proteinColor,
+                        fill.fat to fatColor,
+                        fill.carbs to carbsColor,
+                        fill.other to otherColor,
                     ).filter { it.first > 0.0 }
 
                     // A gap between segments, in degrees, so two adjacent macros never merge into one band.
@@ -214,9 +220,9 @@ fun MacroGauge(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            MacroChip(ChartPalette.protein, R.string.gauge_protein, intake.proteinG)
-            MacroChip(ChartPalette.fat, R.string.gauge_fat, intake.fatG)
-            MacroChip(ChartPalette.carbs, R.string.gauge_carbs, intake.carbsG)
+            MacroChip(proteinColor, R.string.gauge_protein, intake.proteinG)
+            MacroChip(fatColor, R.string.gauge_fat, intake.fatG)
+            MacroChip(carbsColor, R.string.gauge_carbs, intake.carbsG)
             if (split.isUnlabelled) {
                 Text(
                     text = stringResource(R.string.gauge_unlabelled),

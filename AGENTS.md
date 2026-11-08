@@ -14,11 +14,11 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1-M5, M7.1-M7.4 complete, M6 half done.** `:core` (131 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
+Current state: **M1-M5, M7.1-M7.5 complete, M6 half done.** `:core` (140 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
 repositories) build green, and `:app` has the whole loop: Today with burned/balance/quality, the food side
 (products, search, scanning, logging, recipes) and **History** with the adaptive TDEE, the weekly recap,
-a weight trend line and a projection, plus a backup screen. 131 :core + 42 :data + 10 :app JVM tests and
-**119 device tests** (115 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split and `Вес` carries the **weight chart** (dots, trend, dashed goal). The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie on one side and a steel-blue dumbbell on the other. Next: M7.5 the dark theme, then the rest of M6 and the release; see docs/04-plan.md.
+a weight trend line and a projection, plus a backup screen. 140 :core + 42 :data + 16 :app JVM tests and
+**119 device tests** (115 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split and `Вес` carries the **weight chart** (dots, trend, dashed goal). The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie on one side and a steel-blue dumbbell on the other. The app now **follows the phone's dark setting** — Material 3 baseline schemes plus a chart palette per surface. Next: M7.6 the strings and verification sweep, then the rest of M6 and the release; see docs/04-plan.md.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -403,8 +403,25 @@ a weight trend line and a projection, plus a backup screen. 131 :core + 42 :data
     Nothing caught it because Markdown renders the damage as a table at the top of the page, and no test reads
     the docs. Repaired and both rows moved into §13; when appending to a table, check the first line of the file
     after the write, not just that the text landed somewhere.
-25. Tests: 131 :core, 42 :data, 10 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**.
-26. Next: **M7.5** — the dark theme, then the rest of M6 and the release.
+25. ~~**M7.5 — the dark theme and contrast**~~ — the app follows `isSystemInDarkTheme()` with Material 3's baseline
+    pair, and `values-night/themes.xml` keeps the cold-start window dark. The milestone's real finding was the
+    palette: measuring it for the first time showed the light theme's six chart tones at **1.4–2.9 : 1** on
+    cream, below the 3 : 1 graphic floor, with the fat tone effectively invisible. `Contrast` in `:core` is the
+    WCAG arithmetic (12 cases, pinned against the published grey thresholds) and `ChartPaletteContrastTest`
+    refuses any tone under 4.5 : 1 per surface. The palette is now **two sets of six tones at the lightness each
+    surface needs**, carried by `LocalChartTones`; the dark set is the 300-level tones the light theme used to
+    use, because they were always fine on near-black. No in-app switch: the phone already knows. ADR-033.
+26. **Three things the dark theme taught:**
+    - **"Quiet colours" and "readable colours" were in a fight, and quiet was winning.** ADR-029's 300-level
+      tones stopped a carbohydrate arc reading as a failure — and made it invisible on cream. Lightness per
+      surface settles it; the hue still does not shout, the value does its job.
+    - **A `@Composable` palette property is free, except inside a `DrawScope`.** `MacroGauge` read the tones
+      inside `Canvas { }`, which compiled while the palette was a plain object and stopped the moment it became
+      theme-aware. Hoist the colours above the canvas.
+    - **A theme is a place, not a coat of paint.** Every screen already asked `MaterialTheme.colorScheme`, so
+      dark mode needed no screen changes: the work was the palette, the window background and the test.
+27. Tests: 140 :core, 42 :data, 16 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**.
+28. Next: **M7.6** — strings and the verification sweep, then the rest of M6 and the release.
 
 ## Toolchain (installed 2026-11-07, verified)
 

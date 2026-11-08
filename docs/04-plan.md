@@ -428,13 +428,43 @@ Four things the icon taught:
   only way they disagree is if the script is edited without re-rendering. The path data is printed, never
   hand-typed.
 
-### M7.5 — Dark theme and contrast (0.5 d)
+### M7.5 — Dark theme and contrast — done 2026-11-08
 
-- [ ] `MaterialTheme {}` currently resolves to a **light-only** scheme; there is no `darkColorScheme`. The
-      macro colours make this urgent: green, yellow and red chosen for a white background are not the same
-      colours on a near-black one.
-- [ ] Follow the system setting, keep the three macro hues recognisable, and check the chart's contrast
-      against both surfaces. A colour that fails contrast is a number the person cannot read.
+- [x] **`MaterialTheme {}` resolved to a light-only scheme** with no `darkColorScheme` and no idea what the phone
+      was set to. `BalanceTheme` now follows `isSystemInDarkTheme()` with Material 3's baseline pair, and
+      `values-night/themes.xml` gives the window a dark background so the app does not flash white on a cold start
+      in dark mode (Compose cannot paint before it runs, and the platform theme is what the phone shows meanwhile).
+- [x] **The palette problem was worse than "the colours need retuning" — they were never measured.** On cream, the
+      six chart tones sat at **1.4 : 1 to 2.9 : 1**: below the 3 : 1 WCAG floor for graphical objects, and the fat
+      tone at 1.4 : 1 was effectively invisible. `Contrast` in `:core` is the WCAG 2.x arithmetic (twelve cases,
+      pinned against the published grey thresholds: black on white is exactly 21, `#767676` is 4.54 on white and
+      `#808080` is 3.95), so a colour argument can now be settled with a number.
+- [x] **Two sets of six tones, chosen per surface.** On cream the tones are dark (700-level, 4.7–6.2 : 1); on
+      near-black they are the 300-level tones the light theme used to use (5.1–12.1 : 1) — they were always legible
+      there, which is exactly why the light failure took a measurement to find. `LocalChartTones` carries the set
+      with the theme, so no call site asks which mode it is in and `ChartPalette.protein` reads the same everywhere.
+- [x] **`ChartPaletteContrastTest` is the guard**: every tone ≥ 4.5 : 1 on its own surface (text level, because
+      these are also drawn as small legend swatches and chip dots), every tone distinguishable from the gauge track,
+      the two modes actually different, and no tone transparent — contrast ignores alpha, so a typo'd alpha would
+      pass the colour test and render invisible.
+- [x] **Verified on the Honor X7c in both modes.** Light: gauge, history chart, weight chart. Dark: the same three
+      plus the food list and settings, switched with `cmd uimode night yes|no` and left back on the phone's own
+      setting (light). Status bar, top bar, tab bar, chips, dialogs and the search field all follow the scheme
+      without a single hard-coded colour, because `ChartPalette` was the only place one existed.
+
+Three things this milestone taught:
+
+- **"Quiet colours" and "readable colours" were in a fight, and quiet was winning.** ADR-029 chose 300-level tones
+  so a full carbohydrate arc would not read as a failure; the same choice made the arc invisible on cream. The
+  compromise is lightness per surface rather than one set for both — the hue still does not shout, the value does
+  its job.
+- **A `@Composable` palette property is nearly free, except inside a `DrawScope`.** `MacroGauge` read the tones
+  inside `Canvas { }` — a lambda that is not composition, which compiled fine while the palette was a plain object
+  and stopped compiling the moment it became theme-aware. The fix is to hoist the colours above the canvas, which
+  is also where they belonged.
+- **A theme is a place, not a coat of paint.** Because every screen already asked `MaterialTheme.colorScheme` for
+  its colours, the dark theme needed no screen changes at all; the work was the palette, the window background and
+  the test that keeps the next palette honest.
 
 ### M7.6 — Strings, verification, and what this breaks
 

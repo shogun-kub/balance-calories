@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -46,6 +45,7 @@ import com.balancecalories.app.recipes.RecipesScreen
 import com.balancecalories.app.scanner.ScannerScreen
 import com.balancecalories.app.settings.SettingsScreen
 import com.balancecalories.app.today.TodayScreen
+import com.balancecalories.app.ui.BalanceTheme
 import com.balancecalories.app.weight.WeightScreen
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.Recipe
@@ -67,7 +67,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            BalanceTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     Root()
                 }

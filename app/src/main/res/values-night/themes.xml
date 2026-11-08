@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Compose draws everything; the platform theme only needs to get the two things Compose cannot paint before it
+      runs right: the window background and the status-bar icon colour. In the dark theme that means the dark
+      parent, or the phone flashes a white window and draws black status icons on a black bar.
+    -->
+    <style name="Theme.BalanceCalories" parent="android:Theme.Material.NoActionBar" />
+</resources>
