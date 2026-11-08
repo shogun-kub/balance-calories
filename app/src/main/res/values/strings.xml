@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BalanceCalories</string>
+
+    <string name="target_title">Energy target</string>
+    <string name="target_note">Demo body data until onboarding exists — nothing here is stored yet.</string>
+
+    <string name="label_bmr">BMR</string>
+    <string name="label_tdee">TDEE</string>
+    <string name="label_target">Daily target</string>
+    <string name="label_limit">Safety rule</string>
+    <string name="label_health_connect">Health Connect</string>
+
+    <string name="kcal_int">%1$d kcal</string>
+    <string name="kcal_decimal">%1$.0f kcal</string>
+
+    <string name="limit_none">none</string>
+    <string name="limit_cap">deficit capped at 25%</string>
+    <string name="limit_floor">raised to safety floor</string>
+
+    <string name="hc_available">available</string>
+    <string name="hc_update_required">update required</string>
+    <string name="hc_not_supported">not supported</string>
+</resources>

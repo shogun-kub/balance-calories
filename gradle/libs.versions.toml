@@ -1,16 +1,43 @@
 # Single source of truth for dependency versions (see AGENTS.md, hard rule 3).
 # No "+", no "latest.release", no "-SNAPSHOT" in anything that ships.
 #
-# Android/Compose/Health Connect versions will be added in M1 step 2, when :app and :data exist.
-# Pinning them before a module uses them would be an untested claim.
+# Versions are resolved against the real repositories, not recalled: AGP and the androidx
+# coordinates from dl.google.com, the rest from Maven Central. Kotlin stays on the version that
+# :core already builds and tests with.
 
 [versions]
 kotlin = "2.4.21"
 junit = "5.14.4"
+agp = "9.5.1"
+androidx-activity = "1.13.0"
+# 2.11.0 requires compileSdk 37; 2.10.0 is the newest that builds against 36.
+androidx-lifecycle = "2.10.0"
+# BOM 2026.06.01 pins Compose UI 1.11.4 and material3 1.4.0, both of which top out at
+# minCompileSdk 35. Newer BOMs pull ui 1.12.x, which demands compileSdk 37 (not installed).
+compose-bom = "2026.06.01"
+health-connect = "1.1.0"
 
 [plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 
 [libraries]
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+
+# Health Connect client. The platform store exists from Android 14; on Android 11 the standalone
+# app supplies it (see docs/02-research.md §2).
+androidx-health-connect-client = { module = "androidx.health.connect:connect-client", version.ref = "health-connect" }
+
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+compose-material3 = { module = "androidx.compose.material3:material3" }

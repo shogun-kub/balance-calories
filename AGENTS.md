@@ -15,8 +15,36 @@ Two outputs, everything else supports them:
    without reverse-engineering the code.
 
 Current state: **M1 in progress.** `docs/` is complete through the plan, the toolchain is installed,
-and `:core` — the pure Kotlin energy maths — builds and tests green (27 tests). `:data` and `:app` do
-not exist yet.
+`:core` — the pure Kotlin energy maths — builds and tests green (27 tests), and the module skeleton
+now exists: `:data` (Health Connect client, status probe) and `:app` (Compose screen showing a target
+computed by `:core`). `assembleDebug` succeeds and the debug APK installs and runs on the Honor X7c.
+What is still missing from M1: Room schema v1 and DAOs, the profile model and onboarding, target
+history, settings, the debug screen.
+
+### Android build: three things that bite (2026-11-08)
+
+1. **AGP 9 has Kotlin built in.** Applying `org.jetbrains.kotlin.android` fails with *"no longer
+   required for Kotlin support since AGP 9.0"*. Android modules apply only
+   `com.android.application` / `com.android.library`. The **Compose compiler plugin is still
+   required** once `buildFeatures.compose = true`. `:core` keeps the plain Kotlin JVM plugin.
+2. **`compileSdk` is 36, and dependencies must respect it.** Platform 37 is not installed and the SDK
+   lives under `Program Files`, so adding it needs an elevated shell. Current pins are chosen to fit
+   36: Compose BOM `2026.06.01` (ui 1.11.4, material3 1.4.0) and lifecycle `2.10.0`. Newer Compose
+   (ui 1.12.x) and lifecycle `2.11.0` declare `minCompileSdk=37` and fail `checkDebugAarMetadata`.
+   Before upgrading either, check the AAR's `aar-metadata.properties` — not the release notes.
+   Raising the ceiling means installing platform 37, then bumping `compileSdk`.
+3. **Room has no working KSP for Kotlin 2.4.21** (KSP publishes `2.3.x`). When Room lands, use KAPT
+   until a matching KSP exists, or the build will fail at annotation processing.
+
+## Remaining setup (M1)
+
+1. ~~`local.properties` with `sdk.dir`~~ — written; untracked.
+2. ~~Create `:data` and `:app`~~ — both exist and build.
+3. Room schema v1: entities, DAOs, `exportSchema = true`, and a `MigrationTestHelper` harness.
+4. Profile model (create/edit/switch/archive, `band_enabled` enforced once per device) and onboarding
+   steps 1–3.
+5. Target calculation writing `target_history`; settings (units, day start, language); debug screen.
+
 
 ## Toolchain (installed 2026-11-07, verified)
 
@@ -95,7 +123,7 @@ from machine-wide `ANDROID_HOME`.
 | Fact | Value |
 | --- | --- |
 | Host | Windows, PowerShell (`pwsh`), NTFS; workspace `E:\Projects\BalanceCalories`, ~420 GB free |
-| File policy | DSH `workspace-write`: writes outside the repository need approval |
+| File policy | DSH sandbox; has run under both `workspace-write` and `danger-full-access`. Writes outside the repo may need approval, so treat anything under `Program Files` as read-only unless proven otherwise |
 | Java | Liberica JDK **21.0.11** LTS, `JAVA_HOME=C:\Program Files\BellSoft\LibericaJDK-21-Full\` |
 | Git | **2.49.0.windows.1**; repository initialised on `main` (`core.autocrlf=false`), first commit `d195f3a` |
 | Python | **3.14.2** — used for `tools/` generators, not in the app |
@@ -125,13 +153,6 @@ a `CDROM Linux File-CD Gadget` (Honor's installer disc), not mass storage. The i
 appears after Honor Suite's driver is installed; MagicOS then shows the `Allow USB debugging` dialog.
 An adb server started from this sandbox dies with the shell that launched it, so bootstrap and query
 in the same command.
-
-## Remaining setup (M1)
-
-1. Write `local.properties` with `sdk.dir` (escaped spaces) — untracked, needed once an Android module
-   exists.
-2. Create `:data` (Room, Health Connect, OpenFoodFacts) and `:app` (Compose, Hilt) and verify
-   `.\gradlew.bat :app:assembleDebug`.
 
 ## Build and test
 

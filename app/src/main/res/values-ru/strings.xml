@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BalanceCalories</string>
+
+    <string name="target_title">Цель по калориям</string>
+    <string name="target_note">Демонстрационные данные тела до появления онбординга — пока ничего не сохраняется.</string>
+
+    <string name="label_bmr">Базовый обмен</string>
+    <string name="label_tdee">Суточный расход</string>
+    <string name="label_target">Дневная цель</string>
+    <string name="label_limit">Ограничение</string>
+    <string name="label_health_connect">Health Connect</string>
+
+    <string name="kcal_int">%1$d ккал</string>
+    <string name="kcal_decimal">%1$.0f ккал</string>
+
+    <string name="limit_none">нет</string>
+    <string name="limit_cap">дефицит ограничен 25%</string>
+    <string name="limit_floor">поднята до безопасного минимума</string>
+
+    <string name="hc_available">доступен</string>
+    <string name="hc_update_required">требуется обновление</string>
+    <string name="hc_not_supported">не поддерживается</string>
+</resources>
