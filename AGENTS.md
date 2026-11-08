@@ -270,23 +270,31 @@ a weight trend line and a projection, plus a backup screen. 107 :core + 42 :data
    `BackupReader` (validates the header, then **replaces** everything in one transaction with foreign keys **on**),
    and `DaysCsv` (the report). `BackupService` is the three-call surface the app uses, because `:app` still never
    sees Room. Reached from Settings → Данные.
-2. **The trap this milestone cost an hour**: the first export skipped the 69 starter products to save space, and the
-   first real restore refused its own file — a food entry from the starter pack pointed at a product the file did not
-   contain, so it failed its own foreign key. A backup must be self-consistent; 69 rows is nothing. Restoring also
-   has to tell the starter importer which world it is in (`markImported` vs `ensureImported`), otherwise a fresh
-   install ends up with two of every ingredient.
-3. **Second trap**: the product index is external-content FTS4. Rows written straight into `product` are invisible
-   to search until `INSERT INTO product_fts(product_fts) VALUES('rebuild')`, and nothing fails — the user just stops
-   finding products. The restore does it, and a test asserts search works afterwards.
-4. **Third trap**: `ImportOutcome.Refused` used to carry only a reason, so "файл повреждён" was a dead end. It now
-   carries the underlying message, which is what turned the first mystery into a one-line diagnosis.
+2. **The trap that cost an hour**: the first export skipped the 69 starter products to save space, and the first real
+   restore refused its own file — a food entry from the starter pack pointed at a product the file did not contain,
+   so it failed its own foreign key. A backup must be self-consistent; 69 rows is nothing. Restoring also has to tell
+   the starter importer which world it is in (`markImported` vs `ensureImported`), otherwise a fresh install ends up
+   with two of every ingredient.
+3. **The product index is external-content FTS4.** Rows written straight into `product` are invisible to search
+   until `INSERT INTO product_fts(product_fts) VALUES('rebuild')`, and nothing fails — the user just stops finding
+   products. The restore does it, and a test asserts search works afterwards.
+4. **`ImportOutcome.Refused` used to carry only a reason**, so "файл повреждён" was a dead end. It now carries the
+   underlying message, which is what turned the first mystery into a one-line diagnosis.
 5. Verified on the Honor X7c: a 61 395-character backup written through the system document picker to Downloads, a
    CSV of the same days, and a restore of that backup back onto the live database — **112 rows restored, schema 6**,
    69 starter products and no duplicates, FTS finding "Avocado", no orphaned entries, today's intake still 406.75.
-6. Tests: 21 new device cases (11 backup round-trip, 10 CSV). Totals: 107 :core, 42 :data, 10 :app JVM; 109 :data,
+6. ~~Font scaling to 200%~~ — every label/value pair, chip group and button row uses `WrappingRow`
+   (`app/ui/LabelValueRow.kt`), a `FlowRow` behind a plain `@Composable` API so no screen needs an experimental
+   opt-in. Two failures made this necessary, both visible only at `font_scale 2.0`: the Today nav row rendered
+   **"Настройки" as a vertical column of single letters** about 1000 px tall and pushed the rest of the screen away,
+   and the Settings unit chips did the same to the whole screen — one chip visible, nothing else reachable. The
+   signature is a squeezed `Text`: it does not ellipsize, it breaks inside words, and `uiautomator dump` shows it as
+   a text node whose bounds are tall and narrow. Check that before believing a screenshot. Verified at 1.0, 1.3 and
+   2.0 in Russian and at 2.0 in English (whose strings are longer); 1.0 is visually unchanged because `FlowRow` only
+   wraps when it must. ADR-026.
+7. Tests: 21 new device cases (11 backup round-trip, 10 CSV). Totals: 107 :core, 42 :data, 10 :app JVM; 109 :data,
    4 :app device. Strings 280/280.
-7. Next: the rest of M6 — device matrix on both phones, accessibility and font scaling, release signing, README.
-
+8. Next: the rest of M6 — device matrix on both phones, TalkBack and contrast, release signing, README.
 ## Toolchain (installed 2026-11-07, verified)
 
 | Item | Location / version |

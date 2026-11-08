@@ -27,11 +27,17 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.today.localized
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.FoodMath
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.Meal
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.Product
 import kotlinx.coroutines.launch
 
@@ -68,7 +74,7 @@ fun ProductScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
             // Correcting a crowd-sourced product is the point of this button: the numbers on the pack win,
             // and `saveUserProduct` marks the row as an override so a later scan cannot undo the fix.
@@ -76,7 +82,7 @@ fun ProductScreen(
         }
 
         Text(text = product.displayName(languageTag), style = MaterialTheme.typography.titleLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(text = product.source.localized(), style = MaterialTheme.typography.bodySmall)
             if (product.isOverride) {
                 Text(text = stringResource(R.string.product_override), style = MaterialTheme.typography.bodySmall)
@@ -116,7 +122,7 @@ fun ProductScreen(
         )
 
         Text(text = stringResource(R.string.product_meal), style = MaterialTheme.typography.titleSmall)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             for (option in Meal.entries) {
                 FilterChip(
                     selected = meal == option,
@@ -154,7 +160,7 @@ fun ProductScreen(
 
 @Composable
 private fun PerHundredRow(label: String, value: Double?) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = label, style = MaterialTheme.typography.bodySmall)
         Text(
             text = value?.let { "%.1f".format(it) } ?: stringResource(R.string.debug_none),

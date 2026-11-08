@@ -26,9 +26,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.energy.Sex
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.profile.Profile
 import kotlinx.coroutines.launch
 
@@ -176,7 +180,7 @@ fun ProfilesScreen(
 private fun ProfileCardBody(
     profile: Profile,
     isCurrent: Boolean,
-    actions: @Composable RowScope.() -> Unit,
+    actions: @Composable () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -216,6 +220,6 @@ private fun ProfileCardBody(
                 style = MaterialTheme.typography.labelSmall,
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), content = actions)
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { actions() }
     }
 }

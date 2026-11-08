@@ -26,7 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.ProductSource
@@ -64,7 +66,7 @@ fun ProductFormScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) }
         }
 

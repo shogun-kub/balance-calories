@@ -30,7 +30,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
 import com.balancecalories.core.profile.Profile
 import com.balancecalories.core.profile.UnitSystem
@@ -66,7 +68,7 @@ fun SettingsScreen(
         Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium)
 
         Text(stringResource(R.string.settings_units), style = MaterialTheme.typography.titleMedium)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = profile.unitSystem == UnitSystem.METRIC,
                 onClick = {
@@ -148,7 +150,7 @@ private fun LanguageSetting() {
         currentTags = tags
     }
 
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         FilterChip(
             selected = currentTags.isEmpty(),
             onClick = { apply("") },

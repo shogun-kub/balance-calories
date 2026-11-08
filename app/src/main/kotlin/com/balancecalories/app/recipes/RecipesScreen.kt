@@ -21,9 +21,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.Recipe
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.RecipeMath
 
 /**
@@ -48,7 +52,7 @@ fun RecipesScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
             Text(text = stringResource(R.string.recipes_title), style = MaterialTheme.typography.titleLarge)
         }
@@ -76,7 +80,7 @@ private fun RecipeRow(recipe: Recipe, onClick: () -> Unit) {
 
     Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp)) {
         Text(text = recipe.name, style = MaterialTheme.typography.bodyLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = perServing?.kcal?.let { stringResource(R.string.recipe_portion_kcal, it) }
                     ?: stringResource(R.string.product_no_energy),

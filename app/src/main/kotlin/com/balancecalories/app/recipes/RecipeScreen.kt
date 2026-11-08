@@ -28,12 +28,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.food.trimNumber
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.today.localized
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.Meal
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.Recipe
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.RecipeMath
 import kotlinx.coroutines.launch
 
@@ -76,7 +83,7 @@ fun RecipeScreen(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
             TextButton(onClick = onEdit) { Text(stringResource(R.string.action_edit)) }
         }
@@ -94,7 +101,7 @@ fun RecipeScreen(
         HorizontalDivider()
         Text(text = stringResource(R.string.recipe_ingredients), style = MaterialTheme.typography.titleSmall)
         for (item in recipe.items) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(text = item.product.displayName(languageTag), style = MaterialTheme.typography.bodyMedium)
                 Text(
                     text = stringResource(R.string.recipe_grams_value, trimNumber(item.grams)),
@@ -155,7 +162,7 @@ fun RecipeScreen(
         )
 
         Text(text = stringResource(R.string.product_meal), style = MaterialTheme.typography.titleSmall)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             for (option in Meal.entries) {
                 FilterChip(
                     selected = meal == option,
@@ -219,7 +226,7 @@ fun RecipeScreen(
 
 @Composable
 private fun MacroLine(label: String, value: Double?) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = label, style = MaterialTheme.typography.bodySmall)
         Text(
             text = value?.let { "%.1f".format(it) } ?: stringResource(R.string.debug_none),

@@ -25,12 +25,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.Product
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.ProductSource
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.RecentlyEaten
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.data.off.OffProduct
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.data.off.OffSearch
 import kotlinx.coroutines.launch
 
@@ -78,7 +85,7 @@ fun ProductsScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
             Text(text = stringResource(R.string.food_title), style = MaterialTheme.typography.titleLarge)
         }
@@ -208,7 +215,7 @@ private const val MIN_REMOTE_QUERY = 2
 private fun ProductRow(product: Product, languageTag: String?, onClick: () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp)) {
         Text(text = product.displayName(languageTag), style = MaterialTheme.typography.bodyLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = stringResource(R.string.kcal_decimal, product.kcal100g ?: 0.0),
                 style = MaterialTheme.typography.bodySmall,
@@ -235,7 +242,7 @@ private fun ProductRow(product: Product, languageTag: String?, onClick: () -> Un
 private fun RecentRow(recent: RecentlyEaten, languageTag: String?, onClick: () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp)) {
         Text(text = recent.product.displayName(languageTag), style = MaterialTheme.typography.bodyLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = stringResource(R.string.kcal_decimal, recent.product.kcal100g ?: 0.0),
                 style = MaterialTheme.typography.bodySmall,
@@ -267,7 +274,7 @@ private fun RemoteProductRow(hit: OffProduct, onClick: () -> Unit) {
             .padding(vertical = 8.dp),
     ) {
         Text(text = hit.name ?: hit.code, style = MaterialTheme.typography.bodyLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (usable) {
                 Text(
                     text = stringResource(R.string.kcal_decimal, hit.energy?.kcal ?: 0.0),

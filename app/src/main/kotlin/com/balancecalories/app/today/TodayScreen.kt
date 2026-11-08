@@ -2,6 +2,8 @@ package com.balancecalories.app.today
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,7 +36,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.PermissionController
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
 import com.balancecalories.core.activity.ActivityQuality
 import com.balancecalories.core.activity.BurnSource
@@ -45,6 +49,8 @@ import com.balancecalories.core.energy.TargetLimit
 import com.balancecalories.core.food.DailyIntake
 import com.balancecalories.core.food.Meal
 import com.balancecalories.core.food.LoggedEntry
+import com.balancecalories.app.ui.WrappingRow
+import com.balancecalories.app.ui.LabelValueRow
 import com.balancecalories.core.profile.Profile
 import com.balancecalories.data.health.HealthConnectState
 import com.balancecalories.data.health.HealthConnectSupport
@@ -63,6 +69,7 @@ import kotlinx.coroutines.launch
  * Estimates are marked, because a day built from derived values is not the same claim as one built from
  * labels (AGENTS.md, hard rule 4).
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TodayScreen(
     profile: Profile,
@@ -313,7 +320,10 @@ fun TodayScreen(
         }
         TextButton(onClick = onOpenRecipes) { Text(stringResource(R.string.recipes_title)) }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // FlowRow, not Row: at a 200% font scale three buttons do not fit on one line, and a squeezed TextButton
+        // breaks its label inside a word — "Настройки" came out as a single vertical column of letters, a metre
+        // tall, with the rest of the screen pushed off it.
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onOpenHistory) { Text(stringResource(R.string.history_title)) }
             TextButton(onClick = onOpenProfiles) { Text(stringResource(R.string.profiles_title)) }
             TextButton(onClick = onOpenSettings) { Text(stringResource(R.string.action_settings)) }
@@ -423,10 +433,7 @@ private fun EntryRow(entry: LoggedEntry, languageTag: String?, onEdit: () -> Uni
 
 @Composable
 private fun MetricRow(label: String, value: String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium)
-        Text(text = value, style = MaterialTheme.typography.bodyMedium)
-    }
+    LabelValueRow(label = label, value = value)
 }
 
 @Composable

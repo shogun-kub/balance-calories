@@ -50,7 +50,9 @@ import android.view.Surface
 import android.view.TextureView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
 import com.balancecalories.core.food.Barcode
 import com.balancecalories.core.food.Product
@@ -148,7 +150,7 @@ fun ScannerScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
             Text(text = stringResource(R.string.scan_title), style = MaterialTheme.typography.titleLarge)
         }
@@ -183,7 +185,7 @@ fun ScannerScreen(
                         .padding(8.dp),
                 )
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(
                     onClick = {
                         torch = !torch

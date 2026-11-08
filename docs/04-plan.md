@@ -225,7 +225,7 @@ at 21:00 and a day where the band stayed home.
       torch, background sync under MIUI battery management, low-storage behaviour, font scaling
 - [x] JSON export/import (schema-versioned) + CSV export; round-trip test — `:data/backup`, ADR-025
 - [ ] Full i18n pass (en/ru), plurals, RTL-safe layouts (cheap insurance)
-- [ ] Accessibility pass: TalkBack, contrast, 48 dp targets, font scaling to 200%
+- [ ] Accessibility pass: TalkBack, contrast, 48 dp targets — font scaling to 200% is done (ADR-026)
 - [ ] Empty/error/offline states everywhere; no dead ends
 - [ ] Performance: cold start < 1.5 s, day render < 100 ms, DB size after 1 year < 50 MB
 - [ ] ProGuard rules and release signing (no flavours: ADR-017 dropped the split)

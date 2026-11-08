@@ -39,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.balancecalories.app.AppContainer
 import com.balancecalories.app.R
+import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.food.trimNumber
 import com.balancecalories.data.repo.AdaptiveTdeeRepository
 import com.balancecalories.core.energy.AdaptiveTdee
@@ -328,10 +329,9 @@ private fun WeekBars(days: List<DaySummary>) {
 @Composable
 private fun DayRow(day: DaySummary, label: String) {
     Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
+        // Wrapping, not SpaceBetween: at a 200% font scale the date and the balance together exceed the width,
+        // and a squeezed balance is unreadable exactly where the person is trying to read a number.
+        WrappingRow(modifier = Modifier.fillMaxWidth()) {
             Text(text = label, style = MaterialTheme.typography.bodyMedium)
             Text(
                 text = when {
