@@ -14,14 +14,13 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1 done except the archive action.** `docs/` is complete through the plan, the
-toolchain is installed, `:core` — the pure Kotlin energy maths plus unit conversions — builds and tests
-green (30 tests), and the modules exist: `:data` (Health Connect status probe, Room schema **v2** with 12
-tables and 6 DAOs, Profile / BodyMeasurement / Target / AppSettings / Debug repositories) and `:app`
-(create/edit/delete/switch profiles, settings, debug screen). `assembleDebug` succeeds and the APK runs on
+Current state: **M1 complete.** `docs/` is complete through the plan, the toolchain is installed,
+`:core` — the pure Kotlin energy maths plus unit conversions — builds and tests green (30 tests), and the
+modules exist: `:data` (Health Connect status probe, Room schema **v2** with 12 tables and 6 DAOs,
+Profile / BodyMeasurement / Target / AppSettings / Debug repositories) and `:app` (create/edit/delete/
+archive/restore/switch profiles, settings, debug screen). `assembleDebug` succeeds and the APK runs on
 the Honor X7c, where the v1 → v2 migration ran against a real database; 16 instrumentation tests pass
-there and every screen was exercised by hand. What is left before M2: an archive action with a way to
-restore archived profiles.
+there and every screen was exercised by hand. Next: M2, the food side.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -82,16 +81,16 @@ restore archived profiles.
    `target_history`.
 6. ~~Profile deletion~~ — Profiles screen lists active profiles and deletes with a confirmation that
    cascades through weights, food and target history (ADR-012). Verified on device: after deleting the
-   last profile the app returns to onboarding and every dependent table is empty. `archived_at` stays
-   for the reversible case, but archive has no UI yet.
+   last profile the app returns to onboarding and every dependent table is empty.
 7. ~~Profile edit and switch~~ — `ProfileFormScreen` serves create and edit (prefilled, records a new
    weight only when it actually changed, upserts today's target). The current profile is stored in
    `app_setting` (schema **v2**, migrated on a real v1 database: `user_version = 2`, rows preserved),
    and tapping a profile card switches to it. Edit verified on device: goal −0.25 → −0.5 made the target
    2130 → 1924, where the safety floor (1.1 × BMR = 1923.6) engaged and the screen said so.
-8. Archive has no UI yet (`archived_at` and `ProfileRepository.archive` exist); deletion is the
-   user-facing destructive action for now. Archiving needs a "show archived" path first, otherwise the
-   action would hide a profile with no way back.
+8. ~~Archive~~ — `ProfileRepository.archive` hides a profile without destroying it, clears the stored
+   selection if that profile was current, and `unarchive` brings it back. The profiles screen lists
+   archived profiles behind a toggle that opens by itself when nothing else is visible, and says in one
+   line that archiving deletes nothing. Verified on device both ways.
 9. ~~Settings~~ — units (metric/imperial, applied to height/weight entry and converted back to metric
    before storage), day-start hour, and language. Language uses Android's per-app locale
    (`LocaleManager`) on Android 13+; below that the screen says the phone follows the system language

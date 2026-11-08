@@ -3,6 +3,7 @@ package com.balancecalories.app.profiles
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -41,7 +42,9 @@ import kotlinx.coroutines.launch
 fun ProfilesScreen(
     container: AppContainer,
     profiles: List<Profile>,
+    archivedProfiles: List<Profile>,
     activeProfileId: Long?,
+    initiallyShowArchived: Boolean = false,
     onAddProfile: () -> Unit,
     onEditProfile: (Profile) -> Unit,
     onSelectProfile: (Profile) -> Unit,
@@ -51,6 +54,7 @@ fun ProfilesScreen(
     val scope = rememberCoroutineScope()
     var pendingDelete by remember { mutableStateOf<Profile?>(null) }
     var failure by remember { mutableStateOf<String?>(null) }
+    var showArchived by remember(initiallyShowArchived) { mutableStateOf(initiallyShowArchived) }
 
     Column(
         modifier = modifier
@@ -71,47 +75,54 @@ fun ProfilesScreen(
                     onClick = { onSelectProfile(profile) },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(profile.name, style = MaterialTheme.typography.titleMedium)
-                            if (isCurrent) {
-                                Text(
-                                    text = stringResource(R.string.current_badge),
-                                    style = MaterialTheme.typography.labelMedium,
-                                )
-                            }
-                        }
-                        Text(
-                            text = stringResource(
-                                when (profile.sex) {
-                                    Sex.MALE -> R.string.sex_male
-                                    Sex.FEMALE -> R.string.sex_female
-                                },
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                        if (profile.bandEnabled) {
-                            Text(
-                                text = stringResource(R.string.band_owner_badge),
-                                style = MaterialTheme.typography.labelSmall,
-                            )
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ProfileCardBody(
+                        profile = profile,
+                        isCurrent = isCurrent,
+                        actions = {
                             TextButton(onClick = { onEditProfile(profile) }) {
                                 Text(stringResource(R.string.action_edit))
                             }
+                            TextButton(
+                                onClick = { scope.launch { container.profiles.archive(profile.id) } },
+                            ) { Text(stringResource(R.string.action_archive)) }
                             TextButton(onClick = { pendingDelete = profile }) {
                                 Text(stringResource(R.string.action_delete))
                             }
+                        },
+                    )
+                }
+            }
+
+            if (archivedProfiles.isNotEmpty()) {
+                item {
+                    TextButton(onClick = { showArchived = !showArchived }) {
+                        Text(
+                            stringResource(
+                                if (showArchived) R.string.hide_archived
+                                else R.string.show_archived,
+                                archivedProfiles.size,
+                            ),
+                        )
+                    }
+                }
+                if (showArchived) {
+                    item {
+                        Text(stringResource(R.string.archive_note), style = MaterialTheme.typography.bodySmall)
+                    }
+                    items(archivedProfiles, key = { it.id }) { profile ->
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            ProfileCardBody(
+                                profile = profile,
+                                isCurrent = false,
+                                actions = {
+                                    TextButton(
+                                        onClick = { scope.launch { container.profiles.unarchive(profile.id) } },
+                                    ) { Text(stringResource(R.string.action_unarchive)) }
+                                    TextButton(onClick = { pendingDelete = profile }) {
+                                        Text(stringResource(R.string.action_delete))
+                                    }
+                                },
+                            )
                         }
                     }
                 }
@@ -134,8 +145,7 @@ fun ProfilesScreen(
         }
     }
 
-    pendingDelete?.let { profile ->
-        AlertDialog(
+    pendingDelete?.let { profile ->        AlertDialog(
             onDismissRequest = { pendingDelete = null },
             title = { Text(stringResource(R.string.delete_dialog_title)) },
             text = { Text(stringResource(R.string.delete_dialog_text, profile.name)) },
@@ -159,5 +169,53 @@ fun ProfilesScreen(
                 }
             },
         )
+    }
+}
+
+@Composable
+private fun ProfileCardBody(
+    profile: Profile,
+    isCurrent: Boolean,
+    actions: @Composable RowScope.() -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(profile.name, style = MaterialTheme.typography.titleMedium)
+            when {
+                profile.isArchived -> Text(
+                    text = stringResource(R.string.archived_badge),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                isCurrent -> Text(
+                    text = stringResource(R.string.current_badge),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+        }
+        Text(
+            text = stringResource(
+                when (profile.sex) {
+                    Sex.MALE -> R.string.sex_male
+                    Sex.FEMALE -> R.string.sex_female
+                },
+            ),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        if (profile.bandEnabled && !profile.isArchived) {
+            Text(
+                text = stringResource(R.string.band_owner_badge),
+                style = MaterialTheme.typography.labelSmall,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), content = actions)
     }
 }

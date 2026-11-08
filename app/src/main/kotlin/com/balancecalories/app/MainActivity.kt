@@ -65,8 +65,11 @@ private fun Root() {
     val container = (LocalContext.current.applicationContext as BalanceCaloriesApp).container
     val scope = rememberCoroutineScope()
 
-    val profiles by container.profiles.observeActive()
+    val allProfiles by container.profiles.observeAll()
         .collectAsStateWithLifecycle(initialValue = emptyList())
+    val profiles = allProfiles.filterNot { it.isArchived }
+    val archivedProfiles = allProfiles.filter { it.isArchived }
+
     val activeId by container.settings.observeActiveProfileId()
         .collectAsStateWithLifecycle(initialValue = null)
 
@@ -88,7 +91,7 @@ private fun Root() {
     val active = profiles.firstOrNull { it.id == activeId } ?: profiles.firstOrNull()
 
     when {
-        profiles.isEmpty() -> ProfileFormScreen(
+        allProfiles.isEmpty() -> ProfileFormScreen(
             container = container,
             existing = null,
             onSaved = { screen = Screen.TODAY },
@@ -97,7 +100,10 @@ private fun Root() {
         screen == Screen.PROFILES -> ProfilesScreen(
             container = container,
             profiles = profiles,
+            archivedProfiles = archivedProfiles,
             activeProfileId = active?.id,
+            // Archiving the last visible profile opens the archive instead of hiding the only way back.
+            initiallyShowArchived = profiles.isEmpty(),
             onAddProfile = {
                 editing = null
                 screen = Screen.FORM
@@ -135,10 +141,27 @@ private fun Root() {
             onBack = { screen = Screen.SETTINGS },
         )
 
-        active == null -> ProfileFormScreen(
+        // Everything is archived: show the list with the archive open, so restoring is one tap away
+        // instead of dropping the user into onboarding as if no profile had ever existed.
+        active == null -> ProfilesScreen(
             container = container,
-            existing = null,
-            onSaved = { screen = Screen.TODAY },
+            profiles = profiles,
+            archivedProfiles = archivedProfiles,
+            activeProfileId = null,
+            initiallyShowArchived = true,
+            onAddProfile = {
+                editing = null
+                screen = Screen.FORM
+            },
+            onEditProfile = {
+                editing = it
+                screen = Screen.FORM
+            },
+            onSelectProfile = { profile ->
+                scope.launch { container.settings.setActiveProfile(profile.id) }
+                screen = Screen.TODAY
+            },
+            onBack = { screen = Screen.TODAY },
         )
 
         else -> ProfileTarget(

@@ -26,6 +26,10 @@ interface ProfileDao {
     @Query("SELECT * FROM profile WHERE archived_at IS NULL ORDER BY created_at")
     fun observeActive(): Flow<List<ProfileEntity>>
 
+    /** Every profile, archived ones included; the profiles screen needs both lists. */
+    @Query("SELECT * FROM profile ORDER BY created_at")
+    fun observeAll(): Flow<List<ProfileEntity>>
+
     /**
      * Used to enforce "band data belongs to the phone": at most one active profile may read Health
      * Connect. Reading the list rather than relying on SQL keeps the rule testable.
@@ -41,6 +45,9 @@ interface ProfileDao {
 
     @Query("UPDATE profile SET archived_at = :at WHERE id = :id")
     suspend fun archive(id: Long, at: Long)
+
+    @Query("UPDATE profile SET archived_at = NULL WHERE id = :id")
+    suspend fun unarchive(id: Long)
 
     /** Delete a profile and, by cascade, everything that belongs to it. */
     @Query("DELETE FROM profile WHERE id = :id")

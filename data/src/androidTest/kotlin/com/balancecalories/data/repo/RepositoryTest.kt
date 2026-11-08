@@ -8,6 +8,7 @@ import com.balancecalories.core.energy.Sex
 import com.balancecalories.core.profile.Profile
 import com.balancecalories.data.db.BalanceCaloriesDatabase
 import java.time.LocalDate
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -94,14 +95,24 @@ class RepositoryTest {
     }
 
     @Test
-    fun archivingHidesAProfileFromTheActiveList() = runBlocking {
+    fun archivingHidesAProfileAndRestoringBringsItBack() = runBlocking {
         val created = profiles.create(profile())
+        settings.setActiveProfile(created.id)
 
         profiles.archive(created.id)
 
         val stored = profiles.byId(created.id)!!
         assertTrue(stored.isArchived)
         assertEquals(1_760_000_000_000, stored.archivedAt)
+        // A hidden profile must not stay the current one.
+        assertNull(settings.activeProfileId())
+        assertEquals(0, profiles.observeActive().first().size)
+        assertEquals(1, profiles.observeAll().first().size)
+
+        profiles.unarchive(created.id)
+
+        assertTrue(!profiles.byId(created.id)!!.isArchived)
+        assertEquals(1, profiles.observeActive().first().size)
     }
 
     @Test

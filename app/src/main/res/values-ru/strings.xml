@@ -54,6 +54,12 @@
     <string name="delete_dialog_confirm">Удалить</string>
     <string name="current_badge">текущий</string>
     <string name="action_edit">Изменить</string>
+    <string name="action_archive">В архив</string>
+    <string name="action_unarchive">Восстановить</string>
+    <string name="archived_badge">в архиве</string>
+    <string name="show_archived">Показать архив (%1$d)</string>
+    <string name="hide_archived">Скрыть архив</string>
+    <string name="archive_note">Архив сохраняет всё и просто скрывает профиль из списка. Ничего не удаляется.</string>
     <string name="profile_edit_title">Изменить профиль</string>
 
     <string name="settings_title">Настройки</string>

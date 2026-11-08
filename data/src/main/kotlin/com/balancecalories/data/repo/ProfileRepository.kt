@@ -22,6 +22,10 @@ class ProfileRepository(
     fun observeActive(): Flow<List<Profile>> =
         dao.observeActive().map { rows -> rows.map { it.toDomain() } }
 
+    /** Active and archived together, so the profiles screen can offer both. */
+    fun observeAll(): Flow<List<Profile>> =
+        dao.observeAll().map { rows -> rows.map { it.toDomain() } }
+
     suspend fun byId(id: Long): Profile? = dao.byId(id)?.toDomain()
 
     /** Inserts a profile and returns it with the assigned id. Enabling the band clears every other one. */
@@ -50,7 +54,19 @@ class ProfileRepository(
         }
     }
 
-    suspend fun archive(id: Long) = dao.archive(id, clock())
+    /**
+     * Hides a profile without destroying anything. If it was the one being shown, the stored selection is
+     * cleared so the app cannot point at a hidden profile.
+     */
+    suspend fun archive(id: Long) = database.withTransaction {
+        dao.archive(id, clock())
+        val settings = database.settingsDao()
+        if (settings.value(AppSettingsRepository.KEY_ACTIVE_PROFILE_ID)?.toLongOrNull() == id) {
+            settings.remove(AppSettingsRepository.KEY_ACTIVE_PROFILE_ID)
+        }
+    }
+
+    suspend fun unarchive(id: Long) = dao.unarchive(id)
 
     /**
      * Removes the profile and, by cascade, its weights, activity, food and target history. If it was the

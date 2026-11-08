@@ -54,6 +54,12 @@
     <string name="delete_dialog_confirm">Delete</string>
     <string name="current_badge">current</string>
     <string name="action_edit">Edit</string>
+    <string name="action_archive">Archive</string>
+    <string name="action_unarchive">Restore</string>
+    <string name="archived_badge">archived</string>
+    <string name="show_archived">Show archived (%1$d)</string>
+    <string name="hide_archived">Hide archived</string>
+    <string name="archive_note">Archiving keeps everything and hides the profile from the list. Nothing is deleted.</string>
     <string name="profile_edit_title">Edit profile</string>
 
     <string name="settings_title">Settings</string>
