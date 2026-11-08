@@ -23,13 +23,14 @@ import com.balancecalories.app.food.ProductScreen
 import com.balancecalories.app.food.ProductsScreen
 import com.balancecalories.app.profile.ProfileFormScreen
 import com.balancecalories.app.profiles.ProfilesScreen
+import com.balancecalories.app.scanner.ScannerScreen
 import com.balancecalories.app.settings.SettingsScreen
 import com.balancecalories.app.today.TodayScreen
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.profile.Profile
 import kotlinx.coroutines.launch
 
-private enum class Screen { TODAY, PROFILES, FORM, SETTINGS, DEBUG, FOOD, PRODUCT, PRODUCT_FORM }
+private enum class Screen { TODAY, PROFILES, FORM, SETTINGS, DEBUG, FOOD, PRODUCT, PRODUCT_FORM, SCAN }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,11 +69,12 @@ private fun Root() {
     var screen by remember { mutableStateOf(Screen.TODAY) }
     var editing by remember { mutableStateOf<Profile?>(null) }
     var openedProduct by remember { mutableStateOf<Product?>(null) }
+    var scannedBarcode by remember { mutableStateOf<String?>(null) }
 
     // System back walks one step up the food stack, and returns to Today from anywhere else.
     BackHandler(enabled = screen != Screen.TODAY) {
         screen = when (screen) {
-            Screen.PRODUCT, Screen.PRODUCT_FORM -> Screen.FOOD
+            Screen.PRODUCT, Screen.PRODUCT_FORM, Screen.SCAN -> Screen.FOOD
             else -> {
                 editing = null
                 Screen.TODAY
@@ -148,6 +150,21 @@ private fun Root() {
             },
             onAddManual = {
                 openedProduct = null
+                scannedBarcode = null
+                screen = Screen.PRODUCT_FORM
+            },
+            onScan = { screen = Screen.SCAN },
+        )
+
+        screen == Screen.SCAN -> ScannerScreen(
+            container = container,
+            onBack = { screen = Screen.FOOD },
+            onProduct = { product ->
+                openedProduct = product
+                screen = Screen.PRODUCT
+            },
+            onAddManually = { barcode ->
+                scannedBarcode = barcode
                 screen = Screen.PRODUCT_FORM
             },
         )
@@ -166,6 +183,7 @@ private fun Root() {
         screen == Screen.PRODUCT_FORM && active != null -> ProductFormScreen(
             container = container,
             existing = null,
+            initialBarcode = scannedBarcode,
             onSaved = {
                 // Straight to Today: a product typed here was typed to be logged, not to be filed away.
                 screen = Screen.TODAY

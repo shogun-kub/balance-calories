@@ -68,5 +68,9 @@ class BalanceCaloriesApp : Application() {
         container = AppContainer(this)
         // First launch imports the ingredient pack; the work is idempotent and off the main thread.
         appScope.launch { container.starterPack.ensureImported() }
+        // Barcodes scanned while offline are retried once the app starts, throttled by the OFF client.
+        appScope.launch {
+            runCatching { container.barcodes.drainQueue(fetch = { container.offClient.lookup(it) }) }
+        }
     }
 }

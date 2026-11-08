@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- OpenFoodFacts lookups only; the app has no other network use (AGENTS.md, data and privacy). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Camera is used only by the barcode scanner, requested at the moment of use. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- A phone without a camera still logs food by hand. -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <!-- Health data is not allowed to drift into a cloud backup (AGENTS.md, data and privacy). -->
     <application
         android:name=".BalanceCaloriesApp"

@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 fun ProductFormScreen(
     container: AppContainer,
     existing: Product?,
+    initialBarcode: String? = null,
     onSaved: (Product) -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -119,7 +120,7 @@ fun ProductFormScreen(
                     val saved = container.products.saveUserProduct(
                         Product(
                             id = existing?.id ?: Product.NEW,
-                            barcode = existing?.barcode,
+                            barcode = existing?.barcode ?: initialBarcode,
                             name = name.trim(),
                             nameRu = nameRu.trim().ifBlank { null },
                             brand = existing?.brand,

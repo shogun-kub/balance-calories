@@ -14,13 +14,12 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1 complete, M2 in progress.** `:core` (46 JVM tests) and `:data` (schema **v4**, 9 DAOs,
-7 repositories, OpenFoodFacts client + product persistence + food logging) build green. `:app` now has the
-food flow: profiles end to end (create, edit, switch, delete, archive/restore), settings, debug, plus Today
-with target/eaten/remaining/macros/meal sections, a local product list, a product screen with portion
-preview and logging, and a manual product form. The starter pack (69 bilingual items) imports on first run;
-the OFF client follows the **measured** v3 contract. 49 instrumentation tests pass on the Honor X7c.
-Next in M2: the barcode scanner, product search over OFF, then M3 recipes.
+Current state: **M1 complete, M2 nearly done.** `:core` (46 JVM tests) and `:data` (schema **v4**, 9 DAOs,
+7 repositories, OFF client, product persistence, food logging) build green, and `:app` has the full food
+loop: Today with target/eaten/remaining/macros/meal sections, product list and search, product screen with
+portion preview, manual product form, entry edit, repeat-yesterday, and a working **barcode scanner**
+(CameraX 1.6.2 + zxing-cpp 3.1.1, single FOSS build). 46 :core + 31 :data JVM tests and **53 device tests**
+(49 :data, 4 :app) pass. Next in M2: scanner polish, then OFF product search; M3 recipes after that.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -267,8 +266,9 @@ in the same command.
 .\gradlew.bat lint detekt           # if detekt is added, keep the config in the repo
 ```
 
-- Two flavours: `foss` (zxing-cpp only) and `google` (adds ML Kit). `foss` is the default; a change
-  must build in both before it is called done.
+- **One build, no flavours.** The `foss`/`google` split was dropped when zxing-cpp turned out to be
+  enough (ADR-017); adding ML Kit later would be a flavour again, not a rewrite, because the decoder sits
+  behind `BarcodeScanner`.
 - Instrumented tests that touch Health Connect or the camera run on a **real device**, not an
   emulator — an emulator has no Health Connect data source and no real sensor noise.
 - Under DSH `workspace-write`, Gradle cannot write `~/.gradle`: native extraction fails with
@@ -293,6 +293,23 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
 # OK (49 tests) — database behaviour, migrations, repositories, starter pack, products, food entries
 ```
+
+### The scanner: two traps that cost an hour each (2026-11-08)
+
+1. **`PreviewView`'s internal `SurfaceView` ignores its parent's bounds.** The preview painted over the
+   title and the torch button, at screen size, inside a 240 dp box. `implementationMode = COMPATIBLE` did
+   not help. `adb shell dumpsys activity top` showed it plainly: `PreviewView 0,0-656,240` but
+   `SurfaceView 0,0-720,1280` inside it. The fix is to own the surface: a plain `TextureView` plus
+   `Preview.setSurfaceProvider` (ADR-018). Diagnose such things with the view hierarchy, not screenshots
+   alone.
+2. **A missing `INTERNET` permission fails as a *network error* at runtime.** Every lookup returned
+   `network error: Permission denied (missing INTERNET permission?)`, which the offline queue then stored —
+   the queue worked perfectly and the app was simply not allowed to open a socket. The error text names the
+   cause; read the recorded `last_error` before suspecting the network.
+
+App instrumentation tests are a **separate** APK and runner: `com.balancecalories.test` (not
+`com.balancecalories.app.test`), installed with `-t` alongside the app APK, and the app APK must be
+reinstalled whenever a dependency is added — the test APK alone resolves classes from the installed app.
 
 ### Driving the UI with adb without lying to yourself
 
@@ -382,7 +399,7 @@ Learned the hard way, several times:
 
 A change is done when all of these are true:
 
-1. It builds in both flavours.
+1. It builds (one build: there are no flavours any more, see ADR-017).
 2. The maths has a unit test; the schema has a migration test.
 3. It was exercised on a real device if it touches Health Connect, camera, permissions, background work
    or storage.

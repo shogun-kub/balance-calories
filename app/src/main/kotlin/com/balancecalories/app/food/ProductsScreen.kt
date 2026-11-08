@@ -41,6 +41,7 @@ fun ProductsScreen(
     onBack: () -> Unit,
     onPick: (Product) -> Unit,
     onAddManual: () -> Unit,
+    onScan: () -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<Product>>(emptyList()) }
@@ -79,6 +80,7 @@ fun ProductsScreen(
             }
         }
 
+        TextButton(onClick = onScan) { Text(stringResource(R.string.action_scan)) }
         TextButton(onClick = onAddManual) { Text(stringResource(R.string.food_add_manual)) }
     }
 }
