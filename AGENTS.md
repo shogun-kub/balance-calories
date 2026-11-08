@@ -18,8 +18,8 @@ Current state: **M1 complete, M2 nearly done.** `:core` (46 JVM tests) and `:dat
 7 repositories, OFF client, product persistence, food logging) build green, and `:app` has the full food
 loop: Today with target/eaten/remaining/macros/meal sections, product list and search, product screen with
 portion preview, manual product form, entry edit, repeat-yesterday, and a working **barcode scanner**
-(CameraX 1.6.2 + zxing-cpp 3.1.1, single FOSS build). 46 :core + 42 :data JVM tests and **53 device tests**
-(49 :data, 4 :app) pass. Next in M2: recents/frequents, the edit-product entry point, then M3 recipes.
+(CameraX 1.6.2 + zxing-cpp 3.1.1, single FOSS build). 46 :core + 42 :data + 10 :app JVM tests and **53 device tests**
+(49 :data, 4 :app) pass. Next in M2: recents/frequents in the food list, then M3 recipes.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -129,8 +129,8 @@ portion preview, manual product form, entry edit, repeat-yesterday, and a workin
    product's names, schema **v4**) so renaming or deleting a product cannot rewrite yesterday; delete is a
    soft delete and the day ignores the row. `TodayScreen` shows target, eaten, remaining, macros and meal
    sections, and keeps BMR/TDEE/safety rule visible. Food screens: `ProductsScreen` (local search + browse),
-   `ProductScreen` (per-100 g table, portion, meal chips, log), `ProductFormScreen` (manual product; accepts
-   an existing one but no screen opens it yet).
+   `ProductScreen` (per-100 g table, portion, meal chips, log, **Edit**), `ProductFormScreen` (manual
+   product, and the same form serves editing an existing one — a correction marks the row `is_override`).
    Verified on the Honor X7c: schema 3 → 4 migrated in place with 69 products intact; 150 g of avocado
    previewed 240 kcal and stored `150.0 g / 240.0 kcal / P 3.0 / F 22.05` with the name snapshot; Today read
    240 eaten, 1684 remaining; deleting the row set `deleted_at` and the day went back to 0.
@@ -148,7 +148,11 @@ portion preview, manual product form, entry edit, repeat-yesterday, and a workin
    `search.openfoodfacts.org`, and a hit becomes a row only when tapped, through `saveFromOff` (ADR-019).
    The measured shape is in docs/02-research.md §3.1.2; the trap is that **`brands` is an array in a search
    hit and a string in a product lookup**, which threw until `OffResponseParser.text` accepted both.
-8. Next: recents/frequents in the food list, the edit-product entry point, then M3 recipes.
+8. ~~Edit a product from the UI~~ — the product screen opens the form prefilled and comes back with the
+   corrected numbers; a correction to a starter or OFF row sets `is_override`. Prefilling exposed float noise
+   (`7.6899999999999995`), fixed by `NumberText.trimNumber` (3 decimals, no exponent, no trailing zeros, 6
+   unit tests).
+9. Next: recents/frequents in the food list, then M3 recipes.
 
 
 ## Toolchain (installed 2026-11-07, verified)

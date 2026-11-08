@@ -112,8 +112,15 @@ Exit criteria: I can create two profiles and see a defensible daily target with 
       saved. An estimated energy is labelled **before** the user commits.
 - [x] Manual product creation: name (English and optional Russian), energy and macros per 100 g, liquid
       toggle. Saving a correction to a scanned product marks it `is_override`.
-- [ ] Editing an existing product from the UI: `ProductFormScreen` already accepts an `existing` product,
-      but no screen opens it yet.
+- [x] Editing an existing product from the UI: the product screen has an **Edit** action that opens the form
+      prefilled and returns to the product with the corrected numbers (not to Today — a correction is not a
+      log). Saving marks a starter or OFF row `is_override`, so a later scan cannot undo the fix.
+      Prefilling exposed a display bug: `7.6899999999999995` from OpenFoodFacts reached the field verbatim, so
+      numbers are now rounded to three decimals with the exponent form and trailing zeros removed
+      (`NumberText.kt`, 6 unit tests).
+      Verified on the Honor X7c: an OFF product went 519.2 → 500 kcal and showed `ваши цифры` with the source
+      still `OpenFoodFacts`; cancelling returned to the product screen, and a starter product prefilled
+      `160 / 2 / 14.7` with both names.
 - [x] Scanner screen: CameraX + zxing-cpp, overlay, torch, haptics, manual entry, debounce. Shipped as a
       **single FOSS build** — the `foss`/`google` flavour split is dropped (ADR-017): one Apache-2.0 engine,
       2.9 MB, no Play services. The preview is an owned `TextureView` because `PreviewView`'s internal

@@ -48,6 +48,7 @@ fun ProductScreen(
     container: AppContainer,
     profileId: Long,
     onBack: () -> Unit,
+    onEdit: () -> Unit,
     onLogged: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -69,6 +70,9 @@ fun ProductScreen(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
+            // Correcting a crowd-sourced product is the point of this button: the numbers on the pack win,
+            // and `saveUserProduct` marks the row as an override so a later scan cannot undo the fix.
+            TextButton(onClick = onEdit) { Text(stringResource(R.string.action_edit)) }
         }
 
         Text(text = product.displayName(languageTag), style = MaterialTheme.typography.titleLarge)

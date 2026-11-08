@@ -69,6 +69,7 @@ private fun Root() {
     var screen by remember { mutableStateOf(Screen.TODAY) }
     var editing by remember { mutableStateOf<Profile?>(null) }
     var openedProduct by remember { mutableStateOf<Product?>(null) }
+    var formEditing by remember { mutableStateOf<Product?>(null) }
     var scannedBarcode by remember { mutableStateOf<String?>(null) }
 
     // System back walks one step up the food stack, and returns to Today from anywhere else.
@@ -150,6 +151,7 @@ private fun Root() {
             },
             onAddManual = {
                 openedProduct = null
+                formEditing = null
                 scannedBarcode = null
                 screen = Screen.PRODUCT_FORM
             },
@@ -164,6 +166,7 @@ private fun Root() {
                 screen = Screen.PRODUCT
             },
             onAddManually = { barcode ->
+                formEditing = null
                 scannedBarcode = barcode
                 screen = Screen.PRODUCT_FORM
             },
@@ -174,21 +177,35 @@ private fun Root() {
             container = container,
             profileId = active.id,
             onBack = { screen = Screen.FOOD },
+            onEdit = {
+                formEditing = openedProduct
+                scannedBarcode = null
+                screen = Screen.PRODUCT_FORM
+            },
             onLogged = {
                 openedProduct = null
+                formEditing = null
                 screen = Screen.TODAY
             },
         )
 
         screen == Screen.PRODUCT_FORM && active != null -> ProductFormScreen(
             container = container,
-            existing = null,
+            existing = formEditing,
             initialBarcode = scannedBarcode,
-            onSaved = {
-                // Straight to Today: a product typed here was typed to be logged, not to be filed away.
-                screen = Screen.TODAY
+            onSaved = { saved ->
+                if (formEditing != null) {
+                    // Correcting a product is not logging it: show the corrected numbers, then let the user
+                    // decide the portion. Straight to Today would hide the change the user just made.
+                    openedProduct = saved
+                    formEditing = null
+                    screen = Screen.PRODUCT
+                } else {
+                    // Straight to Today: a product typed here was typed to be logged, not to be filed away.
+                    screen = Screen.TODAY
+                }
             },
-            onCancel = { screen = Screen.FOOD },
+            onCancel = { screen = if (formEditing != null) Screen.PRODUCT else Screen.FOOD },
         )
 
         // Everything is archived: show the list with the archive open, so restoring is one tap away

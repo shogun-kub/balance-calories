@@ -164,5 +164,3 @@ private fun NumberField(labelRes: Int, value: String, onChange: (String) -> Unit
 }
 
 /** 539.0 → "539", 0.107 → "0.107": no trailing zeros in a field the user may edit. */
-private fun trimNumber(value: Double): String =
-    if (value % 1.0 == 0.0) value.toLong().toString() else value.toString()
