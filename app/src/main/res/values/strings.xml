@@ -39,6 +39,16 @@
     <string name="label_sex_male_short">M</string>
     <string name="label_sex_female_short">F</string>
 
+    <string name="profiles_title">Profiles</string>
+    <string name="profiles_note">One profile per person. Only one of them can read the band on this phone.</string>
+    <string name="band_owner_badge">reads the band</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_add_profile">Add a profile</string>
+    <string name="action_back">Back</string>
+    <string name="delete_dialog_title">Delete this profile?</string>
+    <string name="delete_dialog_text">%1$s will be deleted together with its weight readings, food log and target history. This cannot be undone.</string>
+    <string name="delete_dialog_confirm">Delete</string>
+
     <string name="target_title">Energy target</string>
     <string name="target_note">Computed from your profile and latest weight. Nothing leaves the phone.</string>
 

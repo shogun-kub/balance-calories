@@ -75,7 +75,11 @@ private val activityOptions = listOf(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OnboardingScreen(container: AppContainer, modifier: Modifier = Modifier) {
+fun OnboardingScreen(
+    container: AppContainer,
+    onSaved: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val scope = rememberCoroutineScope()
     val today = remember { LocalDate.now() }
     val oldestAllowed = remember(today) { today.minusYears(14) }
@@ -147,6 +151,7 @@ fun OnboardingScreen(container: AppContainer, modifier: Modifier = Modifier) {
                     source = BodyMeasurementRepository.SOURCE_MANUAL,
                 )
                 container.targets.recordSeed(created, weightKg = weight, on = today)
+                onSaved()
             } catch (failure: Exception) {
                 saveError = failure.message ?: failure::class.java.simpleName
             } finally {

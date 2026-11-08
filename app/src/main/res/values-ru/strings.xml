@@ -39,6 +39,16 @@
     <string name="label_sex_male_short">М</string>
     <string name="label_sex_female_short">Ж</string>
 
+    <string name="profiles_title">Профили</string>
+    <string name="profiles_note">Один профиль на человека. Читать браслет на этом телефоне может только один из них.</string>
+    <string name="band_owner_badge">читает браслет</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_add_profile">Добавить профиль</string>
+    <string name="action_back">Назад</string>
+    <string name="delete_dialog_title">Удалить профиль?</string>
+    <string name="delete_dialog_text">%1$s будет удалён вместе с записями веса, дневником еды и историей цели. Отменить это нельзя.</string>
+    <string name="delete_dialog_confirm">Удалить</string>
+
     <string name="target_title">Цель по калориям</string>
     <string name="target_note">Рассчитано по вашему профилю и последнему весу. Ничего не покидает телефон.</string>
 

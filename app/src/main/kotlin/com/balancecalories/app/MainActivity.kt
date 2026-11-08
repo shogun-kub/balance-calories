@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.balancecalories.app.onboarding.OnboardingScreen
+import com.balancecalories.app.profiles.ProfilesScreen
 import com.balancecalories.core.energy.TargetCalculator
 import com.balancecalories.core.energy.TargetLimit
 import com.balancecalories.core.profile.Profile
@@ -30,23 +32,57 @@ import com.balancecalories.data.health.HealthConnectState
 import com.balancecalories.data.health.HealthConnectSupport
 import java.time.LocalDate
 
+private enum class Screen { TODAY, PROFILES, ONBOARDING }
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    val container = (LocalContext.current.applicationContext as BalanceCaloriesApp).container
-                    val profiles by container.profiles.observeActive()
-                        .collectAsStateWithLifecycle(initialValue = emptyList())
-
-                    when (val active = profiles.firstOrNull()) {
-                        null -> OnboardingScreen(container = container)
-                        else -> ProfileTarget(profile = active, container = container)
-                    }
+                    Root()
                 }
             }
         }
+    }
+}
+
+/**
+ * Navigation is two enum states and a nullable profile list: no Navigation Compose yet, because three
+ * destinations do not justify the dependency. What the app shows follows the database, so deleting the
+ * last profile returns to onboarding without any explicit navigation call.
+ */
+@Composable
+private fun Root() {
+    val container = (LocalContext.current.applicationContext as BalanceCaloriesApp).container
+    val profiles by container.profiles.observeActive()
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    var screen by remember { mutableStateOf(Screen.TODAY) }
+
+    when {
+        // No profiles means onboarding, whichever screen was open — deleting the last profile lands here.
+        profiles.isEmpty() -> OnboardingScreen(
+            container = container,
+            onSaved = { screen = Screen.TODAY },
+        )
+
+        screen == Screen.PROFILES -> ProfilesScreen(
+            container = container,
+            profiles = profiles,
+            onAddProfile = { screen = Screen.ONBOARDING },
+            onBack = { screen = Screen.TODAY },
+        )
+
+        screen == Screen.ONBOARDING -> OnboardingScreen(
+            container = container,
+            onSaved = { screen = Screen.TODAY },
+        )
+
+        else -> ProfileTarget(
+            profile = profiles.first(),
+            container = container,
+            onOpenProfiles = { screen = Screen.PROFILES },
+        )
     }
 }
 
@@ -56,7 +92,7 @@ class MainActivity : ComponentActivity() {
  * a screen is opened.
  */
 @Composable
-private fun ProfileTarget(profile: Profile, container: AppContainer) {
+private fun ProfileTarget(profile: Profile, container: AppContainer, onOpenProfiles: () -> Unit) {
     val today = remember { LocalDate.now() }
     var weightKg by remember(profile.id) { mutableStateOf<Double?>(null) }
     var loaded by remember(profile.id) { mutableStateOf(false) }
@@ -108,6 +144,10 @@ private fun ProfileTarget(profile: Profile, container: AppContainer) {
         MetricRow(stringResource(R.string.label_target), stringResource(R.string.kcal_int, target.kcal))
         MetricRow(stringResource(R.string.label_limit), target.limit.localized())
         MetricRow(stringResource(R.string.label_health_connect), hcState.localized())
+
+        TextButton(onClick = onOpenProfiles) {
+            Text(stringResource(R.string.profiles_title))
+        }
     }
 }
 

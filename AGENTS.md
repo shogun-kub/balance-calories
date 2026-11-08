@@ -20,8 +20,8 @@ exists: `:data` (Health Connect status probe, Room schema v1 with 11 tables and 
 BodyMeasurement / Target repositories behind domain mappers) and `:app` (Application container,
 onboarding that writes profile + first weight + seed target, target screen reading the database).
 `assembleDebug` succeeds and the APK installs and runs on the Honor X7c, creating `balancecalories.db`;
-12 instrumentation tests pass there, and onboarding was exercised by hand through the UI. What is still
-missing from M1: profile edit/switch/archive UI, settings, the debug screen.
+12 instrumentation tests pass there, and onboarding plus profile deletion were exercised by hand through
+the UI. What is still missing from M1: profile edit and switch, settings, the debug screen.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -73,8 +73,14 @@ missing from M1: profile edit/switch/archive UI, settings, the debug screen.
    `TargetRepository`, and `Profile` as a `:core` domain type; `:app` never sees an entity or Room.
 5. ~~Onboarding (steps 1–3)~~ — one scrollable form validates, then writes profile, first weight and
    seed target in order. Verified on device: rows land in `profile`, `body_measurement`,
-   `target_history`. Profile edit/switch/archive UI is next.
-6. Settings (units, day start, language); debug screen.
+   `target_history`.
+6. ~~Profile deletion~~ — Profiles screen lists active profiles and deletes with a confirmation that
+   cascades through weights, food and target history (ADR-012). Verified on device: after deleting the
+   last profile the app returns to onboarding and every dependent table is empty. `archived_at` stays
+   for the reversible case, but archive has no UI yet.
+7. Profile **edit** and **switch**: both need a stored "active profile" setting, so they land together
+   with a schema v2 (the first real migration) rather than pretending the first row is the chosen one.
+8. Settings (units, day start, language); debug screen.
 
 
 ## Toolchain (installed 2026-11-07, verified)
