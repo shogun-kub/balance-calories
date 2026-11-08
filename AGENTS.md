@@ -14,13 +14,13 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1 complete, M2 in progress.** `:core` (38 JVM tests) and `:data` (schema **v3**, 7 DAOs,
-6 repositories, OpenFoodFacts client with 22 JVM tests) build green, and `:app` covers profiles end to end:
-create, edit, switch, delete, archive/restore, settings, debug. The starter ingredient pack ships as an
+Current state: **M1 complete, M2 in progress.** `:core` (46 JVM tests) and `:data` (schema **v3**, 8 DAOs,
+7 repositories, OpenFoodFacts client + product persistence) build green, and `:app` covers profiles end to
+end: create, edit, switch, delete, archive/restore, settings, debug. The starter ingredient pack ships as an
 asset and imports on first run (69 bilingual items, verified on the Honor: schema migrated 2 → 3 in place,
-69 product rows), and the OFF client is written against the **measured** v3 contract. 20 instrumentation
-tests pass on device. Next in M2: persist OFF results into `product` + `pending_lookup`, then the product
-screen, scanner and food entries.
+69 product rows). The OFF client is written against the **measured** v3 contract, and products persist with a
+stable id, honoured user overrides and cached misses. 35 instrumentation tests pass on the Honor X7c.
+Next in M2: the product screen and manual entry, then the scanner, then food entries and Today v1.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -275,7 +275,7 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (20 tests) — database behaviour, migrations, repositories, starter pack
+# OK (35 tests) — database behaviour, migrations, repositories, starter pack, products
 ```
 
 ## Devices and how to test on them
