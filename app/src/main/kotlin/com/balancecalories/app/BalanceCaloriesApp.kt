@@ -10,7 +10,12 @@ import com.balancecalories.data.repo.AppSettingsRepository
 import com.balancecalories.data.repo.BodyMeasurementRepository
 import com.balancecalories.data.repo.DebugRepository
 import com.balancecalories.data.repo.ProfileRepository
+import com.balancecalories.data.repo.StarterPackImporter
 import com.balancecalories.data.repo.TargetRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Manual dependency container. Hilt is still deferred (docs/03-architecture.md §1 lists it), because
@@ -19,12 +24,17 @@ import com.balancecalories.data.repo.TargetRepository
 class AppContainer(context: Context) {
 
     private val database: BalanceCaloriesDatabase = createDatabase(context)
-
     val profiles: ProfileRepository = ProfileRepository(database)
     val body: BodyMeasurementRepository = BodyMeasurementRepository(database)
     val targets: TargetRepository = TargetRepository(database)
     val settings: AppSettingsRepository = AppSettingsRepository(database)
     val debug: DebugRepository = DebugRepository(database)
+
+    /** Imports the bundled ingredient pack on first launch; idempotent, see StarterPackImporter. */
+    val starterPack: StarterPackImporter = StarterPackImporter(
+        database = database,
+        openAsset = { context.assets.open(StarterPackImporter.ASSET_NAME) },
+    )
 
     /**
      * Whether this phone can supply band data at all. The first profile claims the band when it can;
@@ -39,8 +49,12 @@ class BalanceCaloriesApp : Application() {
     lateinit var container: AppContainer
         private set
 
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        // First launch imports the ingredient pack; the work is idempotent and off the main thread.
+        appScope.launch { container.starterPack.ensureImported() }
     }
 }

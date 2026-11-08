@@ -94,7 +94,10 @@ Exit criteria: I can create two profiles and see a defensible daily target with 
 
 ## M2 — Food: products, barcode, entries (9 d)
 
-- [ ] Starter ingredient pack: build-time JSON (~150 cooking basics, per 100 g), import on first run
+- [x] Starter ingredient pack: generated JSON asset (`tools/generate_starter_pack.py`), **69 items** across
+      12 categories with English and Russian names, per 100 g, imported once on first run in a single
+      transaction. Smaller than the planned ~150: 69 reviewable entries beat 150 guessed ones, and the pack
+      grows from user entries and OpenFoodFacts lookups.
       as `source='starter'`, editable/deletable, plus a small script that regenerates it
 - [ ] OFF client: fields, UA, token bucket, backoff, 404 caching, `pending_lookup`
 - [ ] OFF → `product` mapper incl. kJ-only, serving-string parsing, `energy_estimated`

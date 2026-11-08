@@ -14,13 +14,12 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1 complete.** `docs/` is complete through the plan, the toolchain is installed,
-`:core` — the pure Kotlin energy maths plus unit conversions — builds and tests green (30 tests), and the
-modules exist: `:data` (Health Connect status probe, Room schema **v2** with 12 tables and 6 DAOs,
-Profile / BodyMeasurement / Target / AppSettings / Debug repositories) and `:app` (create/edit/delete/
-archive/restore/switch profiles, settings, debug screen). `assembleDebug` succeeds and the APK runs on
-the Honor X7c, where the v1 → v2 migration ran against a real database; 16 instrumentation tests pass
-there and every screen was exercised by hand. Next: M2, the food side.
+Current state: **M1 complete, M2 started.** `:core` (30 tests) and `:data` (schema **v3**, 7 DAOs, 6
+repositories) build green, and `:app` covers profiles end to end: create, edit, switch, delete,
+archive/restore, settings, debug. The starter ingredient pack ships as an asset and imports on first run
+(69 bilingual items, verified on the Honor: schema migrated 2 → 3 in place, 69 product rows). 20
+instrumentation tests pass on device, including three migration tests and the pack import. Next in M2: the
+OpenFoodFacts client, product screen, scanner and food entries.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -39,12 +38,13 @@ there and every screen was exercised by hand. Next: M2, the food side.
    processor. Measured, not assumed: with Kotlin **2.3.20** + KSP **2.3.13** + Room **2.8.5**, Room
    generates `*_Impl.kt` and exports `schemas/…/<version>.json`. The alternative — KAPT — works but is
    slower and deprecated; it is not needed. Revisit when KSP ships a 2.4.x build.
-4. **After a schema version bump, rebuild the androidTest APK with `--rerun-tasks` once.** The exported
-   `N.json` becomes a test asset, but AGP keeps a stale asset merge and the new file never reaches the
-   APK, so `MigrationTestHelper` fails with *"Cannot find the schema file in the assets folder"*. The
-   tell is a test APK containing only the previous version: check with
-   `python -c "import zipfile;print([n for n in zipfile.ZipFile(p).namelist() if n.endswith('.json')])"`.
-   `.\gradlew.bat :data:assembleDebugAndroidTest --rerun-tasks` fixes it.
+4. **After a schema version bump, package the androidTest APK twice.** The exported `N.json` becomes a
+   test asset, but the asset merge can run before KSP writes the new JSON, so the file never reaches the
+   APK and `MigrationTestHelper` fails with *"Cannot find the schema file in the assets folder"*. Build
+   once to export the schema, then build `:data:assembleDebugAndroidTest` again and confirm the APK lists
+   all versions:
+   `python -c "import zipfile;print(sorted(n.split('/')[-1] for n in zipfile.ZipFile(p).namelist() if n.endswith('.json')))"`
+   `--rerun-tasks` does not help when the schema is generated in the same build.
 
 ### Naming and localisation (2026-11-08)
 
@@ -99,6 +99,16 @@ there and every screen was exercised by hand. Next: M2, the food side.
    recreates the activity, which resets in-memory navigation to Today.
 10. ~~Debug screen~~ — app version, device, schema version, Health Connect state, the active profile's
    inputs, the latest stored target row, and per-table row counts. Read-only by design.
+
+## M2 progress (food)
+
+1. ~~Starter ingredient pack~~ — `tools/generate_starter_pack.py` emits `data/src/main/assets/starter_products.json`
+   (69 items, 12 categories, English + Russian names, per 100 g). `StarterPackImporter` imports it once in
+   one transaction, guarded by `app_setting.starter_pack_version`, and marks every row `source='starter'`.
+   Schema **v3** added `product.name_ru` (nullable) for the Russian names; migration 2 → 3 is additive and
+   tested. Values are composition-table estimates, which is exactly why the product keeps a `source` column
+   and why a scanned OpenFoodFacts product or a user edit outranks it.
+2. Next: OpenFoodFacts client, `pending_lookup`, screenshot fixtures; then product screen and scanner.
 
 
 ## Toolchain (installed 2026-11-07, verified)
@@ -247,7 +257,7 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (16 tests) — database behaviour, migration harness, repositories
+# OK (20 tests) — database behaviour, migrations, repositories, starter pack
 ```
 
 ## Devices and how to test on them

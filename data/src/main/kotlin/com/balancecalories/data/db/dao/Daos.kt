@@ -125,7 +125,6 @@ interface TargetHistoryDao {
 /** Read-only counts for the debug screen, so a wrong-looking number can be traced to a table. */
 @Dao
 interface DebugDao {
-
     @Query("SELECT COUNT(*) FROM profile")
     suspend fun profileCount(): Int
 
@@ -149,6 +148,24 @@ interface DebugDao {
 
     @Query("SELECT COUNT(*) FROM app_setting")
     suspend fun appSettingCount(): Int
+}
+
+/** Products: the starter pack today, OpenFoodFacts and user products later. */
+@Dao
+interface ProductDao {
+
+    /** IGNORE keeps a re-import from duplicating rows even if the version guard is ever bypassed. */
+    @Insert(onConflict = androidx.room.OnConflictStrategy.IGNORE)
+    suspend fun insertAll(products: List<com.balancecalories.data.db.entity.ProductEntity>): List<Long>
+
+    @Query("SELECT COUNT(*) FROM product")
+    suspend fun count(): Int
+
+    @Query("SELECT COUNT(*) FROM product WHERE source = :source")
+    suspend fun countFromSource(source: String): Int
+
+    @Query("SELECT * FROM product WHERE name = :name LIMIT 1")
+    suspend fun byName(name: String): com.balancecalories.data.db.entity.ProductEntity?
 }
 
 /** App-level key-value state (schema v2), such as which profile is currently shown. */

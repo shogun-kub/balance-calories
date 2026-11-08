@@ -25,7 +25,15 @@ class AppSettingsRepository(private val database: BalanceCaloriesDatabase) {
 
     suspend fun clearActiveProfile() = dao.remove(KEY_ACTIVE_PROFILE_ID)
 
+    /** Which starter pack version was imported; null means "never imported". */
+    suspend fun starterPackVersion(): Int? = dao.value(KEY_STARTER_PACK_VERSION)?.toIntOrNull()
+
+    suspend fun setStarterPackVersion(version: Int) {
+        dao.put(AppSettingEntity(KEY_STARTER_PACK_VERSION, version.toString()))
+    }
+
     companion object {
         const val KEY_ACTIVE_PROFILE_ID = "active_profile_id"
+        const val KEY_STARTER_PACK_VERSION = "starter_pack_version"
     }
 }

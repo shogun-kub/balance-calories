@@ -22,5 +22,15 @@ object Migrations {
         }
     }
 
-    val all: Array<Migration> = arrayOf(MIGRATION_1_2)
+    /**
+     * v2 → v3 gives products a Russian name. Additive and nullable, so existing rows keep working and
+     * the UI falls back to `name`.
+     */
+    val MIGRATION_2_3 = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `product` ADD COLUMN `name_ru` TEXT")
+        }
+    }
+
+    val all: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
 }

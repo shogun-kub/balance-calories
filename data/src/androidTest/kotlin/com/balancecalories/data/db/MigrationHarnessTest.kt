@@ -108,6 +108,30 @@ class MigrationHarnessTest {
         return names
     }
 
+    @Test
+    fun migration2To3GivesProductsARussianNameAndKeepsTheirValues() {
+        helper.createDatabase(TEST_DB, 2).use { db ->
+            db.execSQL(
+                "INSERT INTO product (id, barcode, name, brand, source, kcal_100g, protein_100g, " +
+                    "fat_100g, carbs_100g, fiber_100g, sugar_100g, salt_100g, is_liquid, " +
+                    "serving_grams, pack_grams, image_url, off_rev, is_override, energy_estimated, " +
+                    "created_at, updated_at) " +
+                    "VALUES (1, '4600000000001', 'Test oats', NULL, 'starter', 389.0, 16.9, 6.9, " +
+                    "66.3, 10.6, 1.0, 0.0, 0, NULL, NULL, NULL, NULL, 0, 0, 1760000000000, 1760000000000)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 3, true, Migrations.MIGRATION_2_3).use { db ->
+            assertEquals(3, db.version)
+            db.query("SELECT name, kcal_100g, name_ru FROM product WHERE id = 1").use { cursor ->
+                assertTrue("the product row must survive", cursor.moveToFirst())
+                assertEquals("Test oats", cursor.getString(0))
+                assertEquals(389.0, cursor.getDouble(1), 0.001)
+                assertTrue("name_ru must be null for existing rows", cursor.isNull(2))
+            }
+        }
+    }
+
     private companion object {
         const val TEST_DB = "migration-harness-test.db"
     }

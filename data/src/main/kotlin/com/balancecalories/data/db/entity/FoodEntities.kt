@@ -30,6 +30,13 @@ data class ProductEntity(
     @ColumnInfo(name = "name")
     val name: String,
 
+    /**
+     * Russian name, added in schema v3. Nullable because OpenFoodFacts and user products usually carry
+     * one name only; the UI falls back to [name] when this is absent.
+     */
+    @ColumnInfo(name = "name_ru")
+    val nameRu: String? = null,
+
     @ColumnInfo(name = "brand")
     val brand: String? = null,
 
