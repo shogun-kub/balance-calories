@@ -1,6 +1,10 @@
 package com.balancecalories.data.repo
 
 import com.balancecalories.core.activity.ActivityQuality
+import com.balancecalories.core.energy.DayEnergy
+import com.balancecalories.core.energy.RecapCalculator
+import com.balancecalories.core.energy.WeeklyRecap
+import com.balancecalories.core.energy.WeightTrend
 import com.balancecalories.core.activity.activityQualityFromStorage
 import com.balancecalories.core.time.DayWindow
 import com.balancecalories.data.db.BalanceCaloriesDatabase
@@ -39,6 +43,43 @@ class HistoryRepository(
     private val database: BalanceCaloriesDatabase,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
+
+    /** Canonical weight per day, smoothed through [WeightTrend], for the chart and the recap. */
+    suspend fun weightTrend(
+        profileId: Long,
+        today: LocalDate,
+        days: Int,
+    ): List<Pair<LocalDate, Double>> {
+        val from = today.minusDays(days - 1L)
+        val raw = CanonicalWeights(database).perDay(profileId, from, today)
+        return WeightTrend.ewma(raw.toList())
+    }
+
+    /**
+     * The week in one glance. The trend is smoothed over twice the window so the first recap day does not start its
+     * own baseline from a single weigh-in.
+     */
+    suspend fun recap(
+        profileId: Long,
+        today: LocalDate,
+        days: Int,
+        bmrKcal: Double,
+        palKcal: Double,
+    ): WeeklyRecap {
+        val window = summaries(profileId, today, days, bmrKcal, palKcal)
+        val trend = weightTrend(profileId, today, days * 2)
+        return RecapCalculator.recap(
+            days = window.map {
+                DayEnergy(
+                    date = it.date,
+                    intakeKcal = it.intakeKcal,
+                    burnKcal = it.burnKcal,
+                    logged = it.logged,
+                )
+            },
+            weightTrend = trend,
+        )
+    }
 
     suspend fun summaries(
         profileId: Long,

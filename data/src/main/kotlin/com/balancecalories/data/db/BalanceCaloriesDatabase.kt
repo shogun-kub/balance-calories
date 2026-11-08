@@ -53,7 +53,7 @@ import com.balancecalories.data.db.entity.TargetHistoryEntity
         SyncStateEntity::class,
         AppSettingEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

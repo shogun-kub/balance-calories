@@ -48,6 +48,15 @@ data class ProfileEntity(
     @ColumnInfo(name = "target_kcal_override")
     val targetKcalOverride: Int? = null,
 
+    /**
+     * The weight the person is aiming for, in kilograms, or null when they have not said.
+     *
+     * Schema **v6**, nullable and additive. The projection needs a destination; without this the app could only
+     * report a rate of change, which is not what anyone actually wants to know.
+     */
+    @ColumnInfo(name = "goal_weight_kg")
+    val goalWeightKg: Double? = null,
+
     /** At most one profile per device may read Health Connect. */
     @ColumnInfo(name = "band_enabled", defaultValue = "0")
     val bandEnabled: Boolean = false,

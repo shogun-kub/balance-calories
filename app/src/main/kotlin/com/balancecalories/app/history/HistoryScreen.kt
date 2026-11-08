@@ -1,5 +1,6 @@
 package com.balancecalories.app.history
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,7 +28,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.balancecalories.app.AppContainer
@@ -36,7 +40,9 @@ import com.balancecalories.app.food.trimNumber
 import com.balancecalories.data.repo.AdaptiveTdeeRepository
 import com.balancecalories.core.energy.AdaptiveTdee
 import com.balancecalories.core.energy.TdeeConfidence
+import com.balancecalories.core.energy.Projection
 import com.balancecalories.core.energy.TargetCalculator
+import com.balancecalories.core.energy.WeeklyRecap
 import com.balancecalories.core.profile.Profile
 import com.balancecalories.core.time.DayWindow
 import com.balancecalories.data.repo.DaySummary
@@ -75,6 +81,8 @@ fun HistoryScreen(
     var target by remember(profile.id) { mutableStateOf<Int?>(null) }
     var tdee by remember(profile.id) { mutableStateOf<AdaptiveTdeeRepository.Outcome?>(null) }
     var appliedTarget by remember(profile.id) { mutableStateOf<Int?>(null) }
+    var recap by remember(profile.id) { mutableStateOf<WeeklyRecap?>(null) }
+    var trend by remember(profile.id) { mutableStateOf<List<Pair<LocalDate, Double>>>(emptyList()) }
     var refresh by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(profile.id, refresh) {
@@ -99,6 +107,8 @@ fun HistoryScreen(
             currentTargetKcal = current.kcal,
             zone = zone,
         )
+        recap = container.history.recap(profile.id, today, days = 7, current.bmrKcal, current.tdeeKcal)
+        trend = container.history.weightTrend(profile.id, today, days = 30)
     }
 
     Column(
@@ -125,6 +135,8 @@ fun HistoryScreen(
                 },
             )
         }
+
+        recap?.let { RecapBlock(recap = it, trend = trend, profile = profile, today = today) }
 
         HorizontalDivider()
         Text(text = stringResource(R.string.history_week), style = MaterialTheme.typography.titleSmall)
@@ -315,14 +327,133 @@ private fun TdeeConfidence.localized(): String = when (this) {
     TdeeConfidence.HIGH -> stringResource(R.string.history_confidence_high)
 }
 
-/** Weight change with an explicit sign: "-0.5 kg" reads as loss, "0.5 kg" would be ambiguous. */
+/**
+ * Weight change with an explicit sign: "-0.5 kg" reads as loss, "0.5 kg" would be ambiguous.
+ *
+ * The unit comes from a resource, like every other user-visible string — "kg" is not universal even though the
+ * stored value always is.
+ */
+@Composable
 private fun signedKg(value: Double): String {
-    val text = trimNumber(kotlin.math.abs(value))
+    val unit = stringResource(R.string.weight_kg, trimNumber(kotlin.math.abs(value)))
     return when {
-        value > 0.0 -> "+$text kg"
-        value < 0.0 -> "-$text kg"
-        else -> "0 kg"
+        value > 0.0 -> "+$unit"
+        value < 0.0 -> "-$unit"
+        else -> unit
     }
 }
 
+/**
+ * Predicted against actual, plus the projection.
+ *
+ * The two numbers are shown side by side because they are the app's own honesty check: if the log implies a
+ * kilogram and the scale did not move, either the portions are optimistic or the expenditure is lower than
+ * assumed, and the adaptive TDEE is the mechanism that fixes the second case.
+ */
+@Composable
+private fun RecapBlock(
+    recap: WeeklyRecap,
+    trend: List<Pair<LocalDate, Double>>,
+    profile: Profile,
+    today: LocalDate,
+) {
+    val formatter = remember { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(text = stringResource(R.string.history_recap_title), style = MaterialTheme.typography.titleMedium)
 
+        val predicted = recap.predictedChangeKg
+        val actual = recap.actualChangeKg
+        when {
+            recap.loggedDays == 0 -> Text(
+                text = stringResource(R.string.history_recap_none),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            predicted != null -> Text(
+                text = stringResource(R.string.history_recap_predicted, signedKg(predicted)),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        if (actual != null) {
+            Text(
+                text = stringResource(R.string.history_recap_actual, signedKg(actual)),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        if (recap.streakDays > 1) {
+            Text(
+                text = stringResource(R.string.history_recap_streak, recap.streakDays),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+        }
+
+        HorizontalDivider()
+        Text(text = stringResource(R.string.history_trend), style = MaterialTheme.typography.titleSmall)
+        if (trend.size < 2) {
+            Text(text = stringResource(R.string.history_trend_empty), style = MaterialTheme.typography.bodySmall)
+        } else {
+            WeightTrendLine(trend = trend)
+        }
+
+        // A projection assumes the rate holds, so it is stated with its assumption and its date.
+        val goalKg = profile.goalWeightKg
+        val latestWeight = trend.lastOrNull()?.second
+        if (goalKg != null && latestWeight != null) {
+            val days = Projection.daysToGoal(latestWeight, goalKg, profile.goalRateKgPerWeek)
+            if (days != null) {
+                Text(
+                    text = stringResource(
+                        R.string.history_projection,
+                        trimNumber(goalKg),
+                        days,
+                        formatter.format(Projection.dateToGoal(today, days)),
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Text(
+                    text = stringResource(R.string.history_projection_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
+        }
+    }
+}
+
+/** The trend as a line: one polyline, drawn from the smoothed values, with the last value called out. */
+@Composable
+private fun WeightTrendLine(trend: List<Pair<LocalDate, Double>>) {
+    val weights = trend.map { it.second }
+    val min = weights.min()
+    val max = weights.max()
+    val span = (max - min).takeIf { it > 0.0 } ?: 1.0
+    val lineColor = MaterialTheme.colorScheme.primary
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+        ) {
+            val stepX = size.width / (weights.size - 1).coerceAtLeast(1)
+            val path = Path()
+            weights.forEachIndexed { index, weight ->
+                val x = index * stepX
+                // Inverted: a heavier weight must sit higher on screen.
+                val y = size.height * (1f - ((weight - min) / span).toFloat())
+                if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            }
+            drawPath(path = path, color = lineColor, style = Stroke(width = 4f))
+            drawCircle(
+                color = lineColor,
+                radius = 8f,
+                center = Offset(size.width, size.height * (1f - ((weights.last() - min) / span).toFloat())),
+            )
+        }
+        Text(
+            text = trimNumber(max) + " … " + trimNumber(min) + " kg",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.secondary,
+        )
+    }
+}

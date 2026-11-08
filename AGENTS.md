@@ -14,10 +14,11 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1-M4 complete, M5 partly**. `:core` (89 JVM tests) and `:data` (schema **v5**, 10 DAOs, 11
-repositories) build green, and `:app` shows Today with burned/balance/quality, the full food loop (products,
-search, scanning, logging, recipes) and a **History** screen with the adaptive TDEE. 89 :core + 42 :data + 10 :app
-JVM tests and **87 device tests** (83 :data, 4 :app) pass. Next: finish M5 (30-day chart, EWMA, recap), or M6.
+Current state: **M1-M5 complete.** `:core` (103 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
+repositories) build green, and `:app` has the whole loop: Today with burned/balance/quality, the food side
+(products, search, scanning, logging, recipes) and **History** with the adaptive TDEE, the weekly recap,
+a weight trend line and a projection. 103 :core + 42 :data + 10 :app JVM tests and **88 device tests**
+(84 :data, 4 :app) pass. Next: M6 hardening, export and release.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -242,8 +243,16 @@ JVM tests and **87 device tests** (83 :data, 4 :app) pass. Next: finish M5 (30-d
    the numbers behind it, a 7-day balance bar row, and the last 30 days with eaten/burned/balance/weight. A day with
    no food log says "нет записей" and prints **no balance** — "eaten 0" would be a claim about a person, not a
    missing entry.
-5. Tests: 13 new `:core` cases, 7 new device cases. Totals: 89 :core, 42 :data, 10 :app JVM; 83 :data, 4 :app device.
-6. Still open in M5: the 30-day chart and the weight EWMA line, the weekly recap card, and the projection to goal.
+5. ~~Trends and recap~~ — `WeightTrend.ewma` smooths per **measurement** (a gap does not weight the next reading
+   more), `RecapCalculator` prints predicted and actual change side by side, and `Projection` refuses a horizon
+   past two years rather than dating a number nobody believes (ADR-023). The History screen draws the 30-day
+   trend line and the recap; the projection needs a goal weight.
+6. ~~Goal weight~~ — `profile.goal_weight_kg`, schema **v6**, nullable and additive: empty means "no goal", so
+   the projection says nothing instead of guessing a destination. Migration 5 → 6 tested on device.
+7. Tests: 16 new `:core` cases for trends, the recap and the projection; 20 new device cases across the adaptive
+   repository and the v5/v6 migrations. Totals: 103 :core, 42 :data, 10 :app JVM; 84 :data, 4 :app device.
+   Strings 255/255.
+8. Next: **M6** — hardening, export, release.
 
 ## Toolchain (installed 2026-11-07, verified)
 
@@ -392,7 +401,7 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 .\gradlew.bat :data:assembleDebugAndroidTest
 & $adb install -r -t data\build\outputs\apk\androidTest\debug\data-debug-androidTest.apk
 & $adb shell "am instrument -w com.balancecalories.data.test/androidx.test.runner.AndroidJUnitRunner"
-# OK (83 tests) — database behaviour, migrations, repositories, starter pack, products, food, recipes, band activity, adaptive TDEE
+# OK (84 tests) — database behaviour, migrations, repositories, starter pack, products, food, recipes, band activity, adaptive TDEE
 ```
 
 ### The scanner: two traps that cost an hour each (2026-11-08)

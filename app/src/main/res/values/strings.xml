@@ -24,6 +24,8 @@
     <string name="activity_hard">Hard — physical job or 5+ workouts a week</string>
     <string name="activity_athlete">Athlete — training most days</string>
     <string name="field_goal">Weekly goal</string>
+    <string name="field_goal_weight">Goal weight (optional)</string>
+    <string name="field_goal_weight_help">Used for the projection; leave empty if you do not have one</string>
     <string name="goal_lose_fast">Lose 0.5 kg a week</string>
     <string name="goal_lose_steady">Lose 0.25 kg a week</string>
     <string name="goal_maintain">Maintain weight</string>
@@ -263,5 +265,17 @@
     <string name="history_week">Last 7 days, eaten minus burned</string>
     <string name="history_week_empty">last 7 days: nothing logged</string>
     <string name="history_weight">weight %1$s kg</string>
+    <string name="weight_kg">%1$s kg</string>
     <string name="history_surplus">+%1$s</string>
+
+    <!-- M5: the week's recap and the projection. Both state their own weakness. -->
+    <string name="history_recap_title">Last 7 days</string>
+    <string name="history_recap_predicted">the food log implies %1$s</string>
+    <string name="history_recap_actual">the scale says %1$s</string>
+    <string name="history_recap_streak">logged %1$d days in a row</string>
+    <string name="history_recap_none">nothing logged this week</string>
+    <string name="history_trend">Weight trend</string>
+        <string name="history_trend_empty">a trend needs at least two weigh-ins</string>
+    <string name="history_projection">To %1$s kg: about %2$d days, around %3$s</string>
+    <string name="history_projection_note">an estimate at the planned rate, not a promise</string>
 </resources>

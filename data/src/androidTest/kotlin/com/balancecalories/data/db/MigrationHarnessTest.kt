@@ -152,6 +152,29 @@ class MigrationHarnessTest {
         }
     }
 
+    /**
+     * 5 → 6 adds `profile.goal_weight_kg` and must keep every existing profile readable, with no goal set —
+     * the projection then says nothing rather than inventing a destination.
+     */
+    @Test
+    fun migration5To6AddsGoalWeightAndKeepsProfiles() {
+        helper.createDatabase(TEST_DB, 5).use { db ->
+            db.execSQL(
+                "INSERT INTO `profile` (`id`,`name`,`sex`,`birth_date`,`height_cm`,`activity_level`," +
+                    "`goal_rate_kg_per_week`,`day_start_hour`,`unit_system`,`created_at`) " +
+                    "VALUES (1,'Owner','MALE','1990-01-01',180.0,'MODERATE',-0.5,4,'METRIC',1)",
+            )
+        }
+        helper.runMigrationsAndValidate(TEST_DB, 6, true, Migrations.MIGRATION_5_6).use { db ->
+            db.query("SELECT name, goal_rate_kg_per_week, goal_weight_kg FROM profile").use { c ->
+                assertTrue("the profile must survive the migration", c.moveToFirst())
+                assertEquals("Owner", c.getString(0))
+                assertEquals(-0.5, c.getDouble(1), 1e-9)
+                assertTrue("no goal was ever set", c.isNull(2))
+            }
+        }
+    }
+
     private fun androidx.sqlite.db.SupportSQLiteDatabase.tableNames(): List<String> {
         val names = mutableListOf<String>()
         query("SELECT name FROM sqlite_master WHERE type = 'table'").use { cursor ->

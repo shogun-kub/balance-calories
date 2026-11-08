@@ -108,6 +108,9 @@ fun ProfileFormScreen(
             goalOptions.firstOrNull { it.rateKgPerWeek == existing?.goalRateKgPerWeek } ?: goalOptions[1],
         )
     }
+    var goalWeightText by remember(existing?.id) {
+        mutableStateOf(existing?.goalWeightKg?.let { formatWeight(it, unitSystem) } ?: "")
+    }
     var originalWeight by remember(existing?.id) { mutableStateOf<Double?>(null) }
     var validationError by remember { mutableStateOf<Int?>(null) }
     var saveError by remember { mutableStateOf<String?>(null) }
@@ -128,6 +131,8 @@ fun ProfileFormScreen(
     val weightEntered = parseDecimal(weightText)
     val metricHeight = heightEntered?.let { Units.heightToCm(it, unitSystem) }
     val metricWeight = weightEntered?.let { Units.weightToKg(it, unitSystem) }
+    // Optional: an empty field means "no goal", not zero kilograms.
+    val metricGoalWeight = parseDecimal(goalWeightText)?.let { Units.weightToKg(it, unitSystem) }
     val dob = birthDate
 
     val preview = remember(sex, dob, metricHeight, metricWeight, activity, goal, today, oldestAllowed) {
@@ -156,6 +161,8 @@ fun ProfileFormScreen(
                 if (unitSystem == UnitSystem.IMPERIAL) R.string.error_height_imperial else R.string.error_height
             metricWeight == null || metricWeight !in WEIGHT_RANGE_KG ->
                 if (unitSystem == UnitSystem.IMPERIAL) R.string.error_weight_imperial else R.string.error_weight
+            goalWeightText.isNotBlank() && (metricGoalWeight == null || metricGoalWeight !in WEIGHT_RANGE_KG) ->
+                if (unitSystem == UnitSystem.IMPERIAL) R.string.error_weight_imperial else R.string.error_weight
             else -> null
         }
         if (validationError != null || dob == null || metricHeight == null || metricWeight == null) return
@@ -174,6 +181,7 @@ fun ProfileFormScreen(
                             heightCm = height,
                             activityLevel = activity,
                             goalRateKgPerWeek = goal.rateKgPerWeek,
+                            goalWeightKg = metricGoalWeight,
                             bandEnabled = container.healthConnectAvailable,
                             createdAt = System.currentTimeMillis(),
                         ),
@@ -194,6 +202,7 @@ fun ProfileFormScreen(
                         heightCm = height,
                         activityLevel = activity,
                         goalRateKgPerWeek = goal.rateKgPerWeek,
+                        goalWeightKg = metricGoalWeight,
                     )
                     container.profiles.update(updated)
                     if (originalWeight == null || originalWeight!!.roundToInt() != weight.roundToInt()) {
@@ -327,6 +336,16 @@ fun ProfileFormScreen(
                 }
             }
         }
+
+        OutlinedTextField(
+            value = goalWeightText,
+            onValueChange = { goalWeightText = it },
+            label = { Text(stringResource(R.string.field_goal_weight)) },
+            supportingText = { Text(stringResource(R.string.field_goal_weight_help)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         if (preview != null) {
             Text(

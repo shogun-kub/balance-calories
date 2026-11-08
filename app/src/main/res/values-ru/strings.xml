@@ -24,6 +24,8 @@
     <string name="activity_hard">Высокий — физическая работа или 5+ тренировок в неделю</string>
     <string name="activity_athlete">Спортсмен — тренировки почти каждый день</string>
     <string name="field_goal">Цель в неделю</string>
+    <string name="field_goal_weight">Целевой вес (необязательно)</string>
+    <string name="field_goal_weight_help">Нужен для прогноза; оставьте пустым, если цели нет</string>
     <string name="goal_lose_fast">Сбросить 0,5 кг в неделю</string>
     <string name="goal_lose_steady">Сбросить 0,25 кг в неделю</string>
     <string name="goal_maintain">Держать вес</string>
@@ -263,5 +265,17 @@
     <string name="history_week">Последние 7 дней: съедено минус сожжено</string>
     <string name="history_week_empty">за 7 дней ничего не записано</string>
     <string name="history_weight">вес %1$s кг</string>
+    <string name="weight_kg">%1$s кг</string>
     <string name="history_surplus">+%1$s</string>
+
+    <!-- M5: итоги недели и прогноз. Каждый подписывает свою слабость. -->
+    <string name="history_recap_title">Последние 7 дней</string>
+    <string name="history_recap_predicted">по дневнику %1$s</string>
+    <string name="history_recap_actual">весы говорят %1$s</string>
+    <string name="history_recap_streak">записей подряд: %1$d дн.</string>
+    <string name="history_recap_none">за эту неделю ничего не записано</string>
+    <string name="history_trend">Тренд веса</string>
+        <string name="history_trend_empty">для тренда нужно минимум два взвешивания</string>
+    <string name="history_projection">До %1$s кг: примерно %2$d дн., около %3$s</string>
+    <string name="history_projection_note">это оценка при текущем темпе, а не обещание</string>
 </resources>

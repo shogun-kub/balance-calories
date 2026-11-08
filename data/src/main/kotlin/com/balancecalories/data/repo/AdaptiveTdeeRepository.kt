@@ -31,7 +31,7 @@ class AdaptiveTdeeRepository(
 ) {
 
     private val food = database.foodEntryDao()
-    private val body = database.bodyMeasurementDao()
+    private val weights = CanonicalWeights(database)
     private val targets = TargetRepository(database)
 
     /**
@@ -60,7 +60,7 @@ class AdaptiveTdeeRepository(
         val to = today.minusDays(1)
         val from = to.minusDays(windowDays - 1L)
 
-        val weightsByDay = canonicalWeights(profile.id, from, to)
+        val weightsByDay = weights.perDay(profile.id, from, to)
         val days = ArrayList<AdaptiveDay>(windowDays)
         var date = from
         while (!date.isAfter(to)) {
@@ -115,36 +115,5 @@ class AdaptiveTdeeRepository(
         return true
     }
 
-    /**
-     * One weight per day, with a fixed source preference.
-     *
-     * Several writers can report the same morning: a manual entry, a connected scale, Gadgetbridge relaying the
-     * band, and Health Connect. They disagree by a few hundred grams, and picking arbitrarily would make the
-     * weight trend jump between sources. Manual wins because the person chose to correct it; then a real scale;
-     * then whatever the band exported; then Health Connect as the broadest net.
-     */
-    private suspend fun canonicalWeights(
-        profileId: Long,
-        from: LocalDate,
-        to: LocalDate,
-    ): Map<LocalDate, Double> {
-        val rows = body.weightsBetween(profileId, from.toString(), to.toString())
-        val best = LinkedHashMap<LocalDate, Pair<Int, Double>>()
-        for (row in rows) {
-            val weight = row.weightKg ?: continue
-            val date = runCatching { LocalDate.parse(row.localDate) }.getOrNull() ?: continue
-            val rank = sourceRank(row.source)
-            val existing = best[date]
-            if (existing == null || rank < existing.first) best[date] = rank to weight
-        }
-        return best.mapValues { it.value.second }
-    }
-
-    private fun sourceRank(source: String): Int = when (source) {
-        BodyMeasurementRepository.SOURCE_MANUAL -> 0
-        BodyMeasurementRepository.SOURCE_SCALE -> 1
-        BodyMeasurementRepository.SOURCE_GADGETBRIDGE -> 2
-        BodyMeasurementRepository.SOURCE_HEALTH_CONNECT -> 3
-        else -> 4
-    }
 }
+

@@ -26,6 +26,8 @@ data class Profile(
     val goalRateKgPerWeek: Double,
     /** A number the user pinned; null means "recompute from the maths". */
     val targetKcalOverride: Int? = null,
+    /** The weight they are aiming for, or null when they have not set one. Drives the projection. */
+    val goalWeightKg: Double? = null,
     /** Whether this profile is the one allowed to read Health Connect on this phone. */
     val bandEnabled: Boolean = false,
     val bandLabel: String? = null,
