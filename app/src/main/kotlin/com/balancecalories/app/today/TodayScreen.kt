@@ -165,14 +165,11 @@ fun TodayScreen(
         }
 
         HorizontalDivider()
-        MetricRow(stringResource(R.string.label_target), stringResource(R.string.kcal_int, target.kcal))
-        MetricRow(
-            stringResource(R.string.today_eaten),
-            stringResource(R.string.kcal_decimal, loadedIntake.eatenKcal),
-        )
-        MetricRow(
-            stringResource(R.string.today_remaining),
-            stringResource(R.string.kcal_decimal, loadedIntake.remainingKcal),
+        // The gauge replaces the three rows that used to print target, eaten and remaining as text: the
+        // numbers are still here, in the middle of the arc, and the macro grams moved into its legend.
+        MacroGauge(
+            intake = loadedIntake,
+            targetKcal = target.kcal,
         )
         loadedBurn?.let { dayBurn ->
             MetricRow(
@@ -255,17 +252,6 @@ fun TodayScreen(
                 text = stringResource(R.string.product_estimated),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.secondary,
-            )
-        }
-        if (loadedIntake.meals.isNotEmpty()) {
-            Text(
-                text = stringResource(
-                    R.string.macro_line,
-                    loadedIntake.proteinG,
-                    loadedIntake.fatG,
-                    loadedIntake.carbsG,
-                ),
-                style = MaterialTheme.typography.bodySmall,
             )
         }
 

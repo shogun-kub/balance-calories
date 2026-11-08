@@ -318,6 +318,19 @@ and `fillMaxWidth()` inside a `horizontalScroll` resolves against an unbounded w
 the canvas to zero — the 90-day chart was blank until it got an explicit width. Verified on the
 Honor X7c at 1.0 and 2.0 in Russian, on all three ranges. ADR-028.
 
+
+### M7.2b — Today's half-doughnut — done 2026-11-08
+
+- [x] A half-doughnut of today's energy on `Сегодня`, split by macro, with the **grams** of protein, fat and
+      carbs printed beside it. Colour is decoration; the numbers carry the meaning (ADR-029).
+- [x] `CalorieGauge` in `:core` (6 cases): the arc never exceeds half a circle, the excess is reported in
+      words, no target draws no fill, nothing eaten draws the track with today's allowance as the big number.
+- [x] One `ChartPalette` for both charts, in its lighter 300-level tones, so "lighter shades of all chart
+      colours" covers the history chart too instead of only the new one.
+- [x] Verified on the Honor X7c at 1.0, 2.0 and in the empty state: at 2× the phrases move under the arc,
+      because inside it they overflow the inner opening; with nothing logged the headline is today's
+      allowance and the subtitle says so, rather than a dash or a zero.
+
 ### M7.3 — Weight: manual entry and a proper chart (1.5 d)
 
 The wife's request, and the one item on this list that is more than cosmetic: the adaptive TDEE needs

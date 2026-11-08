@@ -28,11 +28,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
-import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
-import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.energy.Sex
-import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.profile.Profile
 import kotlinx.coroutines.launch
 
@@ -83,6 +80,16 @@ fun ProfilesScreen(
                         profile = profile,
                         isCurrent = isCurrent,
                         actions = {
+                        if (!profile.bandEnabled) {
+                            // Creating a profile no longer takes the band (ProfileRepository.create),
+                            // so moving it is a deliberate action on this card. The list re-emits on
+                            // its own, because it is observed from the database.
+                            TextButton(
+                                onClick = {
+                                    scope.launch { container.profiles.setBandEnabled(profile.id, true) }
+                                },
+                            ) { Text(stringResource(R.string.action_read_band)) }
+                        }
                             TextButton(onClick = { onEditProfile(profile) }) {
                                 Text(stringResource(R.string.action_edit))
                             }

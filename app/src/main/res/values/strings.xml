@@ -104,7 +104,6 @@
 
     <string name="label_bmr">BMR</string>
     <string name="label_tdee">TDEE</string>
-    <string name="label_target">Daily target</string>
     <string name="label_limit">Safety rule</string>
     <string name="label_health_connect">Health Connect</string>
 
@@ -156,13 +155,9 @@
     <string name="error_name_required">Enter a name</string>
     <string name="error_kcal_required">Enter energy per 100 g</string>
     <string name="error_kcal_range">Energy must be between 0 and 900 kcal</string>
-
-    <string name="today_eaten">Eaten</string>
-    <string name="today_remaining">Remaining</string>
     <string name="today_empty">Nothing logged today</string>
     <string name="today_add_food">Add food</string>
     <string name="today_entry_line">%1$.0f g · %2$.0f kcal</string>
-    <string name="macro_line">P %1$.0f · F %2$.0f · C %3$.0f</string>
     <string name="loading">Loading…</string>
     <string name="entry_edit_title">Change the portion</string>
     <string name="entry_edit_kcal">%1$.0f kcal after the change</string>
@@ -336,4 +331,17 @@
     <string name="chart_legend_target">Target %1$d kcal</string>
     <string name="chart_summary">%1$d of %2$d days logged: %3$d kcal eaten; burns average %4$d kcal a day, and %5$d of those days are estimates</string>
     <string name="chart_no_data">No logged days in this range, so there is nothing to draw yet.</string>
-    <string name="chart_last_logged">Last logged day: %1$s, %2$d kcal</string></resources>
+    <string name="chart_last_logged">Last logged day: %1$s, %2$d kcal</string>    <!-- M7.2b: the Today gauge. Colour is decoration; the grams beside it and the description carry the meaning. -->
+    <string name="gauge_of_target">of %1$d kcal</string>
+    <string name="gauge_target_today">target for today</string>
+    <string name="gauge_remaining">%1$d kcal left</string>
+    <string name="gauge_over">over by %1$d kcal</string>
+    <string name="gauge_nothing_logged">nothing logged yet</string>
+    <string name="gauge_protein">Protein %1$d g</string>
+    <string name="gauge_fat">Fat %1$d g</string>
+    <string name="gauge_carbs">Carbs %1$d g</string>
+    <string name="gauge_unlabelled">some energy is unlabelled</string>
+    <string name="gauge_description">Today: %1$d of %2$d kcal eaten, protein %3$d g, fat %4$d g, carbs %5$d g</string>
+    <string name="gauge_description_empty">Today: nothing logged against a target of %1$d kcal</string>
+    <string name="action_read_band">Read the band</string>
+</resources>

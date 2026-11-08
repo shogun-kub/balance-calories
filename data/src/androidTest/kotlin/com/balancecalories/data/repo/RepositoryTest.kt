@@ -81,20 +81,39 @@ class RepositoryTest {
     }
 
     @Test
-    fun enablingTheBandForOneProfileTakesItFromTheOther() = runBlocking {
+    fun creatingASecondProfileDoesNotTakeTheBandFromTheFirst() = runBlocking {
         val owner = profiles.create(profile("Owner", band = true))
         val second = profiles.create(profile("Second", band = true))
 
-        // Creating a band profile clears everyone else in the same transaction.
-        val ownerAfter = profiles.byId(owner.id)!!
-        val secondAfter = profiles.byId(second.id)!!
-        assertTrue(!ownerAfter.bandEnabled)
-        assertTrue(secondAfter.bandEnabled)
-
-        profiles.setBandEnabled(owner.id, true)
-
+        // One band per phone: the profile that reads it keeps it until someone moves it explicitly.
+        // A second profile created for an afternoon used to take it silently, stopping the owner's sync.
         assertTrue(profiles.byId(owner.id)!!.bandEnabled)
         assertTrue(!profiles.byId(second.id)!!.bandEnabled)
+    }
+
+    @Test
+    fun movingTheBandTakesItFromTheOtherAndLeavesOnlyOneReader() = runBlocking {
+        val owner = profiles.create(profile("Owner", band = true))
+        val second = profiles.create(profile("Second", band = true))
+
+        profiles.setBandEnabled(second.id, true)
+
+        assertTrue(profiles.byId(second.id)!!.bandEnabled)
+        assertTrue(!profiles.byId(owner.id)!!.bandEnabled)
+        val readers = profiles.observeActive().first().filter { it.bandEnabled }
+        assertEquals(1, readers.size)
+    }
+
+    @Test
+    fun theBandFallsBackToANewProfileWhenItsOwnerIsGone() = runBlocking {
+        val owner = profiles.create(profile("Owner", band = true))
+        profiles.setBandEnabled(owner.id, false)
+
+        // Nobody reads the band now, so the next profile that asks for it gets it rather than ending up
+        // on a phone where no profile reads the band and the Today screen simply loses its sync button.
+        val second = profiles.create(profile("Second", band = true))
+
+        assertTrue(profiles.byId(second.id)!!.bandEnabled)
     }
 
     @Test

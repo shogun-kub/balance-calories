@@ -52,4 +52,10 @@ data class DailyIntake(
 
     /** True when any logged entry carries a derived number, so the screen can say "estimated". */
     val hasEstimates: Boolean get() = meals.any { it.wasEstimated }
+
+    /**
+     * The day's energy split by macro, for the Today gauge — the same maths the history chart draws, so the two
+     * screens cannot disagree about how much of a day was protein.
+     */
+    val macroSplit: MacroSplit get() = MacroEnergy.split(proteinG, fatG, carbsG, eatenKcal)
 }

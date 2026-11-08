@@ -34,6 +34,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.balancecalories.app.R
+import com.balancecalories.app.ui.ChartPalette
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.data.repo.DaySummary
 import java.time.format.DateTimeFormatter
@@ -66,12 +67,14 @@ fun IntakeBurnChart(
     onRangeChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val proteinColor = Color(0xFF2E7D32)
-    val fatColor = Color(0xFFF9A825)
-    val carbsColor = Color(0xFFC62828)
-    val otherColor = Color(0xFF757575)
-    val burnColor = MaterialTheme.colorScheme.primary
-    val estimateColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f)
+    // The lighter palette shared with the Today gauge, so the two charts cannot disagree about what
+    // protein looks like. app/ui/ChartPalette.kt explains why the tones are quiet.
+    val proteinColor = ChartPalette.protein
+    val fatColor = ChartPalette.fat
+    val carbsColor = ChartPalette.carbs
+    val otherColor = ChartPalette.other
+    val burnColor = ChartPalette.burn
+    val estimateColor = ChartPalette.burnEstimate
     val axisColor = MaterialTheme.colorScheme.outline
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val dividerColor = MaterialTheme.colorScheme.surface

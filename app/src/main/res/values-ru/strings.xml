@@ -104,7 +104,6 @@
 
     <string name="label_bmr">Базовый обмен</string>
     <string name="label_tdee">Суточный расход</string>
-    <string name="label_target">Дневная цель</string>
     <string name="label_limit">Ограничение</string>
     <string name="label_health_connect">Health Connect</string>
 
@@ -156,13 +155,9 @@
     <string name="error_name_required">Введите название</string>
     <string name="error_kcal_required">Введите энергию на 100 г</string>
     <string name="error_kcal_range">Энергия должна быть от 0 до 900 ккал</string>
-
-    <string name="today_eaten">Съедено</string>
-    <string name="today_remaining">Осталось</string>
     <string name="today_empty">Сегодня ничего не записано</string>
     <string name="today_add_food">Добавить еду</string>
     <string name="today_entry_line">%1$.0f г · %2$.0f ккал</string>
-    <string name="macro_line">Б %1$.0f · Ж %2$.0f · У %3$.0f</string>
     <string name="loading">Загрузка…</string>
     <string name="entry_edit_title">Изменить порцию</string>
     <string name="entry_edit_kcal">%1$.0f ккал после изменения</string>
@@ -336,4 +331,17 @@
     <string name="chart_legend_target">Цель %1$d ккал</string>
     <string name="chart_summary">Записано %1$d из %2$d дн.: съедено %3$d ккал; в среднем сожжено %4$d ккал в день, из них оценка за %5$d дн.</string>
     <string name="chart_no_data">В этом диапазоне нет записанных дней, показывать нечего.</string>
-    <string name="chart_last_logged">Последний записанный день: %1$s, %2$d ккал</string></resources>
+    <string name="chart_last_logged">Последний записанный день: %1$s, %2$d ккал</string>    <!-- M7.2b: the Today gauge. Colour is decoration; the grams beside it and the description carry the meaning. -->
+    <string name="gauge_of_target">из %1$d ккал</string>
+    <string name="gauge_target_today">цель на сегодня</string>
+    <string name="gauge_remaining">осталось %1$d ккал</string>
+    <string name="gauge_over">перебор на %1$d ккал</string>
+    <string name="gauge_nothing_logged">пока ничего не записано</string>
+    <string name="gauge_protein">Белки %1$d г</string>
+    <string name="gauge_fat">Жиры %1$d г</string>
+    <string name="gauge_carbs">Углеводы %1$d г</string>
+    <string name="gauge_unlabelled">часть энергии не распознана</string>
+    <string name="gauge_description">Сегодня: съедено %1$d из %2$d ккал, белки %3$d г, жиры %4$d г, углеводы %5$d г</string>
+    <string name="gauge_description_empty">Сегодня: ничего не записано при цели %1$d ккал</string>
+    <string name="action_read_band">Читать браслет</string>
+</resources>

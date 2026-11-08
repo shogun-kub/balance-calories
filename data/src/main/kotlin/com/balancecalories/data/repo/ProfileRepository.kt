@@ -28,10 +28,19 @@ class ProfileRepository(
 
     suspend fun byId(id: Long): Profile? = dao.byId(id)?.toDomain()
 
-    /** Inserts a profile and returns it with the assigned id. Enabling the band clears every other one. */
+    /**
+     * Inserts a profile and returns it with the assigned id.
+     *
+     * The band on this phone belongs to one person, and **creating a profile does not take it**: the
+     * first profile that reads the band keeps it until someone moves it explicitly through
+     * [setBandEnabled]. Before this rule, adding a second profile for an afternoon silently stopped the
+     * owner's band sync, and deleting that second profile left nobody reading the band at all — the
+     * phone just went quiet, with nothing on screen to explain it.
+     */
     suspend fun create(profile: Profile): Profile = database.withTransaction {
-        val id = dao.insert(profile.toEntity())
-        if (profile.bandEnabled) dao.clearBandExcept(id)
+        val takesBand = profile.bandEnabled && dao.bandEnabledProfiles().isEmpty()
+        val id = dao.insert(profile.toEntity().copy(bandEnabled = takesBand))
+        if (takesBand) dao.clearBandExcept(id)
         requireNotNull(dao.byId(id)).toDomain()
     }
 

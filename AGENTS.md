@@ -14,11 +14,11 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1-M5, M7.1 and M7.2 complete, M6 half done.** `:core` (115 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
+Current state: **M1-M5, M7.1, M7.2 and M7.2b complete, M6 half done.** `:core` (121 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
 repositories) build green, and `:app` has the whole loop: Today with burned/balance/quality, the food side
 (products, search, scanning, logging, recipes) and **History** with the adaptive TDEE, the weekly recap,
-a weight trend line and a projection, plus a backup screen. 115 :core + 42 :data + 10 :app JVM tests and
-**117 device tests** (113 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split. Next: M7.3 (the weight chart), then M7.4 the icon, M7.5 the dark theme, then the rest of M6 and the release; see docs/04-plan.md.
+a weight trend line and a projection, plus a backup screen. 121 :core + 42 :data + 10 :app JVM tests and
+**119 device tests** (115 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split. Next: M7.3 (the weight chart), then M7.4 the icon, M7.5 the dark theme, then the rest of M6 and the release; see docs/04-plan.md.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -333,7 +333,31 @@ a weight trend line and a projection, plus a backup screen. 115 :core + 42 :data
       canvas got an explicit width, and `rememberScrollState(initial = …)` cannot open at the end — the maximum
       is only known after layout, so scroll in a `LaunchedEffect(scrollState.maxValue)`.
 15. Tests: 115 :core, 42 :data, 10 :app JVM; **113 :data, 4 :app device** (117 device). Strings **306/306**.
-16. Next: **M7.3** — the weight chart (raw dots, EWMA line, dashed goal), the only piece of `Вес` still missing.
+16. ~~**M7.2b — the Today gauge**~~ — a half-doughnut of today's energy split by macro, with the **grams**
+    of protein, fat and carbs printed beside it. The scale is the target and it clamps at half a circle
+    (`CalorieGauge` in `:core`, 6 cases): eating past the allowance fills the arc and reports the excess
+    in words, because a sweep past 180° wraps and would look like *less* than a full day, and "142% of
+    target" is harder to feel than "перебор на 500 ккал". One `ChartPalette` now feeds both this gauge and
+    the history chart, in the lighter 300-level tones; the grams and the spoken description carry the
+    meaning, so the colour is decoration and a big carbohydrate band is not a verdict. ADR-029.
+17. **Three things the gauge taught:**
+    - **A dash is not a number.** With nothing logged the first version printed "—" over "из 1992 ккал";
+      the one figure a person wants before eating is how much they have, so the headline becomes the
+      allowance and the subtitle names it. Never "0 ккал" — that is a claim, not an absence.
+    - **The centre of a half circle is narrow.** At `font_scale 2.0` the phrases were twice as wide and
+      ran across the track; they are now constrained to the inner opening and, above 1.5×, the
+      remaining/over line moves *under* the arc. Measure the opening, do not guess it.
+    - **`2 * arcThickness` does not compile for `Dp`** (`Int.times(Dp)` does not exist) and `min` over
+      `Dp` needs `minOf`. Trivial, but it cost a build cycle each.
+18. **A second profile used to steal the band** — found while verifying the gauge, when a throwaway
+    profile created to look at an *empty* day took `band_enabled` from the owner's profile (the form
+    set it on every create), stopped his sync, and then left **nobody** reading the band once the
+    throwaway was deleted — Today simply lost its sync button, with nothing on screen to say why.
+    `create` now grants the band only when no active profile has it, and the profiles screen has a
+    **Читать браслет** action, so moving it is one deliberate tap. Three device tests pin the rule.
+    ADR-030.
+19. Tests: 121 :core, 42 :data, 10 :app JVM; **115 :data, 4 :app device** (119 device). Strings **314/314**.
+20. Next: **M7.3** — the weight chart (raw dots, EWMA line, dashed goal), the only piece of `Вес` still missing.
 
 ## Toolchain (installed 2026-11-07, verified)
 
