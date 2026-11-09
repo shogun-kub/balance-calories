@@ -159,7 +159,7 @@
 <string name="today_entry_fat">Fat %1$d</string>
 <string name="today_entry_carbs">Carbs %1$d</string>
 <string name="macro_separator"> · </string>
-<string name="today_entry_macros_a11y">protein %1$d g, %2$d%% of the daily norm; fat %3$d g, %4$d%%; carbs %5$d g, %6$d%%</string>
+<string name="today_entry_macros_a11y">protein %1$s g, %2$d%% of the daily norm; fat %3$s g, %4$d%%; carbs %5$s g, %6$d%%</string>
     <string name="loading">Loading…</string>
     <string name="entry_edit_title">Change the portion</string>
     <string name="entry_edit_kcal">%1$.0f kcal after the change</string>
