@@ -3,10 +3,14 @@ package com.balancecalories.data.repo
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.balancecalories.core.food.MacroNorm
 import com.balancecalories.data.db.BalanceCaloriesDatabase
+import com.balancecalories.data.db.entity.AppSettingEntity
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -63,5 +67,41 @@ class AppSettingsRepositoryTest {
         settings.setTdeeAutoApply(profileId = 1L, enabled = false)
 
         assertFalse(settings.tdeeAutoApply(profileId = 1L))
+    }
+
+    @Test
+    fun macroNormIsUnsetUntilSomeoneSetsIt() = runBlocking {
+        assertNull("null means 'derive from the target', not 'no norms'", settings.macroNorm(profileId = 1L))
+    }
+
+    @Test
+    fun macroNormSurvivesARead() = runBlocking {
+        settings.setMacroNorm(profileId = 1L, MacroNorm(proteinG = 140.0, fatG = 70.0, carbsG = 190.0))
+
+        assertEquals(MacroNorm(140.0, 70.0, 190.0), settings.macroNorm(profileId = 1L))
+    }
+
+    @Test
+    fun oneProfilesMacroNormDoesNotGovernAnother() = runBlocking {
+        settings.setMacroNorm(profileId = 1L, MacroNorm(140.0, 70.0, 190.0))
+
+        assertNull("the second person on this phone has their own norms", settings.macroNorm(profileId = 2L))
+    }
+
+    @Test
+    fun macroNormCanBeClearedBackToTheDerivedOne() = runBlocking {
+        settings.setMacroNorm(profileId = 1L, MacroNorm(140.0, 70.0, 190.0))
+        settings.clearMacroNorm(profileId = 1L)
+
+        assertNull(settings.macroNorm(profileId = 1L))
+    }
+
+    @Test
+    fun aDamagedStoredNormReadsAsUnsetRatherThanCrashing() = runBlocking {
+        // Something wrote nonsense into the key (a downgrade, a hand-edited debug row): the screen must fall back
+        // to the derived norms, not throw on launch.
+        db.settingsDao().put(AppSettingEntity(AppSettingsRepository.MACRO_NORM_PREFIX + 1L, "140,,oops"))
+
+        assertNull(settings.macroNorm(profileId = 1L))
     }
 }

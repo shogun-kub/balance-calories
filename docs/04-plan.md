@@ -514,6 +514,37 @@ Three things this milestone taught:
 
 Nothing here changes stored data or the schema, which is deliberate: an interface milestone that also
 migrates the database cannot be reviewed or rolled back cleanly.
+### M7.7 — The macros where the food is
+
+- [x] **The list says what a food is made of.** Every logged portion on Today prints `Белки 3 · Жиры 2 ·
+      Углеводы 15` under its weight and energy, and the macro whose share of **its own** daily norm is largest is
+      bold and printed in that macro's colour: protein green, fat yellow, carbs red — the same three tones the
+      gauge and the history chart use, so a legend already learned keeps working. Ties light up together.
+- [x] **The denominator exists now.** The app had a calorie target and nothing per macro, so "5 % of the daily
+      norm" had nothing to divide by. `MacroNorm` in `:core` derives one (25/30/45 % of the target through the
+      same Atwater factors as everywhere else), Settings shows the numbers and accepts the person's own, and a
+      stored norm outranks the derivation for good. 20 `:core` cases: the arithmetic, the winner rule, ties, a
+      broken norm, a row with no macro data, encode/decode. ADR-035.
+- [x] **Manual products compute their own energy.** Typing protein/fat/carbs and leaving kcal empty is a complete
+      answer: the form predicts `из БЖУ: примерно 352 ккал` as you type and stores the derived energy with
+      `energyEstimated = true`, so every screen that already says "энергия оценена" keeps telling the truth. A
+      typed kcal still wins — that is what the label states.
+- [x] **A typed product is a meal, not a catalogue entry.** Saving from the form now lands on the product's
+      portion screen — grams prefilled, meal by time of day, one tap to log — instead of returning to Today with
+      nothing logged and the product to be found again in a list. Back from there keeps the product and logs
+      nothing, which is the "cancel the add" the owner asked for.
+- [ ] **Not yet seen on a device.** The phone was unplugged when this landed. Unit-tested and built, but the
+      pixels, the colours at 200 % and the Russian plural on the new settings row are unverified — the first
+      thing to do when the Honor is back.
+
+#### What the highlight is and is not
+
+| It is | It is not |
+| --- | --- |
+| A comparison **inside one row**: which of the three this food is proportionally richest in | A ranking of foods, or a verdict that one is healthy |
+| A share of **that macro's own** allowance, so 30 g of protein beats 30 g of carbs for chicken and loses for rice | A percentage of the calorie target |
+| Carried by colour **and** bold **and** position, with the percentages in the spoken description | Colour alone — a person who cannot separate the hues still sees which one is bold |
+
 ## M8 — Optional v1.1 (post-release)
 
 Adaptive-TDEE refinements, HC write-back (`NutritionRecord`, `WeightRecord`), widget, notifications,

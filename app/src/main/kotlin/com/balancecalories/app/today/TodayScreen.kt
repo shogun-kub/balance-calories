@@ -25,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -33,13 +34,20 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.withStyle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.PermissionController
+import com.balancecalories.app.ui.ChartPalette
+import com.balancecalories.app.ui.LabelValueRow
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
-import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
 import com.balancecalories.core.activity.ActivityQuality
 import com.balancecalories.core.activity.BurnSource
@@ -48,10 +56,10 @@ import com.balancecalories.data.repo.DailyActivityRepository
 import com.balancecalories.core.energy.TargetCalculator
 import com.balancecalories.core.energy.TargetLimit
 import com.balancecalories.core.food.DailyIntake
+import com.balancecalories.core.food.Macro
+import com.balancecalories.core.food.MacroNorm
 import com.balancecalories.core.food.Meal
 import com.balancecalories.core.food.LoggedEntry
-import com.balancecalories.app.ui.WrappingRow
-import com.balancecalories.app.ui.LabelValueRow
 import com.balancecalories.core.profile.Profile
 import com.balancecalories.data.health.HealthConnectState
 import com.balancecalories.data.health.HealthConnectSupport
@@ -164,6 +172,14 @@ fun TodayScreen(
             Text(text = stringResource(R.string.loading), style = MaterialTheme.typography.bodySmall)
             return@Column
         }
+
+        // The norms a portion is compared against: what this profile stored, or the 25/30/45 derivation from the
+        // target when nobody has set them. Reading them here, once, is what keeps every row in the list comparing
+        // against the same denominator (ADR-035).
+        val storedMacroNorm by produceState<MacroNorm?>(initialValue = null, profile.id, refresh) {
+            value = container.settings.macroNorm(profile.id)
+        }
+        val macroNorm = storedMacroNorm ?: MacroNorm.derived(target.kcal)
 
         HorizontalDivider()
         // The gauge replaces the three rows that used to print target, eaten and remaining as text: the
@@ -282,6 +298,7 @@ fun TodayScreen(
             for (entry in entries) {
                 EntryRow(
                     entry = entry,
+                    norm = macroNorm,
                     languageTag = languageTag,
                     onEdit = {
                         editingEntry = entry
@@ -382,8 +399,71 @@ private fun EditPortionDialog(
 private fun trimGrams(grams: Double): String =
     if (grams % 1.0 == 0.0) grams.toLong().toString() else grams.toString()
 
+/**
+ * One logged food: what it was, how much, and what it was made of.
+ *
+ * The macro line answers one question a list of portions cannot: which of the three this food is actually a
+ * source of. The grams are what is printed; the **highlight** is chosen by each macro's share of its own daily
+ * allowance, and the largest share is bold and drawn in that macro's colour — protein green, fat yellow, carbs
+ * red, the same three tones the gauge and the history chart use, so a legend already learned keeps working here
+ * (ADR-035).
+ *
+ * Bold carries the emphasis for anyone who cannot separate the hues, and the row's spoken description states the
+ * percentages, so the colour is never the only channel.
+ */
 @Composable
-private fun EntryRow(entry: LoggedEntry, languageTag: String?, onEdit: () -> Unit, onDelete: () -> Unit) {
+private fun EntryRow(
+    entry: LoggedEntry,
+    norm: MacroNorm,
+    languageTag: String?,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val leaders = norm.leaders(entry.proteinG, entry.fatG, entry.carbsG)
+    val proteinColor = ChartPalette.protein
+    val fatColor = ChartPalette.fat
+    val carbsColor = ChartPalette.carbs
+    val separator = stringResource(R.string.macro_separator)
+    val labelProtein = stringResource(R.string.today_entry_protein)
+    val labelFat = stringResource(R.string.today_entry_fat)
+    val labelCarbs = stringResource(R.string.today_entry_carbs)
+
+    val gramsOf = listOf(entry.proteinG, entry.fatG, entry.carbsG)
+    val macrosLine = if (gramsOf.all { it == null }) {
+        null
+    } else {
+        val parts = listOf(
+            Triple(Macro.PROTEIN, entry.proteinG, labelProtein to proteinColor),
+            Triple(Macro.FAT, entry.fatG, labelFat to fatColor),
+            Triple(Macro.CARBS, entry.carbsG, labelCarbs to carbsColor),
+        ).filter { (_, grams, _) -> grams != null }
+
+        buildAnnotatedString {
+            parts.forEachIndexed { index, (macro, grams, look) ->
+                if (index > 0) append(separator)
+                val (label, color) = look
+                val style = if (macro in leaders) {
+                    SpanStyle(color = color, fontWeight = FontWeight.Bold)
+                } else {
+                    SpanStyle()
+                }
+                withStyle(style) { append("$label ${grams!!.roundToInt()}") }
+            }
+        }
+    }
+
+    // Spoken instead of the abbreviations, and with the percentages the colour stands for: "protein 3 g, 26 % of
+    // the day's norm" needs no legend and no colour to be understood.
+    val spoken = stringResource(
+        R.string.today_entry_macros_a11y,
+        entry.proteinG?.roundToInt() ?: 0,
+        norm.percentOf(Macro.PROTEIN, entry.proteinG),
+        entry.fatG?.roundToInt() ?: 0,
+        norm.percentOf(Macro.FAT, entry.fatG),
+        entry.carbsG?.roundToInt() ?: 0,
+        norm.percentOf(Macro.CARBS, entry.carbsG),
+    )
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -398,6 +478,13 @@ private fun EntryRow(entry: LoggedEntry, languageTag: String?, onEdit: () -> Uni
                 text = stringResource(R.string.today_entry_line, entry.grams, entry.kcal),
                 style = MaterialTheme.typography.bodySmall,
             )
+            if (macrosLine != null) {
+                Text(
+                    text = macrosLine,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.semantics { contentDescription = spoken },
+                )
+            }
         }
         TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete)) }
     }

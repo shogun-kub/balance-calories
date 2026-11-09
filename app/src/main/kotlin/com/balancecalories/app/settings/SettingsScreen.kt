@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,6 +22,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,10 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
-import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
+import com.balancecalories.app.food.trimNumber
+import com.balancecalories.app.ui.NumberField
+import com.balancecalories.app.ui.WrappingRow
+import com.balancecalories.core.food.MacroNorm
 import com.balancecalories.core.profile.Profile
 import com.balancecalories.core.profile.UnitSystem
 import kotlinx.coroutines.launch
@@ -113,6 +117,9 @@ fun SettingsScreen(
         Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleMedium)
         LanguageSetting()
 
+        HorizontalDivider()
+        MacroNormSetting(container = container, profile = profile)
+
         // Profiles moved here when the four tabs took the Today screen's navigation column: switching
         // profile is a rare act on a phone that belongs to one person, so it earns neither a tab nor a
         // button on Today.
@@ -130,6 +137,93 @@ fun SettingsScreen(
             Text(stringResource(R.string.action_back))
         }
     }
+}
+
+/**
+ * The daily protein/fat/carb allowance the Today list compares portions against.
+ *
+ * Empty means "follow the target": the norms are then 25/30/45 % of the calorie target in grams, recomputed
+ * whenever the target moves. Typing numbers stores them for this profile for good, because a person who wrote
+ * their own norms has said something the derivation cannot know (ADR-035).
+ */
+@Composable
+private fun MacroNormSetting(container: AppContainer, profile: Profile) {
+    val scope = rememberCoroutineScope()
+    var targetKcal by remember(profile.id) { mutableStateOf<Int?>(null) }
+    var storedNorm by remember(profile.id) { mutableStateOf<MacroNorm?>(null) }
+    var protein by remember(profile.id) { mutableStateOf("") }
+    var fat by remember(profile.id) { mutableStateOf("") }
+    var carbs by remember(profile.id) { mutableStateOf("") }
+    var message by remember(profile.id) { mutableStateOf<Int?>(null) }
+
+    LaunchedEffect(profile.id) {
+        targetKcal = container.targets.latest(profile.id)?.kcal
+        val stored = container.settings.macroNorm(profile.id)
+        storedNorm = stored
+        protein = stored?.let { trimNumber(it.proteinG) } ?: ""
+        fat = stored?.let { trimNumber(it.fatG) } ?: ""
+        carbs = stored?.let { trimNumber(it.carbsG) } ?: ""
+    }
+
+    val derived = targetKcal?.takeIf { it > 0 }?.let { MacroNorm.derived(it) }
+
+    Text(stringResource(R.string.macro_norm_title), style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(R.string.macro_norm_note), style = MaterialTheme.typography.bodySmall)
+    Text(
+        text = if (storedNorm != null) {
+            stringResource(R.string.macro_norm_own)
+        } else if (derived != null) {
+            stringResource(R.string.macro_norm_derived, targetKcal!!)
+        } else {
+            stringResource(R.string.macro_norm_own)
+        },
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.secondary,
+    )
+
+    NumberField(R.string.macro_norm_protein, protein) { protein = it }
+    NumberField(R.string.macro_norm_fat, fat) { fat = it }
+    NumberField(R.string.macro_norm_carbs, carbs) { carbs = it }
+
+    WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(
+            onClick = {
+                val values = listOf(protein, fat, carbs).map { it.replace(',', '.').toDoubleOrNull() }
+                val norm = values.takeIf { list -> list.all { v -> v != null && v > 0.0 } }
+                    ?.let { MacroNorm(it[0]!!, it[1]!!, it[2]!!) }
+                if (norm == null) {
+                    message = R.string.error_macro_norm_value
+                    return@Button
+                }
+                scope.launch {
+                    container.settings.setMacroNorm(profile.id, norm)
+                    storedNorm = norm
+                    message = R.string.macro_norm_saved
+                }
+            },
+        ) {
+            Text(stringResource(R.string.action_save))
+        }
+        OutlinedButton(
+            onClick = {
+                val target = derived ?: return@OutlinedButton
+                protein = trimNumber(target.proteinG)
+                fat = trimNumber(target.fatG)
+                carbs = trimNumber(target.carbsG)
+                scope.launch {
+                    // Both halves of the gesture: the fields show the derived numbers, and the stored ones stop
+                    // overriding them, so the norms follow the target again.
+                    container.settings.clearMacroNorm(profile.id)
+                    storedNorm = null
+                    message = R.string.macro_norm_saved
+                }
+            },
+            enabled = derived != null,
+        ) {
+            Text(stringResource(R.string.action_macro_norm_reset))
+        }
+    }
+    message?.let { Text(stringResource(it), style = MaterialTheme.typography.bodySmall) }
 }
 
 /**

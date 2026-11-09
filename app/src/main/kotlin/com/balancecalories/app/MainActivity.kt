@@ -313,9 +313,13 @@ private fun Root() {
                     formEditing = null
                     overlay = Overlay.PRODUCT
                 } else {
-                    // Straight to Today: a product typed here was typed to be logged, not to be filed away.
-                    overlay = null
-                    tab = Tab.TODAY
+                    // A product typed here was typed in order to be eaten, so the next screen is its portion:
+                    // grams, meal, and a Log button, with Back meaning "keep the product, drop the meal". Saving
+                    // it into the catalogue and stopping there left the person to find their own product again
+                    // in yesterday's list (ADR-035).
+                    openedProduct = saved
+                    formEditing = null
+                    overlay = Overlay.PRODUCT
                 }
             },
             onCancel = {

@@ -147,13 +147,19 @@
     <string name="field_protein_100g">Protein per 100 g, g</string>
     <string name="field_fat_100g">Fat per 100 g, g</string>
     <string name="field_carbs_100g">Carbs per 100 g, g</string>
+<string name="form_kcal_from_macros" tools:ignore="PluralsCandidate">from macros: about %1$d kcal</string>
+<string name="error_energy_or_macros">Enter energy, or protein, fat and carbs to compute it</string>
     <string name="field_liquid">Liquid (per 100 ml)</string>
     <string name="error_name_required">Enter a name</string>
-    <string name="error_kcal_required">Enter energy per 100 g</string>
     <string name="error_kcal_range">Energy must be between 0 and 900 kcal</string>
     <string name="today_empty">Nothing logged today</string>
     <string name="today_add_food">Add food</string>
     <string name="today_entry_line">%1$.0f g · %2$.0f kcal</string>
+<string name="today_entry_protein">Protein %1$d</string>
+<string name="today_entry_fat">Fat %1$d</string>
+<string name="today_entry_carbs">Carbs %1$d</string>
+<string name="macro_separator"> · </string>
+<string name="today_entry_macros_a11y">protein %1$d g, %2$d%% of the daily norm; fat %3$d g, %4$d%%; carbs %5$d g, %6$d%%</string>
     <string name="loading">Loading…</string>
     <string name="entry_edit_title">Change the portion</string>
     <string name="entry_edit_kcal">%1$.0f kcal after the change</string>
@@ -335,6 +341,16 @@
 
     <!-- M6: the data screen (backup, restore, CSV). -->
     <string name="settings_data">Data</string>
+<string name="macro_norm_title">Daily macro norms</string>
+<string name="macro_norm_note">Portions on Today compare against these, and the highlight marks the macro a food is proportionally richest in. Nothing leaves the phone.</string>
+<string name="macro_norm_derived" tools:ignore="PluralsCandidate">25/30/45%% of the %1$d kcal target, in grams</string>
+<string name="macro_norm_own">Your own numbers</string>
+<string name="macro_norm_protein">Protein, g</string>
+<string name="macro_norm_fat">Fat, g</string>
+<string name="macro_norm_carbs">Carbs, g</string>
+<string name="action_macro_norm_reset">Use the target</string>
+<string name="macro_norm_saved">Norms saved</string>
+<string name="error_macro_norm_value">Enter grams, or use the target</string>
     <string name="settings_data_note">Backup, restore, and a spreadsheet of your days.</string>
     <!-- M7.1: the four tabs and the weight screen. -->
     <string name="nav_today">Today</string>

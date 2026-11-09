@@ -26,13 +26,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
-import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
+import com.balancecalories.app.ui.NumberField
+import com.balancecalories.app.ui.WrappingRow
+import com.balancecalories.core.food.MacroEnergy
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.ProductSource
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 /**
  * A product the user types in, or a correction to a scanned one.
@@ -58,6 +60,21 @@ fun ProductFormScreen(
     var liquid by remember { mutableStateOf(existing?.isLiquid ?: false) }
     var error by remember { mutableStateOf<Int?>(null) }
     var saving by remember { mutableStateOf(false) }
+
+    // The energy of a food is 4/9/4 of its macros, so typing the macros and no kcal is a complete answer, not a
+    // missing one. It comes from the same `MacroEnergy` the charts split bars with, so the number the form predicts
+    // and the number the gauge later draws cannot come from two different sets of factors. A typed kcal always
+    // wins: it is what the label states, and that is a measurement where this is an estimate (hard rule 4).
+    val typedKcal = kcal.replace(',', '.').toDoubleOrNull()
+    val proteinValue = protein.replace(',', '.').toDoubleOrNull()
+    val fatValue = fat.replace(',', '.').toDoubleOrNull()
+    val carbsValue = carbs.replace(',', '.').toDoubleOrNull()
+    val derivedKcal = if (proteinValue == null && fatValue == null && carbsValue == null) {
+        null
+    } else {
+        MacroEnergy.atwaterKcal(proteinValue ?: 0.0, fatValue ?: 0.0, carbsValue ?: 0.0).takeIf { it > 0.0 }
+    }
+    val effectiveKcal = typedKcal ?: derivedKcal
 
     Column(
         modifier = Modifier
@@ -92,6 +109,13 @@ fun ProductFormScreen(
             modifier = Modifier.fillMaxWidth(),
         )
         NumberField(R.string.field_kcal_100g, kcal) { kcal = it }
+        if (typedKcal == null && derivedKcal != null) {
+            Text(
+                text = stringResource(R.string.form_kcal_from_macros, derivedKcal.roundToInt()),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+        }
         NumberField(R.string.field_protein_100g, protein) { protein = it }
         NumberField(R.string.field_fat_100g, fat) { fat = it }
         NumberField(R.string.field_carbs_100g, carbs) { carbs = it }
@@ -108,11 +132,10 @@ fun ProductFormScreen(
 
         Button(
             onClick = {
-                val kcalValue = kcal.replace(',', '.').toDoubleOrNull()
                 error = when {
                     name.isBlank() -> R.string.error_name_required
-                    kcalValue == null -> R.string.error_kcal_required
-                    kcalValue < 0.0 || kcalValue > 900.0 -> R.string.error_kcal_range
+                    effectiveKcal == null -> R.string.error_energy_or_macros
+                    effectiveKcal < 0.0 || effectiveKcal > 900.0 -> R.string.error_kcal_range
                     else -> null
                 }
                 if (error != null) return@Button
@@ -127,10 +150,10 @@ fun ProductFormScreen(
                             nameRu = nameRu.trim().ifBlank { null },
                             brand = existing?.brand,
                             source = existing?.source ?: ProductSource.USER,
-                            kcal100g = kcalValue,
-                            protein100g = protein.toDoubleOrNull(),
-                            fat100g = fat.toDoubleOrNull(),
-                            carbs100g = carbs.toDoubleOrNull(),
+                            kcal100g = effectiveKcal,
+                            protein100g = proteinValue,
+                            fat100g = fatValue,
+                            carbs100g = carbsValue,
                             fiber100g = existing?.fiber100g,
                             sugar100g = existing?.sugar100g,
                             salt100g = existing?.salt100g,
@@ -139,7 +162,9 @@ fun ProductFormScreen(
                             packGrams = existing?.packGrams,
                             imageUrl = existing?.imageUrl,
                             isOverride = existing?.isOverride ?: false,
-                            energyEstimated = false,
+                            // Typed energy is what the label says; computed energy is Atwater and says so everywhere
+                            // the product is shown.
+                            energyEstimated = typedKcal == null,
                         ),
                     )
                     onSaved(saved)
@@ -151,18 +176,6 @@ fun ProductFormScreen(
             Text(stringResource(R.string.action_save))
         }
     }
-}
-
-@Composable
-private fun NumberField(labelRes: Int, value: String, onChange: (String) -> Unit) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onChange,
-        label = { Text(stringResource(labelRes)) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = Modifier.fillMaxWidth(),
-    )
 }
 
 /** 539.0 → "539", 0.107 → "0.107": no trailing zeros in a field the user may edit. */

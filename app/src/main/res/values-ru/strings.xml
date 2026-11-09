@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Баланс Калорий</string>
 
     <string name="no_weight_title">Веса пока нет</string>
@@ -147,13 +147,19 @@
     <string name="field_protein_100g">Белки на 100 г, г</string>
     <string name="field_fat_100g">Жиры на 100 г, г</string>
     <string name="field_carbs_100g">Углеводы на 100 г, г</string>
+<string name="form_kcal_from_macros" tools:ignore="PluralsCandidate">из БЖУ: примерно %1$d ккал</string>
+<string name="error_energy_or_macros">Введите энергию или БЖУ, чтобы её посчитать</string>
     <string name="field_liquid">Жидкость (на 100 мл)</string>
     <string name="error_name_required">Введите название</string>
-    <string name="error_kcal_required">Введите энергию на 100 г</string>
     <string name="error_kcal_range">Энергия должна быть от 0 до 900 ккал</string>
     <string name="today_empty">Сегодня ничего не записано</string>
     <string name="today_add_food">Добавить еду</string>
     <string name="today_entry_line">%1$.0f г · %2$.0f ккал</string>
+<string name="today_entry_protein">Белки %1$d</string>
+<string name="today_entry_fat">Жиры %1$d</string>
+<string name="today_entry_carbs">Углеводы %1$d</string>
+<string name="macro_separator"> · </string>
+<string name="today_entry_macros_a11y">белки %1$d г, %2$d%% от нормы; жиры %3$d г, %4$d%%; углеводы %5$d г, %6$d%%</string>
     <string name="loading">Загрузка…</string>
     <string name="entry_edit_title">Изменить порцию</string>
     <string name="entry_edit_kcal">%1$.0f ккал после изменения</string>
@@ -357,6 +363,16 @@
 
     <!-- M6: экран данных (копия, восстановление, CSV). -->
     <string name="settings_data">Данные</string>
+<string name="macro_norm_title">Нормы БЖУ</string>
+<string name="macro_norm_note">С ними сравниваются порции на «Сегодня», а подсветка отмечает то, чего в продукте больше относительно своей нормы. Ничего не покидает телефон.</string>
+<string name="macro_norm_derived" tools:ignore="PluralsCandidate">25/30/45%% от цели %1$d ккал, в граммах</string>
+<string name="macro_norm_own">Ваши числа</string>
+<string name="macro_norm_protein">Белки, г</string>
+<string name="macro_norm_fat">Жиры, г</string>
+<string name="macro_norm_carbs">Углеводы, г</string>
+<string name="action_macro_norm_reset">Из цели</string>
+<string name="macro_norm_saved">Нормы сохранены</string>
+<string name="error_macro_norm_value">Введите граммы или возьмите из цели</string>
     <string name="settings_data_note">Резервная копия, восстановление и таблица по дням.</string>
     <!-- M7.1: the four tabs and the weight screen. -->
     <string name="nav_today">Сегодня</string>

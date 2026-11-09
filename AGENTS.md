@@ -14,11 +14,11 @@ Two outputs, everything else supports them:
 2. **A written record** of why it works that way — `docs/`, so a decision can be re-read in six months
    without reverse-engineering the code.
 
-Current state: **M1-M5, M7.1-M7.6 complete, M6 half done.** `:core` (140 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
+Current state: **M1-M5, M7.1-M7.7 complete, M6 half done.** `:core` (160 JVM tests) and `:data` (schema **v6**, 10 DAOs, 12
 repositories) build green, and `:app` has the whole loop: Today with burned/balance/quality, the food side
 (products, search, scanning, logging, recipes) and **History** with the adaptive TDEE, the weekly recap,
-a weight trend line and a projection, plus a backup screen. 140 :core + 42 :data + 19 :app JVM tests and
-**119 device tests** (115 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split and `Вес` carries the **weight chart** (dots, trend, dashed goal). The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie on one side and a steel-blue dumbbell on the other. The app **follows the phone's dark setting** — Material 3 baseline schemes plus a chart palette per surface — and every count that inflects is a **`<plurals>`** in both languages, with lint down to five reviewed warnings. Next: the rest of M6 (device matrix, TalkBack, release signing) and the release; see docs/04-plan.md.
+a weight trend line and a projection, plus a backup screen. 160 :core + 42 :data + 19 :app JVM tests and
+**119 device tests** (115 :data, 4 :app) pass, the app navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`) with settings behind a gear, and `История` carries the **eaten/burned chart** with the macro split and `Вес` carries the **weight chart** (dots, trend, dashed goal). The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie on one side and a steel-blue dumbbell on the other. The app **follows the phone's dark setting** — Material 3 baseline schemes plus a chart palette per surface — every count that inflects is a **`<plurals>`** in both languages, lint is down to five reviewed warnings, and the Today list prints each portion's protein, fat and carbs with the one it is proportionally richest in marked in that macro's colour. Next: the rest of M6 (device matrix, TalkBack, release signing) and the release; see docs/04-plan.md.
 
 ### Android build: three things that bite (2026-11-08)
 
@@ -443,8 +443,25 @@ a weight trend line and a projection, plus a backup screen. 140 :core + 42 :data
     resource rather than as a bad comment.
 31. Tests: 140 :core, 42 :data, 19 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**
     (308 `<string>` + 12 `<plurals>` in each language).
-32. Next: the rest of **M6** — device matrix on both phones, TalkBack, release signing, README — then the
-    release.
+32. ~~**M7.7 — the macros where the food is**~~ — every logged portion on Today prints its protein, fat and carb
+    grams, and the macro with the **largest share of its own daily norm** is bold and coloured: protein green, fat
+    yellow, carbs red — the gauge's and chart's own three tones. The denominator did not exist, so `MacroNorm` in
+    `:core` derives it (25/30/45 % of the target, same Atwater factors as everywhere), Settings shows it and takes
+    the person's own, and a stored norm outranks the derivation. A manual product with macros and no kcal computes
+    its energy (`MacroEnergy.atwaterKcal`) and stores it as *estimated*; a typed kcal still wins. A freshly typed
+    product now lands on its portion screen instead of back on Today with nothing logged. ADR-035.
+33. **Three things the macros taught:**
+    - **A percentage needs a denominator, and inventing one silently is the actual bug.** "5 % of the daily norm"
+      is meaningless in an app that only knows a calorie target; the fix was not a formula but a number the person
+      can see and change.
+    - **Compare shares, not grams.** 30 g of protein is a quarter of a day's protein and an eighth of a day's
+      carbs, so the same 30 g has to win for the chicken and lose for the rice.
+    - **`kotlin.math.round` sends ties to even.** 12.5 became 12 while every kcal in the app rounds up with
+      `roundToInt`; a percentage printed next to a rounded kcal now uses the same rounding, and a test pins it.
+34. Tests: 160 :core, 42 :data, 19 :app JVM; **115 :data, 4 :app device** (119 device) — the 5 new
+    `AppSettingsRepository` cases need the phone. Strings **337/337**
+35. Next: the **device pass for M7.7** (the phone was unplugged when it landed), then the rest of **M6** — device
+    matrix on both phones, TalkBack, release signing, README — then the release.
 
 ## Toolchain (installed 2026-11-07, verified)
 
