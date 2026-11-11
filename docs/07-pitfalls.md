@@ -195,7 +195,10 @@ So a test run that starts logging without looking at the header can write into t
 look identical, because the fixture profile is called `Test` and the real one has a person's name. Before
 the first write of a session, read the profile name in the header (or `active_profile_id` together with the
 row's name), and switch deliberately. The same rule protects the reverse direction: leaving the app on the
-fixture at the end of a run means the owner opens his app tomorrow and finds somebody else's day.
+fixture at the end of a run means the owner opens his app tomorrow and finds somebody else's day. The same
+selection is the sync destination: `ActivitySyncWorker` reads `activeProfileId` and then checks
+`band_enabled` on that profile, so a run parked on the fixture silently stops the owner's band sync as well
+as hiding his day.
 
 ### Kotlin
 

@@ -100,8 +100,12 @@ was selected last.
   `adb uninstall`, restore over live data or permission change without asking first (hard rule 10).
 - **Creating a profile switches the app to it** (`ProfileFormScreen` calls `setActiveProfile`), so right
   after a create the app is *not* on the fixture.
-- **A new profile does not take the band** while another profile holds it (ADR-030). Moving it is one
-  deliberate tap on «Читать браслет», and it moves the owner's band data with it — ask before doing that.
+- **Band data lands in the *active* profile, and only if that profile holds `band_enabled`**
+  (`ActivitySyncWorker` reads `activeProfileId` first, then checks the flag), so the selection decides both
+  what the screens show and where the next sync writes. While a run sits on `Test`, the owner's sync is
+  paused — switch back when the run ends.
+- **A new profile does not take the band** while another profile holds it (ADR-030). Moving it is one tap on
+  «Читать браслет» on that profile's card, and it moves the owner's band data with it — ask before doing it.
 - **Database pulls for diagnosis go to `tmp/`**, the database and its `-wal` together (P-07), never into
   git (hard rule 1), and are deleted when the run ends. Nothing about the owner's day is a screenshot.
 
