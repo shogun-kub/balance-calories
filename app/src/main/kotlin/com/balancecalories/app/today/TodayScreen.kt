@@ -45,7 +45,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.PermissionController
 import com.balancecalories.app.ui.ChartPalette
-import com.balancecalories.app.food.trimNumber
+import com.balancecalories.app.ui.displayNumber
 import com.balancecalories.app.ui.LabelValueRow
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
@@ -448,7 +448,7 @@ private fun EntryRow(
                 } else {
                     SpanStyle()
                 }
-                withStyle(style) { append("$label ${trimNumber(grams!!)}") }
+                withStyle(style) { append("$label ${displayNumber(grams!!)}") }
             }
         }
     }
@@ -457,11 +457,11 @@ private fun EntryRow(
     // the day's norm" needs no legend and no colour to be understood.
     val spoken = stringResource(
         R.string.today_entry_macros_a11y,
-        trimNumber(entry.proteinG ?: 0.0),
+        displayNumber(entry.proteinG ?: 0.0),
         norm.percentOf(Macro.PROTEIN, entry.proteinG),
-        trimNumber(entry.fatG ?: 0.0),
+        displayNumber(entry.fatG ?: 0.0),
         norm.percentOf(Macro.FAT, entry.fatG),
-        trimNumber(entry.carbsG ?: 0.0),
+        displayNumber(entry.carbsG ?: 0.0),
         norm.percentOf(Macro.CARBS, entry.carbsG),
     )
 

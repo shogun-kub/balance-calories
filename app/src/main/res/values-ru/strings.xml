@@ -155,11 +155,11 @@
     <string name="today_empty">Сегодня ничего не записано</string>
     <string name="today_add_food">Добавить еду</string>
     <string name="today_entry_line">%1$.0f г · %2$.0f ккал</string>
-<string name="today_entry_protein">Белки %1$d</string>
-<string name="today_entry_fat">Жиры %1$d</string>
-<string name="today_entry_carbs">Углеводы %1$d</string>
-<string name="macro_separator"> · </string>
-<string name="today_entry_macros_a11y">белки %1$s г, %2$d%% от нормы; жиры %3$s г, %4$d%%; углеводы %5$s г, %6$d%%</string>
+    <string name="today_entry_protein">Белки</string>
+    <string name="today_entry_fat">Жиры</string>
+    <string name="today_entry_carbs">Углеводы</string>
+    <string name="macro_separator">" ·\u00A0"</string>
+    <string name="today_entry_macros_a11y">белки %1$s г, %2$d%% от нормы; жиры %3$s г, %4$d%%; углеводы %5$s г, %6$d%%</string>
     <string name="loading">Загрузка…</string>
     <string name="entry_edit_title">Изменить порцию</string>
     <string name="entry_edit_kcal">%1$.0f ккал после изменения</string>

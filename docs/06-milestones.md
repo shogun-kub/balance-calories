@@ -311,6 +311,18 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     product now lands on its portion screen instead of back on Today with nothing logged. ADR-035.
 33. Three things the macros taught: **J-05** (a percentage needs a denominator), **J-06** (compare shares, not grams) and **P-30** (`kotlin.math.round` sends ties to even).
 34. Tests: 160 :core, 42 :data, 19 :app JVM; **115 :data, 4 :app device** (119 device) — the 5 new
-    `AppSettingsRepository` cases need the phone. Strings **337/337**
+    `AppSettingsRepository` cases need the phone. Strings **324 `<string>` + 12 `<plurals>` per language**
 35. Next: the **device pass for M7.7** (the phone was unplugged when it landed), then the rest of **M6** — device
     matrix on both phones, TalkBack, release signing, README — then the release.
+36. ~~**The M7.7 device pass**~~ - the Honor came back and disagreed with the tests five times. Three rendering
+    defects in the macro line itself (labels declared as `Белки %1$d` and printed with the placeholder, AAPT
+    trimming the separator's spaces, grams with an ASCII dot under a kcal value with a comma), one design defect
+    in Settings (empty fields under a line that already named the derived norm) and one typographic one (the
+    separator dangling at the end of a wrapped line at 200 %). All five fixed; **P-33** and ADR-036 record the
+    rules. Verified afterwards on the Honor X7c: three rows with three different winners in the right colours
+    (`#81C784`, `#FFD54F`, `#E57373` sampled from the screenshot, not eyeballed), a stored norm of 60/200/230
+    flips beef from fat to protein, "Из цели" clears it and the derivation returns, a macros-only product stores
+    `energy_estimated = 1` and opens its portion screen, Back keeps the product and logs nothing, "no energy and
+    no macros" is refused in words, and 200 % and English both hold. The 5 new `AppSettingsRepository` cases pass
+    on the phone. Tests: 160 :core, 42 :data, **25** :app JVM; **120 :data, 4 :app device** (124). Strings
+    **324 `<string>` + 12 `<plurals>` per language**.

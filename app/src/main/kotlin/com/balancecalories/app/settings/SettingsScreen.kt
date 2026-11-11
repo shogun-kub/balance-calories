@@ -157,12 +157,17 @@ private fun MacroNormSetting(container: AppContainer, profile: Profile) {
     var message by remember(profile.id) { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(profile.id) {
-        targetKcal = container.targets.latest(profile.id)?.kcal
+        val target = container.targets.latest(profile.id)?.kcal
+        targetKcal = target
         val stored = container.settings.macroNorm(profile.id)
         storedNorm = stored
-        protein = stored?.let { trimNumber(it.proteinG) } ?: ""
-        fat = stored?.let { trimNumber(it.fatG) } ?: ""
-        carbs = stored?.let { trimNumber(it.carbsG) } ?: ""
+        // The fields show the norm that is *in effect*, not only a stored one: an empty form under a line that
+        // says "25/30/45 % of 1904 kcal, in grams" asks a person to invent three numbers to correct a value the
+        // app already knows (found on the Honor X7c, 2026-11-11).
+        val effective = stored ?: target?.takeIf { it > 0 }?.let { MacroNorm.derived(it) }
+        protein = effective?.let { trimNumber(it.proteinG) } ?: ""
+        fat = effective?.let { trimNumber(it.fatG) } ?: ""
+        carbs = effective?.let { trimNumber(it.carbsG) } ?: ""
     }
 
     val derived = targetKcal?.takeIf { it > 0 }?.let { MacroNorm.derived(it) }

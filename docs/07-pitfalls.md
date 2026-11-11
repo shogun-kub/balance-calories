@@ -65,9 +65,12 @@ platform-tools is **v41**. They evict each other's daemon (`adb server version (
 client (41); killing...`) and `adb devices` reports nothing while the phone is healthy. Use a private port
 for every call — see `docs/08-environment.md`.
 
-**P-09 · The Honor reverts to landscape after a reinstall.** `settings put system user_rotation 0` does not
-survive `install -r`, so a tap aimed at the tab bar hits the launcher instead. Set rotation, wait, then dump
-and tap **by the reported bounds** — never by remembered coordinates.
+**P-09 · The Honor reverts to landscape after a reinstall, and `settings` cannot stop it.** Both
+`settings put system user_rotation 0` and `accelerometer_rotation 0` were accepted and ignored; the dump kept
+reporting `rotation="1"` while the taps went to the wrong places. The command that actually holds is
+`wm user-rotation lock 0` (Android 12+), and it has to be re-issued after every `install -r`. Then dump and
+tap **by the reported bounds** — a landscape dump reports x up to 1610 on a 720-pixel-wide phone, which is
+its own kind of wrong answer.
 
 **P-10 · `input keyevent 4` is two different keys.** With an IME open it closes the keyboard and stays on
 the screen; with no IME open it pops the screen, and a fixed-coordinate tap immediately after lands on
@@ -116,6 +119,19 @@ recorded `last_error` before suspecting the network.
 `IllegalFormatConversionException: d != java.lang.String` and killed the tab: the string was
 `%1$d … %2$d … %3$s %4$s` and the call passed `(count, first, last, days)`.
 `StringResourceParityTest` compares the two string files, not the call. Launch the screen.
+
+**P-33 · A display fragment obeys different rules than a sentence, and getting it wrong is silent.** The
+first device build of M7.7 showed three such mistakes in one line: the macro *labels* were declared as
+`"Белки %1$d"` and rendered with `stringResource(id)` and no arguments, so the row printed
+`Белки %1$d 20 · Жиры %1$d 12`; the separator `" · "` lost its spaces because AAPT trims leading and trailing
+whitespace (a quoted value keeps them, and `\u00A0` after the dot stops it dangling at the end of a wrapped
+line); and the grams were formatted with the *editable field* formatter, printing `1.1` under `187 ккал` on a
+Russian phone. None of the three fails a test: the parity test compares the files to each other, and a
+rendered screen is what a JVM test cannot see.
+
+The rules that came out of it: a fragment holds a noun and no format specifier (`MacroLabelTest` pins the
+three labels); punctuation that must keep its whitespace is quoted; a number shown to a person goes through
+`displayNumber`, and the ASCII `trimNumber` stays where a value will be parsed back.
 
 **P-19 · Labels break inside words at a 200 % font scale.** A squeezed `Text` does not ellipsize: it breaks
 mid-word, so "Настройки" becomes a vertical column of single letters about 1000 px tall and pushes

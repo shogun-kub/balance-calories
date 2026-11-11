@@ -130,7 +130,8 @@ adb shell "cmd locale get-app-locales com.balancecalories"   # expect [en]
 adb shell "cmd locale set-app-locales com.balancecalories --locales ''"
 ```
 
-The Honor's system locale is `ru-US`; the screens were checked this way on 2026-11-08. Changing the
+The Honor's system locale is `ru-US`; the screens were checked this way on 2026-11-08 and again on
+2026-11-11. Setting it recreates the activity. Changing the
 override recreates the activity, which resets in-memory navigation to Today.
 
 ## Choosing instruments

@@ -533,9 +533,17 @@ migrates the database cannot be reviewed or rolled back cleanly.
       portion screen — grams prefilled, meal by time of day, one tap to log — instead of returning to Today with
       nothing logged and the product to be found again in a list. Back from there keeps the product and logs
       nothing, which is the "cancel the add" the owner asked for.
-- [ ] **Not yet seen on a device.** The phone was unplugged when this landed. Unit-tested and built, but the
-      pixels, the colours at 200 % and the Russian plural on the new settings row are unverified — the first
-      thing to do when the Honor is back.
+- [x] **Seen on the Honor X7c, 2026-11-11** — and the pixels disagreed with the tests five times. Three
+      rendering defects in the macro line itself: the labels were declared as `"Белки %1$d"` and rendered
+      without arguments, so the row printed `Белки %1$d 20`; the separator lost its spaces to AAPT's trimming;
+      and the grams came out with an ASCII dot (`1.1`) under a kcal value with a comma. One design defect in
+      Settings: with no stored norm the fields were empty under a line that already named the derived one, so
+      the form now opens on the norm in effect. Verified afterwards: three rows, three different winners in the
+      right colours (`#81C784`, `#FFD54F`, `#E57373` sampled from the screen), a saved norm of 60/200/230 flips
+      beef from fat to protein on the next launch, "Из цели" clears it, a macros-only product saves as
+      `energy_estimated = 1` and opens its portion screen, Back logs nothing, "no energy and no macros" is
+      refused in words, and 200 % / English hold. Two guard tests came out of it (`MacroLabelTest`,
+      `NumberDisplayTest`); the rules are **P-33** in `docs/07-pitfalls.md`.
 
 #### What the highlight is and is not
 
