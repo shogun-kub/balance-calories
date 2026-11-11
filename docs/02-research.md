@@ -640,6 +640,34 @@ Verified on the device with numbers that can be checked by hand: chicken breast 
 `product_id = NULL` and `was_estimated = 1`, and the Today screen read 407 eaten (394 + the 13 kcal of pepper
 already there) against a 1924 target.
 
+### 3.1.3 Russian coverage and availability — measured 2026-11-11
+
+The owner lives in Russia and reports that most of what he eats is not on Open Food Facts. Measured, not
+assumed, through the same search endpoint the app already uses for text search:
+
+| Query | Products | When |
+| --- | --- | --- |
+| `countries_tags=russia` | **37 439** | 2026-11-11 |
+| `countries_tags=france` | **1 294 861** | 2026-11-11 |
+
+Both asked `api/v2/search?countries_tags=…&fields=code&page_size=1` and read the `count` field. Russia is
+covered roughly **35 times more thinly than France**, which matches the experience at the shelf.
+
+A second pass through `search.openfoodfacts.org` measured the part that matters more than the total:
+**15 807** products carry a Russian GS1 barcode (prefix 460–469), and about **86 % of them have no complete
+nutrition block** (`nutrition_grades` is `unknown`). A barcode that resolves to a product without kcal,
+protein, fat and carbs is not an answer — the app refuses those rows on purpose (`OffProduct.isUsable`). So
+the useful Russian subset is closer to **two thousand products**, not thirty-seven.
+
+**Availability, and why it is not a bug in the client.** After a burst of about eight requests in a few
+minutes, two product lookups hung: `world.openfoodfacts.org/api/v3/product/…` and the v0 path returned
+nothing for over four minutes, and a 15-second client timeout did not fire (a stalled TLS/TCP read, not a
+slow response). Minutes later both **v2 and v3 answered in 0.18–0.19 s** with the app's full field list, and
+the search endpoint answered in 0.24 s throughout. The cause is unresolved — soft throttling after a burst is
+the best guess — and nothing in the client changed: it already spaces barcode lookups 6 s apart, retries
+network errors, 429 and 5xx with a bound, records a cached 404, and queues offline lookups for retry. What
+this does argue for is a **local first** path: a bundled Russian pack answers a scan with no network at all.
+
 ## 4. Barcode scanning
 
 | Option | Facts | Fit |

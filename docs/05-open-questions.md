@@ -121,3 +121,36 @@ These are spikes (M0) and need the real phones and 3–4 days:
    promise band data.
 3. Section D.1–D.3 (scale and weigh-in habit) — it decides whether the app can self-correct or stays a
    formula with a nice UI.
+
+### E. A second food source for Russia — researched 2026-11-11, waiting for a decision
+
+Measured: Open Food Facts holds **37 439** Russian products against **1 294 861** French ones, and only
+about **15 807** of them carry a Russian barcode (prefix 460–469) — of which roughly **86 % have no complete
+nutrition block** (`docs/02-research.md` §3.1.3). Every other route was checked and closed, forbidden or
+paid:
+
+| Route | Status |
+| --- | --- |
+| ФИЦ питания (ion.ru) national composition database | **closed** to public access, per their own statement |
+| Скурихин / Тутельян tables | a **book**; FAO/INFOODS Russia page is a bibliography, no dataset |
+| Честный знак «Национальный каталог» | GTIN-keyed API, but a participant key and per-organisation grants; no individual route |
+| health-diet.ru, kalorizator.ru | ToS forbids extraction, parsers and republishing; database-maker right claimed |
+| Edamam / Nutritionix / FatSecret / spoonacular / CalorieNinjas | paid, caching bans, English-only or shutting down; UPCitemdb resolved **0 of 4** real Russian codes |
+| barcodelookup, EAN-Search | $99/month and paid-per-lookup |
+
+The realistic options, in order of value per hour:
+
+1. **Bundled Russian pack from Open Food Facts, filtered to complete nutrition.** A one-off `tools/` pipeline
+   downloads the products with a 460–469 barcode that have kcal **and** all three macros, dedupes by code,
+   prefers a Russian name, and emits an asset imported once exactly like the 69-item starter pack (versioned
+   guard, `source='off_ru'`). ODbL: attribution and share-alike, which for a private two-person app means a
+   header in the file and an ADR. Answers scans **with no network**.
+2. **A one-off pack of generic foods** (cereals, dairy, meat, vegetables) typed from published tables and
+   marked estimated. Legally fine as facts with a cited source; hours of careful typing, and the composition
+   of a buckwheat groat does not change, so it does not rot.
+3. **Contribute the labels back to Open Food Facts** when adding a product by hand, which improves the only
+   source that also covers barcodes. Needs a network call at save time and a licence statement.
+4. No second commercial API: the report found none worth a subscription for this household.
+
+**The decision needed:** whether to build option 1 now (a few hours, one commit, no new dependency, no
+network at runtime), and whether option 2 is worth doing by hand in parallel.
