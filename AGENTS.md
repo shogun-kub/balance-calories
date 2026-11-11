@@ -731,16 +731,14 @@ A change is done when all of these are true:
 
 ## Language
 
-The user works in Russian and English interchangeably, and may mix both inside a single message. Read
-either without asking for a translation, and never ask which language to use.
+The user mixes Russian and English freely; read either, never ask which to use.
 
 | Where | Language |
 | --- | --- |
-| Chat replies | **The language the user is writing in** — English in this project so far; if the user switches to Russian, answer in Russian. Never ask which language to use |
-| Everything committed — `docs/`, code comments, commit messages, this file | **English** |
-| App UI strings | English and Russian, both maintained; neither is a translation afterthought |
-| Quoted material — error messages, `logcat` lines, API field names | Original, unchanged |
-| Terms of art — `Health Connect`, `Gadgetbridge`, `record`, `barcode`, `TDEE` | Original, never translated |
+| Chat replies | **Russian**, unless asked otherwise |
+| Everything committed — `docs/`, `README`, comments, commit messages | **English** |
+| Quoted material — error messages, log lines, UI strings | Original, unchanged |
+| Terms of art — `patch`, `offset`, tool and API names | Original, never translated |
 
 A Russian question does not make the write-up Russian: investigate in whichever language is clearer,
 write the finding in English, explain it back in Russian.
