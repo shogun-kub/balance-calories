@@ -187,6 +187,16 @@ weigh-ins went into a copy of the live database, were pushed with `run-as`, and 
 afterwards. That copy is why `tmp/` is git-ignored — a pulled database sat in the working tree as an
 untracked file, which is exactly what hard rule 1 forbids.
 
+### Data on a real phone
+
+**P-34 · The selected profile is app state, not a test default.** The app stores `active_profile_id` in
+`app_setting` and falls back to `profiles.first()` when it is absent; creating a profile **switches to it**.
+So a test run that starts logging without looking at the header can write into the owner's day — the rows
+look identical, because the fixture profile is called `Test` and the real one has a person's name. Before
+the first write of a session, read the profile name in the header (or `active_profile_id` together with the
+row's name), and switch deliberately. The same rule protects the reverse direction: leaving the app on the
+fixture at the end of a run means the owner opens his app tomorrow and finds somebody else's day.
+
 ### Kotlin
 
 **P-30 · `kotlin.math.round` sends ties to even.** `round(12.5)` is 12, while every kcal in the app rounds

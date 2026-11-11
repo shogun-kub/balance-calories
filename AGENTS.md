@@ -88,6 +88,23 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | `tmp/` | Scratch: screenshots, previews, pulled databases | Git-ignored. Nothing here is evidence, and nothing here is safe to commit. |
 | `E:\Projects\BalanceCalories-acl-recovery\` | ACL rollback record | Outside the repo. Leave in place: it documents the permission repair that made this workspace writable. |
 
+## Testing on a phone that holds real data
+
+Two profiles live on the Honor: **`Test` (id 3) is the fixture**, and the owner's own profile is his life.
+The app remembers which profile is selected, so anything logged after a fresh start lands in whichever one
+was selected last.
+
+- **Switch to `Test` before logging, editing or deleting anything**, and **switch back to the owner's
+  profile when the run is over**: Settings → Профили → tap the card.
+- **Never touch the owner's profile** — no delete, archive, weight, entry or target, and no `pm clear`,
+  `adb uninstall`, restore over live data or permission change without asking first (hard rule 10).
+- **Creating a profile switches the app to it** (`ProfileFormScreen` calls `setActiveProfile`), so right
+  after a create the app is *not* on the fixture.
+- **A new profile does not take the band** while another profile holds it (ADR-030). Moving it is one
+  deliberate tap on «Читать браслет», and it moves the owner's band data with it — ask before doing that.
+- **Database pulls for diagnosis go to `tmp/`**, the database and its `-wal` together (P-07), never into
+  git (hard rule 1), and are deleted when the run ends. Nothing about the owner's day is a screenshot.
+
 ## Hard rules
 
 1. **Real health data never enters git.** Weight, food logs, exports, screenshots of the Today screen
