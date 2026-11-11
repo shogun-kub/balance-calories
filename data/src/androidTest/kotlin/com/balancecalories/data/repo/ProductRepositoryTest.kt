@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.balancecalories.core.food.EnergyPer100g
+import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.ProductSource
 import com.balancecalories.data.db.BalanceCaloriesDatabase
 import com.balancecalories.data.off.OffLookup
@@ -110,6 +111,30 @@ class ProductRepositoryTest {
 
         assertEquals(1_000L, db.productDao().byId(unchanged.id)!!.updatedAt)
     }
+
+
+    /** A product the user typed in, with a code they read off the pack. */
+    private fun userProduct(barcode: String?, name: String = "Buckwheat, my numbers") = Product(
+        id = Product.NEW,
+        barcode = barcode,
+        name = name,
+        nameRu = null,
+        brand = null,
+        source = ProductSource.USER,
+        kcal100g = 343.0,
+        protein100g = 13.0,
+        fat100g = 3.4,
+        carbs100g = 62.0,
+        fiber100g = null,
+        sugar100g = null,
+        salt100g = null,
+        isLiquid = false,
+        servingGrams = null,
+        packGrams = null,
+        imageUrl = null,
+        isOverride = false,
+        energyEstimated = false,
+    )
 
     @Test
     fun aUserCorrectionIsNeverOverwrittenByARefresh() = runBlocking {
@@ -262,5 +287,32 @@ class ProductRepositoryTest {
         assertEquals(2, calls)
         assertEquals(listOf("4012345678901"), products2.retryable())
         assertNotNull(products2.findByBarcode("3017620422003"))
+    }
+
+    @Test
+    fun aProductTypedInByHandIsFoundByItsBarcodeAndBySearchingTheDigits() = runBlocking {
+        val saved = products.saveUserProduct(userProduct("4600000000000"))
+
+        assertEquals(saved.id, products.findByBarcode("4600000000000")!!.id)
+        assertEquals(
+            "typing the code into the search box finds the product, not only scanning it",
+            saved.id,
+            products.search("4600000000000").single().id,
+        )
+        assertEquals(saved.id, products.search("4600000").single().id)
+    }
+
+    @Test
+    fun barcodeOwnerNamesTheOtherProductAndIgnoresTheRowBeingEdited() = runBlocking {
+        val saved = products.saveUserProduct(userProduct("4600000000000"))
+        val other = products.saveUserProduct(userProduct("4600000000001", name = "Oats"))
+
+        assertNull("a free code has no owner", products.barcodeOwner("4600000000009"))
+        assertNull("the row being edited does not own itself", products.barcodeOwner("4600000000000", saved.id))
+        assertEquals(
+            "a code that belongs to another product is reported before anything is overwritten",
+            other.id,
+            products.barcodeOwner("4600000000001", saved.id)!!.id,
+        )
     }
 }

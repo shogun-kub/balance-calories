@@ -553,6 +553,26 @@ migrates the database cannot be reviewed or rolled back cleanly.
 | A share of **that macro's own** allowance, so 30 g of protein beats 30 g of carbs for chicken and loses for rice | A percentage of the calorie target |
 | Carried by colour **and** bold **and** position, with the percentages in the spoken description | Colour alone — a person who cannot separate the hues still sees which one is bold |
 
+### M7.8 — A barcode of your own
+
+- [x] **A product typed in by hand can carry the code from its pack.** The manual form has an optional
+      barcode field, prefilled when the field came from a scan and editable either way, so a code read off a
+      pack can be corrected and a correction can be attached to a product that was typed without one.
+- [x] **Digits are normalised and checked, not policed.** Spaces and dashes come off; 8–14 digits are
+      required; a check digit that does not match is a sentence ("контрольная цифра не сходится — возможно,
+      опечатка"), not a refusal, because a shop's internal code is a legitimate identifier.
+- [x] **A taken code is refused by name.** `saveUserProduct` resolves a barcode to an existing row on
+      purpose (correcting a scanned product must update it, not duplicate it), and the same mechanism would
+      let a typo rewrite a different food's name and numbers. The form asks `barcodeOwner` first and says
+      "Этот штрихкод уже занят продуктом «Nutella»".
+- [x] **The local list finds a product by its digits.** The search query matches `barcode` as well as the
+      two names and the brand, so a product added months ago is found by typing its code. Scanning already
+      answered from the database before the network (`BarcodeResolver`), so both paths now meet.
+- [x] Verified on the Honor X7c: duplicate code refused with the other product named, a free code with a bad
+      check digit saved after the warning, the same product then found by typing `4600000000001`, and the
+      portion screen opened on save. Two device cases added (search by code, `barcodeOwner`), 122 :data.
+      ADR-037.
+
 ## M8 — Optional v1.1 (post-release)
 
 Adaptive-TDEE refinements, HC write-back (`NutritionRecord`, `WeightRecord`), widget, notifications,

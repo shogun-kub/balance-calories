@@ -326,3 +326,11 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     no macros" is refused in words, and 200 % and English both hold. The 5 new `AppSettingsRepository` cases pass
     on the phone. Tests: 160 :core, 42 :data, **25** :app JVM; **120 :data, 4 :app device** (124). Strings
     **324 `<string>` + 12 `<plurals>` per language**.
+37. ~~**M7.8 - a barcode of your own**~~ - the manual product form gained an optional barcode field, the local
+    search started matching the digits, and a code that already belongs to another product is refused by name.
+    The last part is the interesting one: `saveUserProduct` resolves a barcode to an existing row *on purpose*
+    (a correction to a scanned product must update it), so a typed code would have rewritten another food's
+    name and numbers silently; `barcodeOwner` asks first and the form answers "этот штрихкод уже занят
+    продуктом «Nutella»". A bad check digit stays a hint, because a shop's internal code is a real identifier.
+    Verified on the Honor X7c end to end, including the search by digits; two device cases added (122 :data).
+    ADR-037.

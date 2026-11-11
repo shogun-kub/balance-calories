@@ -30,6 +30,7 @@ import com.balancecalories.app.AppContainer
 import com.balancecalories.app.R
 import com.balancecalories.app.ui.NumberField
 import com.balancecalories.app.ui.WrappingRow
+import com.balancecalories.core.food.Barcode
 import com.balancecalories.core.food.MacroEnergy
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.ProductSource
@@ -57,8 +58,11 @@ fun ProductFormScreen(
     var protein by remember { mutableStateOf(existing?.protein100g?.let { trimNumber(it) }.orEmpty()) }
     var fat by remember { mutableStateOf(existing?.fat100g?.let { trimNumber(it) }.orEmpty()) }
     var carbs by remember { mutableStateOf(existing?.carbs100g?.let { trimNumber(it) }.orEmpty()) }
+    var barcode by remember { mutableStateOf(existing?.barcode ?: initialBarcode.orEmpty()) }
     var liquid by remember { mutableStateOf(existing?.isLiquid ?: false) }
     var error by remember { mutableStateOf<Int?>(null) }
+    // Only one message takes a noun ("this barcode belongs to X"), so the argument rides beside the id.
+    var errorArg by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
 
     // The energy of a food is 4/9/4 of its macros, so typing the macros and no kcal is a complete answer, not a
@@ -75,6 +79,9 @@ fun ProductFormScreen(
         MacroEnergy.atwaterKcal(proteinValue ?: 0.0, fatValue ?: 0.0, carbsValue ?: 0.0).takeIf { it > 0.0 }
     }
     val effectiveKcal = typedKcal ?: derivedKcal
+    // Spaces and dashes come off, so a code pasted from a pack or read aloud can be typed with them.
+    val normalizedBarcode = Barcode.normalize(barcode)
+    val checkDigitOk = normalizedBarcode?.let { Barcode.hasValidCheckDigit(it) }
 
     Column(
         modifier = Modifier
@@ -108,6 +115,23 @@ fun ProductFormScreen(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
+        OutlinedTextField(
+            value = barcode,
+            onValueChange = { barcode = it },
+            label = { Text(stringResource(R.string.field_barcode)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        // A store's internal code can be a legitimate identifier without a valid EAN, so a bad check digit is a
+        // hint, not a refusal: the scanner stores those codes too (Barcode.hasValidCheckDigit).
+        if (normalizedBarcode != null && checkDigitOk == false) {
+            Text(
+                text = stringResource(R.string.form_barcode_check_digit),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+        }
         NumberField(R.string.field_kcal_100g, kcal) { kcal = it }
         if (typedKcal == null && derivedKcal != null) {
             Text(
@@ -128,24 +152,41 @@ fun ProductFormScreen(
             Text(text = stringResource(R.string.field_liquid), style = MaterialTheme.typography.bodyMedium)
         }
 
-        error?.let { Text(text = stringResource(it), color = MaterialTheme.colorScheme.error) }
+        error?.let { res ->
+            val noun = errorArg
+            Text(
+                text = if (noun != null) stringResource(res, noun) else stringResource(res),
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
 
         Button(
             onClick = {
                 error = when {
                     name.isBlank() -> R.string.error_name_required
+                    barcode.isNotBlank() && normalizedBarcode == null -> R.string.error_barcode_invalid
                     effectiveKcal == null -> R.string.error_energy_or_macros
                     effectiveKcal < 0.0 || effectiveKcal > 900.0 -> R.string.error_kcal_range
                     else -> null
                 }
+                errorArg = null
                 if (error != null) return@Button
 
                 saving = true
                 scope.launch {
+                    // A barcode is unique in the table, and saving resolves one to an existing row on purpose, so
+                    // a mistyped code would silently rewrite whichever product already owns it. Ask first.
+                    val owner = normalizedBarcode?.let { container.products.barcodeOwner(it, existing?.id) }
+                    if (owner != null) {
+                        error = R.string.error_barcode_taken
+                        errorArg = owner.nameRu ?: owner.name
+                        saving = false
+                        return@launch
+                    }
                     val saved = container.products.saveUserProduct(
                         Product(
                             id = existing?.id ?: Product.NEW,
-                            barcode = existing?.barcode ?: initialBarcode,
+                            barcode = normalizedBarcode,
                             name = name.trim(),
                             nameRu = nameRu.trim().ifBlank { null },
                             brand = existing?.brand,

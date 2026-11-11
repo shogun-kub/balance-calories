@@ -55,6 +55,18 @@ class ProductRepository(
     suspend fun findByBarcode(barcode: String): Product? =
         products.byBarcode(barcode)?.toDomain()
 
+    /**
+     * The *other* product that already carries this barcode, or null when the code is free or belongs to the
+     * row being edited ([exceptId]).
+     *
+     * This exists because [saveUserProduct] resolves a barcode to an existing row on purpose: correcting a
+     * scanned product must update it rather than duplicate it. The same mechanism turns a typo into
+     * destruction — typing the code of a different food while adding one by hand would rewrite that other
+     * product's name and numbers — so the form asks this first and refuses instead.
+     */
+    suspend fun barcodeOwner(barcode: String, exceptId: Long? = null): Product? =
+        products.byBarcode(barcode)?.toDomain()?.takeIf { it.id != exceptId }
+
     suspend fun byId(id: Long): Product? = products.byId(id)?.toDomain()
 
     suspend fun search(query: String, limit: Int = 20): List<Product> =

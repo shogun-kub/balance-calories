@@ -148,10 +148,14 @@
     <string name="field_fat_100g">Fat per 100 g, g</string>
     <string name="field_carbs_100g">Carbs per 100 g, g</string>
 <string name="form_kcal_from_macros" tools:ignore="PluralsCandidate">from macros: about %1$d kcal</string>
+    <string name="form_barcode_check_digit">the check digit does not match — maybe a typo</string>
 <string name="error_energy_or_macros">Enter energy, or protein, fat and carbs to compute it</string>
     <string name="field_liquid">Liquid (per 100 ml)</string>
+    <string name="field_barcode">Barcode (optional)</string>
     <string name="error_name_required">Enter a name</string>
     <string name="error_kcal_range">Energy must be between 0 and 900 kcal</string>
+    <string name="error_barcode_invalid">A barcode is 8 to 14 digits</string>
+    <string name="error_barcode_taken">This barcode already belongs to %1$s</string>
     <string name="today_empty">Nothing logged today</string>
     <string name="today_add_food">Add food</string>
     <string name="today_entry_line">%1$.0f g · %2$.0f kcal</string>

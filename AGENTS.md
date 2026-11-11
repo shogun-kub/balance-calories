@@ -22,11 +22,12 @@ the food side (products, search, scanning, logging, recipes); History with the a
 the intake/burn chart, a weight trend and a projection; a weight tab with entry and chart; settings with
 units, day start, language and macro norms; and backup / restore / CSV.
 
-160 :core + 42 :data + 25 :app JVM tests and **124 device tests** (120 :data, 4 :app) pass. The app
+160 :core + 42 :data + 25 :app JVM tests and **126 device tests** (122 :data, 4 :app) pass. The app
 navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`), follows the phone's dark setting, and
 prints each logged portion's protein, fat and carbs with the macro it is proportionally richest in marked
-in that macro's colour. The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie
-on one side and a steel-blue dumbbell on the other. Strings are **336/336** (324 `<string>` + 12
+in that macro's colour, and a product can carry a **barcode** that a scan resolves without the network.
+The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie
+on one side and a steel-blue dumbbell on the other. Strings are **340/340** (328 `<string>` + 12
 `<plurals>` per language) and lint is down to five reviewed warnings.
 
 Next: the rest of **M6** — device matrix on both phones, TalkBack, release signing, README — then the

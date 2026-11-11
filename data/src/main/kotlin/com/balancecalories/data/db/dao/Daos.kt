@@ -1,6 +1,6 @@
 package com.balancecalories.data.db.dao
 
-import androidx.room.Dao
+import androidx.room.Dao
 import com.balancecalories.data.repo.DayMacroTotals
 import androidx.room.Insert
 import androidx.room.Query
@@ -202,9 +202,14 @@ interface ProductDao {
     @Update
     suspend fun update(product: com.balancecalories.data.db.entity.ProductEntity)
 
+    /**
+     * Local search by name, Russian name, brand — or by the digits of a barcode, so a product typed in by
+     * hand can be found later by the code on its pack without scanning it.
+     */
     @Query(
         "SELECT * FROM product WHERE name LIKE '%' || :query || '%' " +
             "OR name_ru LIKE '%' || :query || '%' OR brand LIKE '%' || :query || '%' " +
+            "OR barcode LIKE '%' || :query || '%' " +
             "ORDER BY name LIMIT :limit",
     )
     suspend fun search(query: String, limit: Int): List<com.balancecalories.data.db.entity.ProductEntity>

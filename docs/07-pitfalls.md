@@ -76,10 +76,15 @@ its own kind of wrong answer.
 the screen; with no IME open it pops the screen, and a fixed-coordinate tap immediately after lands on
 whatever is underneath. Both were observed. Use it to dismiss the keyboard, then dump again.
 
-**P-11 · Dump before every tap.** Compose dialogs and fields push buttons upward, so a tap aimed at a
-button hits the IME (an avocado became 1503 g); while the keyboard is up a tap aimed at a list row types a
-space into the query instead. Also: `input text` is ASCII only, so a Cyrillic product cannot be typed —
-pick a row by what is visible.
+**P-11 · Dump before every tap — and check the keyboard, because a fresh dump can still lie.** Compose
+dialogs and fields push buttons upward, so a tap aimed at a button hits the IME (an avocado became 1503 g);
+while the keyboard is up a tap aimed at a list row types a space into the query instead. The nastier half:
+`uiautomator dump` reports the **app window**, so a node at `y=1167` comes back with coordinates that are
+current and still wrong when the IME covers that area — three taps "on" a settings row typed digits into a
+text field instead (2026-11-11, a macro-norm field went from `63.467` to `63311.467`). Before tapping
+anything in the lower half, check `dumpsys input_method | grep mIsInputViewShown`; if the view is up, a
+`keyevent 4` may close it, and tapping a non-field area (a title) defocuses the field for good. Also:
+`input text` is ASCII only, so a Cyrillic product cannot be typed — pick a row by what is visible.
 
 ### Health Connect
 

@@ -148,10 +148,14 @@
     <string name="field_fat_100g">Жиры на 100 г, г</string>
     <string name="field_carbs_100g">Углеводы на 100 г, г</string>
 <string name="form_kcal_from_macros" tools:ignore="PluralsCandidate">из БЖУ: примерно %1$d ккал</string>
+    <string name="form_barcode_check_digit">контрольная цифра не сходится — возможно, опечатка</string>
 <string name="error_energy_or_macros">Введите энергию или БЖУ, чтобы её посчитать</string>
     <string name="field_liquid">Жидкость (на 100 мл)</string>
+    <string name="field_barcode">Штрихкод (необязательно)</string>
     <string name="error_name_required">Введите название</string>
     <string name="error_kcal_range">Энергия должна быть от 0 до 900 ккал</string>
+    <string name="error_barcode_invalid">Штрихкод — от 8 до 14 цифр</string>
+    <string name="error_barcode_taken">Этот штрихкод уже занят продуктом «%1$s»</string>
     <string name="today_empty">Сегодня ничего не записано</string>
     <string name="today_add_food">Добавить еду</string>
     <string name="today_entry_line">%1$.0f г · %2$.0f ккал</string>
