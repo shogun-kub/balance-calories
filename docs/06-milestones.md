@@ -1,0 +1,316 @@
+# Milestones
+
+The diary of what each milestone changed and what it cost. The code says what happens,
+`docs/03-architecture.md` says why, and this file says **when it happened and what it took**.
+
+An entry is written when the milestone lands, in order, with the numbers measured at the time — device
+model, test counts, string counts. The numbering is this file's own chronology, not stable IDs. Where the
+milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfalls.md` under a stable ID
+(`P-nn` for a trap, `J-nn` for a judgement call) and the entry points at it instead of repeating it.
+
+## M1 - setup and the first profile
+
+1. ~~`local.properties` with `sdk.dir`~~ — written; untracked.
+2. ~~Create `:data` and `:app`~~ — both exist and build.
+3. ~~Room schema v1~~ — 11 entities, 4 DAOs, schema JSON committed under `data/schemas/`, and a
+   `MigrationTestHelper` harness proven by `MigrationHarnessTest`.
+4. ~~Repositories and mappers over the DAOs~~ — `ProfileRepository`, `BodyMeasurementRepository`,
+   `TargetRepository`, and `Profile` as a `:core` domain type; `:app` never sees an entity or Room.
+5. ~~Onboarding (steps 1–3)~~ — one scrollable form validates, then writes profile, first weight and
+   seed target in order. Verified on device: rows land in `profile`, `body_measurement`,
+   `target_history`.
+6. ~~Profile deletion~~ — Profiles screen lists active profiles and deletes with a confirmation that
+   cascades through weights, food and target history (ADR-012). Verified on device: after deleting the
+   last profile the app returns to onboarding and every dependent table is empty.
+7. ~~Profile edit and switch~~ — `ProfileFormScreen` serves create and edit (prefilled, records a new
+   weight only when it actually changed, upserts today's target). The current profile is stored in
+   `app_setting` (schema **v2**, migrated on a real v1 database: `user_version = 2`, rows preserved),
+   and tapping a profile card switches to it. Edit verified on device: goal −0.25 → −0.5 made the target
+   2130 → 1924, where the safety floor (1.1 × BMR = 1923.6) engaged and the screen said so.
+8. ~~Archive~~ — `ProfileRepository.archive` hides a profile without destroying it, clears the stored
+   selection if that profile was current, and `unarchive` brings it back. The profiles screen lists
+   archived profiles behind a toggle that opens by itself when nothing else is visible, and says in one
+   line that archiving deletes nothing. Verified on device both ways.
+9. ~~Settings~~ — units (metric/imperial, applied to height/weight entry and converted back to metric
+   before storage), day-start hour, and language. Language uses Android's per-app locale
+   (`LocaleManager`) on Android 13+; below that the screen says the phone follows the system language
+   instead of offering a control that does nothing. Two traps worth remembering: clearing the override
+   needs `LocaleList.getEmptyLocaleList()` (a list built from `""` is silently ignored), and changing it
+   recreates the activity, which resets in-memory navigation to Today.
+10. ~~Debug screen~~ — app version, device, schema version, Health Connect state, the active profile's
+   inputs, the latest stored target row, and per-table row counts. Read-only by design.
+
+## M2 - food
+
+1. ~~Starter ingredient pack~~ — `tools/generate_starter_pack.py` emits `data/src/main/assets/starter_products.json`
+   (69 items, 12 categories, English + Russian names, per 100 g). `StarterPackImporter` imports it once in
+   one transaction, guarded by `app_setting.starter_pack_version`, and marks every row `source='starter'`.
+   Schema **v3** added `product.name_ru` (nullable) for the Russian names; migration 2 → 3 is additive and
+   tested. Values are composition-table estimates, which is exactly why the product keeps a `source` column
+   and why a scanned OpenFoodFacts product or a user edit outranks it.
+2. ~~OpenFoodFacts client~~ — `OpenFoodFactsClient` (v3, User-Agent, one request per 6 s against a published
+   15/min quota, bounded retries for network errors/429/5xx, no retry for 404, local barcode validation) and
+   `OffResponseParser`, which accepts **both** status shapes (v3 `"success"`, v2 `1`). `LabelEnergy` in
+   `:core` decides energy precedence: stated kcal (measured) → kJ ÷ 4.184 (estimated) → Atwater from macros
+   (estimated) → nothing. The contract in docs/02-research.md §3.1.1 was measured, not recalled: absent
+   products answer **HTTP 404**, malformed codes answer 200 + `status: 0`, and responses carry **no**
+   rate-limit headers. Junk codes really exist in OFF (`9999999999999` is a cucumber), so a found product
+   can still be unusable — `OffProduct.isUsable` says why. No new shipping dependency: `HttpURLConnection`
+   plus `org.json`; `org.json:json` is test-only, because Android's version is a stub on the JVM.
+3. ~~OFF → `product` persistence~~ — `ProductRepository` (local first, OFF second, user above both) and
+   `BarcodeResolver` (cache → cached miss → fetch → unusable/offline, with the fetch injected so the tree is
+   testable without a network). Three properties are pinned by device tests: the row **id survives a
+   refresh** (entries and recipe items point at it), an **`is_override` correction is never overwritten**
+   by a later scan, and a product with **no energy is refused** rather than stored as zero calories.
+   `pending_lookup` does double duty — offline retry queue and cached 404 — separated by the `not_found`
+   marker (ADR-015). Domain maths lives in `:core`: `Product` (with `displayName(languageTag)` and
+   `hasEnergy`), `FoodMath.portion` (linear, missing stays missing, negative grams throws), `Barcode`.
+4. ~~Logging and Today v1~~ — `FoodEntryRepository` writes a **snapshot** (grams, scaled nutrition and the
+   product's names, schema **v4**) so renaming or deleting a product cannot rewrite yesterday; delete is a
+   soft delete and the day ignores the row. `TodayScreen` shows target, eaten, remaining, macros and meal
+   sections, and keeps BMR/TDEE/safety rule visible. Food screens: `ProductsScreen` (local search + browse),
+   `ProductScreen` (per-100 g table, portion, meal chips, log, **Edit**), `ProductFormScreen` (manual
+   product, and the same form serves editing an existing one — a correction marks the row `is_override`).
+   Verified on the Honor X7c: schema 3 → 4 migrated in place with 69 products intact; 150 g of avocado
+   previewed 240 kcal and stored `150.0 g / 240.0 kcal / P 3.0 / F 22.05` with the name snapshot; Today read
+   240 eaten, 1684 remaining; deleting the row set `deleted_at` and the day went back to 0.
+5. ~~Edit a portion and copy yesterday~~ — `FoodEntryRepository.updateGrams` rescales the entry's **own
+   snapshot** by the weight ratio, deliberately not re-reading the product, so history does not absorb a
+   later product correction. `copyDay` duplicates only visible rows with fresh timestamps and leaves the
+   source day alone. UI: tapping an entry row opens a portion dialog with a live preview; the Today screen
+   offers "Repeat yesterday (n)" when today is empty and yesterday is not.
+   Verified on the Honor X7c: 100 g → 50 g of bell pepper previewed 13 kcal and stored 13; copying moved
+   yesterday's row to today as a new row (id 3) while the deleted avocado entry stayed deleted.
+6. ~~Barcode scanner~~ — see the build notes below; one FOSS engine, a `TextureView` preview, and a real
+   package read on the device.
+7. ~~Product search over OpenFoodFacts~~ — the local list still answers every keystroke with no network; the
+   remote search is an explicit button (quota per client, Cyrillic names would fire per character) against
+   `search.openfoodfacts.org`, and a hit becomes a row only when tapped, through `saveFromOff` (ADR-019).
+   The measured shape is in docs/02-research.md §3.1.2; the trap is that **`brands` is an array in a search
+   hit and a string in a product lookup**, which threw until `OffResponseParser.text` accepted both.
+8. ~~Edit a product from the UI~~ — the product screen opens the form prefilled and comes back with the
+   corrected numbers; a correction to a starter or OFF row sets `is_override`. Prefilling exposed float noise
+   (`7.6899999999999995`), fixed by `NumberText.trimNumber` (3 decimals, no exponent, no trailing zeros, 6
+   unit tests).
+9. ~~Recents in the food list~~ — an empty query lists **Recently eaten** (newest first, `2×` when logged more
+   than once) above the browse list. One query serves recency and habit; soft-deleted entries are excluded
+   and a row whose product vanished is dropped. Tapping opens the product, not a logged portion.
+10. ~~M2 complete~~ — products, search, scanning, logging, Today and editing.
+
+## M3 - recipes
+
+1. ~~Recipe model~~ — `recipe`, `recipe_item` and `food_entry.recipe_id` have existed since **schema v1**, so M3
+   needed no migration: a DAO, a repository, `RecipeMath` and three screens. `RecipeMath` (in `:core`) turns raw
+   components into a dish and applies the cooking semantics from docs/02-research.md §3.5: per-100 g is
+   computed against the **measured cooked weight**, the raw sum is only a flagged fallback, and a dish with an
+   ingredient that has no calorie data reports **no total** rather than the sum of the others (ADR-020).
+2. ~~Recipe screens~~ — `RecipesScreen` (list), `RecipeEditorScreen` (name, servings, cooked weight, ingredient
+   search over local products, grams per ingredient, live preview) and `RecipeScreen` (components, totals,
+   per-100 g, per-serving, portion by grams defaulting to one serving, meal chips, log, edit, delete). The
+   editor's preview and the detail screen call the same maths, so a typed change cannot show one number and
+   store another.
+3. ~~Logging a portion~~ — `FoodEntryRepository.logRecipe` snapshots the derived nutrition into the entry with
+   `product_id = NULL`, `recipe_id` set and `was_estimated = 1`. Editing the recipe afterwards does not move a
+   logged meal, and deleting the recipe leaves the meal on the day with only the link cleared.
+4. ~~Tests~~ — 11 `RecipeMathTest` cases including the property the plan asked for (doubling every ingredient
+   doubles energy and weight and leaves the density unchanged, over 200 seeded random dishes), and 9 device
+   tests for `RecipeRepository` (ingredients replaced as a set, id survives an edit, per-profile scoping,
+   deletion keeps the logged meal, an ingredient-less recipe refused).
+5. Next: **M4** — band data through Health Connect and the real daily balance.
+
+## M4 - band data and the daily balance
+
+1. ~~Health Connect read path~~ — `HealthConnectActivitySource` reads **one** bucketed request for a whole
+   range: `AggregateGroupByDurationRequest` takes a mixed metric set (it has no `recordType`), so steps,
+   active and total calories, distance and resting heart rate arrive together as hourly buckets. A 30-day
+   backfill is one round trip. Measured behaviour, the two manifest traps and the phone's constant
+   1858.25 kcal/day are written up in docs/02-research.md §2.1.
+2. ~~Day mapping and upserts~~ — `:core` owns the boundary: `ActivityBucketMapper` folds buckets into the
+   profile's day-start hour, and `DailyActivityRepository` upserts one row per day (a day with no readings
+   becomes `no_band`, never a zero). Today's window is clipped to *now*, which is why `isToday` feeds the
+   quality rule.
+3. ~~Quality and the burn precedence~~ — `ActivityQuality.complete|partial|no_band|estimated`, decided by two
+   observable facts (is there data; was the day fetched after it closed) rather than a coverage threshold
+   that would read a sleeping user as a missing band. `DailyBurn` keeps the origin: band total → band active
+   + our BMR → PAL estimate (ADR-021).
+4. ~~Today v2~~ — burned, `Balance` (or `Balance (estimate)` when the burn is a formula), a one-line note
+   naming the origin, steps, an "Allow activity access" button when the permission is missing, a "Sync band"
+   button and "Last synced …". Verified on the Honor: 962 kcal burned, −555 balance, 98 steps.
+5. ~~Background sync~~ — `ActivitySyncWorker` (WorkManager 2.10.5) every 3 h plus an expedited attempt on
+   app start. A denied permission or a storeless phone returns `success` (retrying cannot fix either); only a
+   real read failure returns `retry`.
+6. ~~Schema v5~~ — `daily_activity.data_origins`, nullable and additive, because Health Connect merges every
+   writer and the Honor's platform layer contributes a constant daily total with an *empty* origin set.
+   Migrated in place on the Honor with its rows intact; migration tested.
+7. Tests: 11 new `:core` cases (burn precedence, quality rules, bucket folding, origins) and 13 device cases
+   for the repository.
+8. Next: **M5** — history, trends, adaptive TDEE.
+
+## M5 - history and adaptive TDEE
+
+1. ~~Adaptive TDEE~~ — `AdaptiveTdee` in `:core` fits `tdee = average intake − weight change × 7700 / days` over a
+   14-day window that **ends yesterday**, and refuses with a named reason when the evidence is thin: fewer than
+   10 logged days, fewer than 3 weigh-ins, weigh-ins closer than 7 days apart, a weight rate above 2 kg/week, or an
+   implied TDEE outside 1.0–2.5 × BMR (ADR-022). 13 `:core` cases pin the arithmetic and every guard.
+2. ~~Collecting the evidence~~ — `AdaptiveTdeeRepository` reads the window from Room. Two rules matter: a day
+   with no entries is **missing**, not 0 kcal, and several weigh-ins on one day collapse to one point with a fixed
+   source preference (manual > scale > Gadgetbridge > Health Connect). 7 device cases.
+3. ~~Applying it~~ — `TargetRepository.recordAdaptive` writes `mode = adaptive` with the TDEE and its confidence,
+   upserted per day so two runs cannot leave two contradictory targets. A `LOW` estimate is displayed and **not**
+   applied; an estimate that would land on the current target writes nothing and says so.
+4. ~~History screen~~ — `HistoryScreen` (reached from Today) shows the measured expenditure with its confidence and
+   the numbers behind it, a 7-day balance bar row, and the last 30 days with eaten/burned/balance/weight. A day with
+   no food log says "нет записей" and prints **no balance** — "eaten 0" would be a claim about a person, not a
+   missing entry.
+5. ~~Applying it without asking, if you want that~~ — `TdeeApplyPolicy` in `:core` holds the rule: the default is to
+   ask, a per-profile switch (`app_setting.tdee_auto_apply_<id>`) opts into automation, and the confidence gate
+   applies in **both** directions, so a `LOW` estimate never moves a target even with the switch on (ADR-024).
+   `AdaptiveTargetUpdater` is the single implementation, called by both the History screen and `ActivitySyncWorker`
+   so the target cannot change on one route and not the other. The switch renders in the refusal state too — a
+   preference should be settable before there is anything to apply. Verified on the Honor: the switch is off by
+   default, survives a restart, and stays per profile. The **applied** path is not yet observed end to end, because
+   the test profile has one logged day and refuses; the first real observation will be on a profile with ten.
+6. ~~Trends and recap~~ — `WeightTrend.ewma` smooths per **measurement** (a gap does not weight the next reading
+   more), `RecapCalculator` prints predicted and actual change side by side, and `Projection` refuses a horizon
+   past two years rather than dating a number nobody believes (ADR-023). The History screen draws the 30-day
+   trend line and the recap; the projection needs a goal weight.
+7. ~~Goal weight~~ — `profile.goal_weight_kg`, schema **v6**, nullable and additive: empty means "no goal", so
+   the projection says nothing instead of guessing a destination. Migration 5 → 6 tested on device.
+8. Tests: 20 new `:core` cases for trends, the recap, the projection and the apply policy; 24 new device cases
+   across the adaptive repository, the settings table and the v5/v6 migrations. Totals: 107 :core, 42 :data,
+   10 :app JVM; 88 :data, 4 :app device. Strings 257/257.
+9. Next: **M6** — hardening, export, release.
+
+## M6 - hardening, export, release, and the whole M7 series
+
+1. ~~Backup, restore and the CSV report~~ — `:data/backup` holds four pieces: `BackupTables` (what travels and in
+   what order), `BackupWriter` (rows to JSON through raw cursors, so a column no repository reads is still included),
+   `BackupReader` (validates the header, then **replaces** everything in one transaction with foreign keys **on**),
+   and `DaysCsv` (the report). `BackupService` is the three-call surface the app uses, because `:app` still never
+   sees Room. Reached from Settings → Данные.
+2. **The trap that cost an hour**: the first export skipped the 69 starter products to save space, and the first real
+   restore refused its own file — a food entry from the starter pack pointed at a product the file did not contain,
+   so it failed its own foreign key. A backup must be self-consistent; 69 rows is nothing. Restoring also has to tell
+   the starter importer which world it is in (`markImported` vs `ensureImported`), otherwise a fresh install ends up
+   with two of every ingredient.
+3. **The product index is external-content FTS4.** Rows written straight into `product` are invisible to search
+   until `INSERT INTO product_fts(product_fts) VALUES('rebuild')`, and nothing fails — the user just stops finding
+   products. The restore does it, and a test asserts search works afterwards.
+4. **`ImportOutcome.Refused` used to carry only a reason**, so "файл повреждён" was a dead end. It now carries the
+   underlying message, which is what turned the first mystery into a one-line diagnosis.
+5. Verified on the Honor X7c: a 61 395-character backup written through the system document picker to Downloads, a
+   CSV of the same days, and a restore of that backup back onto the live database — **112 rows restored, schema 6**,
+   69 starter products and no duplicates, FTS finding "Avocado", no orphaned entries, today's intake still 406.75.
+6. ~~Font scaling to 200%~~ — every label/value pair, chip group and button row uses `WrappingRow`
+   (`app/ui/LabelValueRow.kt`), a `FlowRow` behind a plain `@Composable` API so no screen needs an experimental
+   opt-in. Two failures made this necessary, both visible only at `font_scale 2.0`: the Today nav row rendered
+   **"Настройки" as a vertical column of single letters** about 1000 px tall and pushed the rest of the screen away,
+   and the Settings unit chips did the same to the whole screen — one chip visible, nothing else reachable. The
+   signature is a squeezed `Text`: it does not ellipsize, it breaks inside words, and `uiautomator dump` shows it as
+   a text node whose bounds are tall and narrow. Check that before believing a screenshot. Verified at 1.0, 1.3 and
+   2.0 in Russian and at 2.0 in English (whose strings are longer); 1.0 is visually unchanged because `FlowRow` only
+   wraps when it must. ADR-026.
+7. Tests: 21 new device cases (11 backup round-trip, 10 CSV). Totals: 107 :core, 42 :data, 10 :app JVM; 109 :data,
+   4 :app device. Strings 280/280.
+8. Next: the rest of M6 — device matrix on both phones, TalkBack and contrast, release signing, README.
+9. ~~**M7.1 — tabs**~~ — four destinations (`Сегодня` · `Еда` · `История` · `Вес`) in a `NavigationBar`, with
+   settings, profiles, products and recipes as **overlays** on top of the current tab. The flat `Screen` enum
+   became `Tab` + `Overlay`; back pops one overlay, then returns to `Сегодня`, then leaves the app, and tab
+   switches do not stack. The tab survives process death (`rememberSaveable`). Icons are **hand-drawn** vector
+   drawables (home, bowl-and-fork, bars, balance, sliders) rather than `material-icons-extended` — ~4 MB of
+   vectors to use five glyphs. Recipes moved under `Еда`, profiles moved into Settings. ADR-027.
+10. Two traps in M7.1, both visible only on a device: the tab-bar labels and the screen the app lands on after `install -r`. Extracted to `docs/07-pitfalls.md` **P-08** and **P-19**. Just before them: the first Android 12+ launch on the Honor and the four-tab structure that ADR-027 records.
+11. **The `Вес` tab ships with working entry, not a placeholder** — field, prefill from the last reading, rate
+    line, recent readings, save. It exposed two real bugs, both fixed:
+    - **Saving twice in one day appended a second row.** `record` now deletes the day's row from that source
+      before inserting, so a re-typed weight corrects the day; different sources still keep their own rows.
+    - **The readings list printed the EWMA** instead of the readings; it now uses `weightPoints` (unsmoothed).
+    The chart is still M7.3. Two device tests pin the replace rule and the canonical preference.
+12. Tests: 107 :core, 42 :data, 10 :app JVM; **111 :data, 4 :app device** (115 device). Strings **296/296**.
+13. ~~**M7.2 — the intake/burn chart**~~ — one Canvas on `История`: eaten as a stacked macro bar (protein/fat/
+    carbs from `MacroEnergy` in `:core`, in `:app/history/IntakeBurnChart.kt`), burned as a second bar, one
+    baseline and one scale, the target dashed across both; a 7/30/90 selector where 90 scrolls sideways and
+    opens at the newest day. `MacroEnergy.split` guarantees the segments fill the bar exactly — macros below
+    the logged energy leave an "unlabelled energy" segment, macros above it are scaled down — and a property
+    test over 500 random days pins that. The window query is one `GROUP BY local_date`
+    (`FoodEntryDao.macroTotalsBetween`), so a day with no log is **absent**, which is what makes the chart draw
+    a gap instead of a zero bar. ADR-028.
+14. Three things the intake/burn chart taught. The lessons are **J-08** (a total over estimates is a lie of emphasis), **J-09** (an estimated burn is an outline, not a fill) and **P-23** (`fillMaxWidth()` inside `horizontalScroll` collapses to zero).
+15. Tests: 115 :core, 42 :data, 10 :app JVM; **113 :data, 4 :app device** (117 device). Strings **306/306**.
+16. ~~**M7.2b — the Today gauge**~~ — a half-doughnut of today's energy split by macro, with the **grams**
+    of protein, fat and carbs printed beside it. The scale is the target and it clamps at half a circle
+    (`CalorieGauge` in `:core`, 6 cases): eating past the allowance fills the arc and reports the excess
+    in words, because a sweep past 180° wraps and would look like *less* than a full day, and "142% of
+    target" is harder to feel than "перебор на 500 ккал". One `ChartPalette` now feeds both this gauge and
+    the history chart, in the lighter 300-level tones; the grams and the spoken description carry the
+    meaning, so the colour is decoration and a big carbohydrate band is not a verdict. ADR-029.
+17. Three things the gauge taught: **J-01** (a dash is not a number), **J-02** (the centre of a half circle is narrow) and **P-25** (`2 * arcThickness` does not compile for `Dp`).
+18. **A second profile used to steal the band** — found while verifying the gauge, when a throwaway
+    profile created to look at an *empty* day took `band_enabled` from the owner's profile (the form
+    set it on every create), stopped his sync, and then left **nobody** reading the band once the
+    throwaway was deleted — Today simply lost its sync button, with nothing on screen to say why.
+    `create` now grants the band only when no active profile has it, and the profiles screen has a
+    **Читать браслет** action, so moving it is one deliberate tap. Three device tests pin the rule.
+    ADR-030.
+19. ~~**M7.3 — the weight chart**~~ — dots for what the scale said, the EWMA through them, the goal
+    dashed across, over 30/90/365 days. `WeightAxis` in `:core` (10 cases) gives the range a **2 kg
+    floor** and rounds bounds to half kilos — or whole pounds — because the axis is where a weight
+    chart lies: rescaling to a 0.2 kg week turns water retention into a cliff. The **data sets the
+    range, not the goal**: folded in, a 5 kg window became 8 and flattened the fortnight the person
+    was looking at, so an off-range goal is *named* in the legend ("Цель 75 кг · ниже графика")
+    instead of drawn. A swatch promises something on the canvas, so with one weigh-in the trend
+    entry disappears and a sentence says why. ADR-031.
+20. Three things the weight chart taught: **P-24** (gutters must be measured, not fixed), **P-18** (a format string and its call site can drift apart and still pass every test) and **P-29** (a seeded history is the only way to see a chart).
+21. Tests: 131 :core, 42 :data, 10 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**.
+22. ~~**M7.4 — the launcher icon**~~ — a vector **adaptive icon**: an ink balance beam with a slice of pie on
+    one side and a steel-blue dumbbell on the other, **both solid objects seen at an angle**. The owner's brief
+    was a balance *with pans*; three sketches at 24/48/108 dp showed that at 24 dp each pan and its food merge
+    into one blob, so he picked the reduced structure after seeing exactly that failure. Two drafts of the
+    objects were then rejected — a flat triangle, then a dumbbell that was a capital H — which produced the
+    final language: the slice is a circular sector with a crust band about a third of its radius and its side
+    swept downwards, the dumbbell is a tilted bar with two rounded weights and a lit disc face on each outer end.
+    Shipped as `res/drawable/ic_launcher_foreground.xml` (8 paths), a cream background colour and a
+    `<monochrome>` layer; no PNG densities, because `minSdk` 28 makes the adaptive icon the only form any phone
+    can use. `tools/icon_design.py` is the source of the geometry — it renders the review previews and prints
+    the exact `pathData` the drawable carries. Verified on the Honor: Settings → *О приложении*, the recents
+    card, and the third home page. ADR-032.
+23. Three things the launcher icon taught: **J-10** (at 24 dp an icon is a silhouette test, not a drawing), **J-11** (two rectangles on a bar are a capital H) and **J-12** (a swept solid is not a translated outline).
+24. **`docs/03-architecture.md` had two ADR rows glued in front of its own title**, left by an earlier append.
+    Nothing caught it because Markdown renders the damage as a table at the top of the page, and no test reads
+    the docs. Repaired and both rows moved into §13; when appending to a table, check the first line of the file
+    after the write, not just that the text landed somewhere.
+25. ~~**M7.5 — the dark theme and contrast**~~ — the app follows `isSystemInDarkTheme()` with Material 3's baseline
+    pair, and `values-night/themes.xml` keeps the cold-start window dark. The milestone's real finding was the
+    palette: measuring it for the first time showed the light theme's six chart tones at **1.4–2.9 : 1** on
+    cream, below the 3 : 1 graphic floor, with the fat tone effectively invisible. `Contrast` in `:core` is the
+    WCAG arithmetic (nine cases, pinned against the published grey thresholds) and `ChartPaletteContrastTest`
+    refuses any tone under 4.5 : 1 per surface. The palette is now **two sets of six tones at the lightness each
+    surface needs**, carried by `LocalChartTones`; the dark set is the 300-level tones the light theme used to
+    use, because they were always fine on near-black. No in-app switch: the phone already knows. ADR-033.
+26. Three things the dark theme taught: **J-03** (quiet colours and readable colours were in a fight), **P-22** (a `@Composable` read inside a `DrawScope`) and **J-04** (a theme is a place, not a coat of paint).
+27. Tests: 140 :core, 42 :data, 16 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**.
+28. ~~**M7.6 — strings and the verification sweep**~~ — lint's first run found **37** things, and the triage was
+    the work: 22 `PluralsCandidate`, 6 unused strings, a `<vector>` warning, a manifest attribute and four
+    small code smells. Ten strings became `<plurals>` in both languages ("Synced 1 days", "restored 1 rows",
+    "1 weigh-ins"); the twelve where the number is followed by an invariant unit (`kcal`, `kg`) or a
+    count-last phrase keep `tools:ignore` and a reason in the file. `StringResourceParityTest` now reads
+    `<plurals>` too and asserts the quantities each grammar needs — a missing Russian `few` fails **silently**
+    at runtime by falling back to `other` ("5 дня"). `android:dataExtractionRules` excludes everything, with
+    `fullBackupContent="false"` for API 28–30. Second lint run: **5 warnings**, each a decision recorded in
+    the plan table. ADR-034.
+29. **The refusal branch was lying, and only reading it out loud showed it.** With fewer weigh-ins than the rule needs, History said *"needs 3 logged days"* — the wrong noun, aimed at the wrong thing to fix; "weigh-ins too close" and both implausible-change refusals said it too. Six refusals now give six sentences, with the thresholds passed in from the constants the rule uses, so the text cannot drift from the arithmetic. Lesson: **P-21**.
+30. **`mipmap-anydpi-v26` stays, and an XML comment cannot contain `--`.** Lint's `ObsoleteSdkInt` advice was tried and failed (`resource mipmap/ic_launcher not found`), which is **P-05**; AAPT2 reporting a malformed comment as an unparseable resource is **P-06**.
+31. Tests: 140 :core, 42 :data, 19 :app JVM; **115 :data, 4 :app device** (119 device). Strings **320/320**
+    (308 `<string>` + 12 `<plurals>` in each language).
+32. ~~**M7.7 — the macros where the food is**~~ — every logged portion on Today prints its protein, fat and carb
+    grams, and the macro with the **largest share of its own daily norm** is bold and coloured: protein green, fat
+    yellow, carbs red — the gauge's and chart's own three tones. The denominator did not exist, so `MacroNorm` in
+    `:core` derives it (25/30/45 % of the target, same Atwater factors as everywhere), Settings shows it and takes
+    the person's own, and a stored norm outranks the derivation. A manual product with macros and no kcal computes
+    its energy (`MacroEnergy.atwaterKcal`) and stores it as *estimated*; a typed kcal still wins. A freshly typed
+    product now lands on its portion screen instead of back on Today with nothing logged. ADR-035.
+33. Three things the macros taught: **J-05** (a percentage needs a denominator), **J-06** (compare shares, not grams) and **P-30** (`kotlin.math.round` sends ties to even).
+34. Tests: 160 :core, 42 :data, 19 :app JVM; **115 :data, 4 :app device** (119 device) — the 5 new
+    `AppSettingsRepository` cases need the phone. Strings **337/337**
+35. Next: the **device pass for M7.7** (the phone was unplugged when it landed), then the rest of **M6** — device
+    matrix on both phones, TalkBack, release signing, README — then the release.
