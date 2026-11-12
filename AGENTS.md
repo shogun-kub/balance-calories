@@ -16,18 +16,18 @@ Two outputs, everything else supports them:
 
 ## Current state
 
-**M1–M5 and M7.1–M7.7 complete; M6 half done.** `:core` (168 JVM tests) and `:data` (schema **v6**, 10 DAOs,
-12 repositories) build green, and `:app` has the whole loop: Today with the macro gauge, burned and balance;
+**M1–M5 and M7.1–M7.7 complete; M6 half done.** `:core` (175 JVM tests) and `:data` (schema **v6**, 10 DAOs,
+12 repositories) build green, and `:app` has the whole loop: Today with the macro gauge, four meal cards, burned and balance;
 the food side (products, search, scanning, logging, recipes); History with the adaptive TDEE, the recap,
 the intake/burn chart, a weight trend and a projection; a weight tab with entry and chart; settings with
 units, day start, language and macro norms (four presets or one's own grams); and backup / restore / CSV.
 
-168 :core + 46 :data + 33 :app JVM tests and **126 device tests** (122 :data, 4 :app) pass. The app
+175 :core + 46 :data + 33 :app JVM tests and **126 device tests** (122 :data, 4 :app) pass. The app
 navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`), follows the phone's dark setting, and
 prints each logged portion's protein, fat and carbs with the macro it is proportionally richest in marked
 in that macro's colour, and a product can carry a **barcode** that a scan resolves without the network.
 The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie
-on one side and a steel-blue dumbbell on the other. Strings are **350/350** (338 `<string>` + 12
+on one side and a steel-blue dumbbell on the other. Strings are **363/363** (351 `<string>` + 12
 `<plurals>` per language) and lint is down to five reviewed warnings.
 
 Next: the rest of **M6** — device matrix on both phones, TalkBack, release signing, README — then the

@@ -138,6 +138,19 @@
     <string name="meal_lunch">Обед</string>
     <string name="meal_dinner">Ужин</string>
     <string name="meal_snack">Перекус</string>
+    <string name="meal_times_title">Время приёмов пищи</string>
+    <string name="meal_times_note">Время только подписывает карточки на «Сегодня»: поел раньше или позже — это не ошибка.</string>
+    <string name="meal_times_saved">Время сохранено</string>
+    <string name="meal_time_invalid">Время вводится как 08:00</string>
+    <string name="meal_card_planned">" ·\u00A0%1$s"</string>
+    <string name="meal_card_empty">пока пусто</string>
+    <string name="meal_card_summary">%1$s · %2$d %% от цели</string>
+    <string name="meal_card_macros">%1$s · %2$s · %3$s</string>
+    <string name="meal_card_protein">Белки %1$s</string>
+    <string name="meal_card_fat">Жиры %1$s</string>
+    <string name="meal_card_carbs">Углеводы %1$s</string>
+    <string name="meal_card_add">Добавить в «%1$s»</string>
+    <string name="meal_card_add_short" translatable="false">+</string>
 
     <string name="action_log">Записать</string>
 

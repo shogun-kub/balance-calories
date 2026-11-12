@@ -1,5 +1,7 @@
 package com.balancecalories.core.food
 
+import kotlin.math.roundToInt
+
 /**
  * One food already eaten, as a fact of history.
  *
@@ -50,6 +52,30 @@ data class DailyIntake(
     val fatG: Double get() = meals.sumOf { it.fatG ?: 0.0 }
     val carbsG: Double get() = meals.sumOf { it.carbsG ?: 0.0 }
 
+    /** What one meal contributed, for the four cards on Today. */
+    fun totalsFor(meal: Meal): MealTotals {
+        val entries = entriesFor(meal)
+        return MealTotals(
+            kcal = entries.sumOf { it.kcal },
+            proteinG = entries.sumOf { it.proteinG ?: 0.0 },
+            fatG = entries.sumOf { it.fatG ?: 0.0 },
+            carbsG = entries.sumOf { it.carbsG ?: 0.0 },
+            entryCount = entries.size,
+        )
+    }
+
+    /**
+     * The meal's share of the day's calorie target, as a whole percent - 412 of 2283 is 18.
+     *
+     * Shares are of the **target**, not of what was eaten so far: a card is answering "how much of today is
+     * this meal", and a proportion of a total still being written would change every time a snack was added.
+     * A target of zero has no share to speak of and answers 0.
+     */
+    fun shareOfTargetFor(meal: Meal): Int {
+        if (targetKcal <= 0) return 0
+        return (totalsFor(meal).kcal / targetKcal * 100.0).roundToInt()
+    }
+
     /** True when any logged entry carries a derived number, so the screen can say "estimated". */
     val hasEstimates: Boolean get() = meals.any { it.wasEstimated }
 
@@ -58,4 +84,17 @@ data class DailyIntake(
      * screens cannot disagree about how much of a day was protein.
      */
     val macroSplit: MacroSplit get() = MacroEnergy.split(proteinG, fatG, carbsG, eatenKcal)
+}
+
+/** One meal's contribution to the day: the numbers a meal card prints. */
+data class MealTotals(
+    val kcal: Double,
+    val proteinG: Double,
+    val fatG: Double,
+    val carbsG: Double,
+    val entryCount: Int,
+) {
+
+    /** A card with nothing in it still exists - it is an invitation, and it carries the planned time. */
+    val isEmpty: Boolean get() = entryCount == 0
 }

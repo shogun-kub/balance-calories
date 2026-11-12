@@ -58,11 +58,12 @@ fun ProductScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onLogged: () -> Unit,
+    initialMeal: Meal? = null,
 ) {
     val scope = rememberCoroutineScope()
     val languageTag = LocalConfiguration.current.locales[0]?.toLanguageTag()
     var portion by remember(product.id) { mutableStateOf("100") }
-    var meal by rememberSaveable { mutableStateOf(defaultMeal()) }
+    var meal by rememberSaveable { mutableStateOf(initialMeal ?: defaultMeal()) }
     var error by remember { mutableStateOf<String?>(null) }
     var saving by rememberSaveable { mutableStateOf(false) }
 

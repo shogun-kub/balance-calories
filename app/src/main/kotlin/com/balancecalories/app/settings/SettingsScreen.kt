@@ -19,6 +19,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -40,6 +42,7 @@ import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.Macro
 import com.balancecalories.core.food.MacroNorm
 import com.balancecalories.core.food.MacroPreset
+import com.balancecalories.core.food.MealTimes
 import com.balancecalories.core.profile.Profile
 import com.balancecalories.core.profile.UnitSystem
 import kotlinx.coroutines.launch
@@ -121,6 +124,7 @@ fun SettingsScreen(
 
         HorizontalDivider()
         MacroNormSetting(container = container, profile = profile)
+    MealTimesSetting(container = container, profile = profile)
 
         // Profiles moved here when the four tabs took the Today screen's navigation column: switching
         // profile is a rare act on a phone that belongs to one person, so it earns neither a tab nor a
@@ -148,6 +152,79 @@ fun SettingsScreen(
  * whenever the target moves. Typing numbers stores them for this profile for good, because a person who wrote
  * their own norms has said something the derivation cannot know (ADR-035).
  */
+/**
+ * When the three named meals are planned, per profile.
+ *
+ * The times label the cards on Today and are stored per profile, because two people sharing a phone do not eat
+ * at the same hours. Nothing is measured against them: eating at 15:00 instead of 13:00 is life, not an error.
+ */
+@Composable
+private fun MealTimesSetting(container: AppContainer, profile: Profile) {
+    val scope = rememberCoroutineScope()
+    var breakfast by rememberSaveable(profile.id) { mutableStateOf("") }
+    var lunch by rememberSaveable(profile.id) { mutableStateOf("") }
+    var dinner by rememberSaveable(profile.id) { mutableStateOf("") }
+    var message by remember { mutableStateOf<Int?>(null) }
+
+    LaunchedEffect(profile.id) {
+        val times = container.settings.mealTimes(profile.id)
+        breakfast = MealTimes.formatClock(times.breakfastMinutes)
+        lunch = MealTimes.formatClock(times.lunchMinutes)
+        dinner = MealTimes.formatClock(times.dinnerMinutes)
+    }
+
+    HorizontalDivider()
+    Text(text = stringResource(R.string.meal_times_title), style = MaterialTheme.typography.titleMedium)
+    Text(
+        text = stringResource(R.string.meal_times_note),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.secondary,
+    )
+
+    val labels = listOf(R.string.meal_breakfast, R.string.meal_lunch, R.string.meal_dinner)
+    val values = listOf(breakfast, lunch, dinner)
+    val setters = listOf<(String) -> Unit>({ breakfast = it }, { lunch = it }, { dinner = it })
+    for (index in labels.indices) {
+        OutlinedTextField(
+            value = values[index],
+            onValueChange = setters[index],
+            label = { Text(stringResource(labels[index])) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+
+    Button(
+        onClick = {
+            val parsed = listOf(
+                MealTimes.parseClock(breakfast),
+                MealTimes.parseClock(lunch),
+                MealTimes.parseClock(dinner),
+            )
+            if (parsed.any { it == null }) {
+                message = R.string.meal_time_invalid
+                return@Button
+            }
+            scope.launch {
+                container.settings.setMealTimes(
+                    profile.id,
+                    MealTimes(parsed[0]!!, parsed[1]!!, parsed[2]!!),
+                )
+                message = R.string.meal_times_saved
+            }
+        },
+    ) {
+        Text(stringResource(R.string.action_save))
+    }
+    message?.let {
+        Text(
+            text = stringResource(it),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.secondary,
+        )
+    }
+}
+
 @Composable
 private fun MacroNormSetting(container: AppContainer, profile: Profile) {
     val scope = rememberCoroutineScope()

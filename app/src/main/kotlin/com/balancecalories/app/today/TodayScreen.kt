@@ -1,14 +1,17 @@
 package com.balancecalories.app.today
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
@@ -29,6 +32,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -60,6 +64,8 @@ import com.balancecalories.core.food.DailyIntake
 import com.balancecalories.core.food.Macro
 import com.balancecalories.core.food.MacroNorm
 import com.balancecalories.core.food.Meal
+import com.balancecalories.core.food.MealTimes
+import com.balancecalories.core.food.MealTotals
 import com.balancecalories.core.food.LoggedEntry
 import com.balancecalories.core.profile.Profile
 import com.balancecalories.data.health.HealthConnectState
@@ -84,7 +90,7 @@ import kotlinx.coroutines.launch
 fun TodayScreen(
     profile: Profile,
     container: AppContainer,
-    onOpenFood: () -> Unit,
+    onAddFood: (Meal?) -> Unit,
 ) {
     val today = remember { LocalDate.now() }
     val scope = rememberCoroutineScope()
@@ -94,6 +100,7 @@ fun TodayScreen(
     var intake by remember(profile.id) { mutableStateOf<DailyIntake?>(null) }
     var refresh by remember { mutableIntStateOf(0) }
     var yesterdayCount by remember { mutableIntStateOf(0) }
+    var mealTimes by remember(profile.id) { mutableStateOf(MealTimes.DEFAULT) }
     var editingEntry by remember { mutableStateOf<LoggedEntry?>(null) }
     var editGrams by remember { mutableStateOf("") }
 
@@ -117,6 +124,7 @@ fun TodayScreen(
             intake = container.food.day(profile.id, today, target.kcal)
             yesterdayCount = container.food.countForDay(profile.id, today.minusDays(1))
             burn = container.activity.burn(profile.id, today, target.bmrKcal, target.tdeeKcal)
+            mealTimes = container.settings.mealTimes(profile.id)
         }
     }
 
@@ -292,31 +300,37 @@ fun TodayScreen(
             }
         }
 
+        // Four cards, always - an empty meal is an invitation with a time on it, not a reason to hide the row.
         for (meal in Meal.entries) {
-            val entries = loadedIntake.entriesFor(meal)
-            if (entries.isEmpty()) continue
-            Text(text = meal.localized(), style = MaterialTheme.typography.titleSmall)
-            for (entry in entries) {
-                EntryRow(
-                    entry = entry,
-                    norm = macroNorm,
-                    languageTag = languageTag,
-                    onEdit = {
-                        editingEntry = entry
-                        editGrams = trimGrams(entry.grams)
-                    },
-                    onDelete = {
-                        scope.launch {
-                            container.food.delete(entry.id)
-                            refresh++
-                        }
-                    },
-                )
+            MealCard(
+                title = meal.localized(),
+                planned = mealTimes.minutesOf(meal)?.let { MealTimes.formatClock(it) },
+                totals = loadedIntake.totalsFor(meal),
+                share = loadedIntake.shareOfTargetFor(meal),
+                onAdd = { onAddFood(meal) },
+            ) {
+                for (entry in loadedIntake.entriesFor(meal)) {
+                    EntryRow(
+                        entry = entry,
+                        norm = macroNorm,
+                        languageTag = languageTag,
+                        onEdit = {
+                            editingEntry = entry
+                            editGrams = trimGrams(entry.grams)
+                        },
+                        onDelete = {
+                            scope.launch {
+                                container.food.delete(entry.id)
+                                refresh++
+                            }
+                        },
+                    )
+                }
             }
         }
 
         HorizontalDivider()
-        Button(onClick = onOpenFood, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = { onAddFood(null) }, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.today_add_food))
         }
         // Kept from the M1 screen: the inputs behind the target stay visible while the maths is fresh.
@@ -494,6 +508,89 @@ private fun EntryRow(
 @Composable
 private fun MetricRow(label: String, value: String) {
     LabelValueRow(label = label, value = value)
+}
+
+/**
+ * One meal: its name, the time it is planned for, what it cost and what share of the day it is.
+ *
+ * The plus button is the owner's request (2026-11-12): a card is the place where a person thinks of a meal, so
+ * adding food from it carries that meal into the portion screen instead of asking again. The general "add food"
+ * button stays, because a person who does not think in meals should not be forced through one.
+ */
+@Composable
+private fun MealCard(
+    title: String,
+    planned: String?,
+    totals: MealTotals,
+    share: Int,
+    onAdd: () -> Unit,
+    entries: @Composable () -> Unit,
+) {
+    val addLabel = stringResource(R.string.meal_card_add, title)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                shape = RoundedCornerShape(14.dp),
+            )
+            .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = title, style = MaterialTheme.typography.titleSmall)
+            if (planned != null) {
+                Text(
+                    text = stringResource(R.string.meal_card_planned, planned),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            // A text plus button: the app has no icon set in its dependencies, and a symbol that carries an
+            // accessible name is honest about being a symbol.
+            TextButton(
+                onClick = onAdd,
+                modifier = Modifier.semantics {
+                    contentDescription = addLabel
+                },
+            ) {
+                Text(
+                    text = stringResource(R.string.meal_card_add_short),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            }
+        }
+        Text(
+            text = if (totals.isEmpty) {
+                stringResource(R.string.meal_card_empty)
+            } else {
+                stringResource(
+                    R.string.meal_card_summary,
+                    stringResource(R.string.kcal_decimal, totals.kcal),
+                    share,
+                )
+            },
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(end = 8.dp),
+        )
+        if (!totals.isEmpty) {
+            Text(
+                text = stringResource(
+                    R.string.meal_card_macros,
+                    stringResource(R.string.meal_card_protein, displayNumber(totals.proteinG, decimals = 0)),
+                    stringResource(R.string.meal_card_fat, displayNumber(totals.fatG, decimals = 0)),
+                    stringResource(R.string.meal_card_carbs, displayNumber(totals.carbsG, decimals = 0)),
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(end = 8.dp),
+            )
+            Column(modifier = Modifier.padding(end = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                entries()
+            }
+        }
+    }
 }
 
 @Composable

@@ -412,5 +412,17 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
        energy split within two percent), so editing a field clears the selection without extra state.
        Verified on the Honor X7c twice: the owner's own `171,76,228` is recognised as "ровно" without being
        rewritten, and on the Test profile the 45/25/30 chip stored `214,53,143` for a 1904 kcal target.
-    Meals are still open.
+    5. *Meal cards.* Today no longer lists meals as bare headings: four cards - Завтрак, Обед, Ужин, Перекус -
+       each carry the planned time, the meal's kcal and its share of the **day target**, its protein/fat/carb
+       sums in whole grams, and its entries. An empty meal stays visible and says "пока пусто", because a card
+       with a time on it is an invitation and hiding it removed the very prompt the owner wanted. Each card has a
+       `+` that opens the food tab with that meal already selected on the portion screen (`ProductScreen` takes
+       an `initialMeal`, `MainActivity` carries it as `pendingMeal`, cleared when the flow ends), while the
+       general "добавить еду" button stays for a person who does not think in meals. The times are a plan, not a
+       measurement: they label and sort nothing, they live per profile in `app_setting` as `meal_times_<id>`
+       (`480,780,1140`), they default to 08:00/13:00/19:00, a partly broken stored value falls back as a whole,
+       and the Settings fields accept only `HH:MM` (`MealTimes.parseClock`). No schema change. Verified on the
+       Honor X7c: the four cards with the owner's real day, `+` on Обед opening Яблоко with Обед preselected and
+       nothing logged, and Save storing `480,780,1140` with his 29 entries, 90 products, 64 activity days and
+       two weigh-ins unchanged.
 

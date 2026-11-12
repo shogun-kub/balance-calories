@@ -138,6 +138,19 @@
     <string name="meal_lunch">Lunch</string>
     <string name="meal_dinner">Dinner</string>
     <string name="meal_snack">Snack</string>
+    <string name="meal_times_title">Meal times</string>
+    <string name="meal_times_note">The time only labels the cards on Today: eating earlier or later is not an error.</string>
+    <string name="meal_times_saved">Times saved</string>
+    <string name="meal_time_invalid">Enter the time as 08:00</string>
+    <string name="meal_card_planned">" ·\u00A0%1$s"</string>
+    <string name="meal_card_empty">nothing yet</string>
+    <string name="meal_card_summary">%1$s · %2$d%% of target</string>
+    <string name="meal_card_macros">%1$s · %2$s · %3$s</string>
+    <string name="meal_card_protein">Protein %1$s</string>
+    <string name="meal_card_fat">Fat %1$s</string>
+    <string name="meal_card_carbs">Carbs %1$s</string>
+    <string name="meal_card_add">Add to %1$s</string>
+    <string name="meal_card_add_short" translatable="false">+</string>
 
     <string name="action_log">Log</string>
 

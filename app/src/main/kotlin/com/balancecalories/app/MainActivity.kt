@@ -47,6 +47,7 @@ import com.balancecalories.app.settings.SettingsScreen
 import com.balancecalories.app.today.TodayScreen
 import com.balancecalories.app.ui.BalanceTheme
 import com.balancecalories.app.weight.WeightScreen
+import com.balancecalories.core.food.Meal
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.Recipe
 import com.balancecalories.core.profile.Profile
@@ -114,6 +115,9 @@ private fun Root() {
     var overlay by rememberSaveable { mutableStateOf<Overlay?>(null) }
     var editing by remember { mutableStateOf<Profile?>(null) }
     var openedProduct by remember { mutableStateOf<Product?>(null) }
+    // The meal a person tapped + on, carried into the portion screen. Not saved across a process death:
+    // it belongs to the tap, and a restored half-flow would open a product nobody asked for.
+    var pendingMeal by remember { mutableStateOf<Meal?>(null) }
     var formEditing by remember { mutableStateOf<Product?>(null) }
     var openedRecipe by remember { mutableStateOf<Recipe?>(null) }
     var recipeEditing by remember { mutableStateOf<Recipe?>(null) }
@@ -307,7 +311,11 @@ private fun Root() {
             product = openedProduct!!,
             container = container,
             profileId = active.id,
-            onBack = { overlay = null },
+            initialMeal = pendingMeal,
+            onBack = {
+                pendingMeal = null
+                overlay = null
+            },
             onEdit = {
                 formEditing = openedProduct
                 scannedBarcode = null
@@ -315,6 +323,7 @@ private fun Root() {
             },
             onLogged = {
                 openedProduct = null
+                pendingMeal = null
                 formEditing = null
                 overlay = null
                 tab = Tab.TODAY
@@ -358,7 +367,10 @@ private fun Root() {
                 Tab.TODAY -> TodayScreen(
                     profile = active,
                     container = container,
-                    onOpenFood = { tab = Tab.FOOD },
+                    onAddFood = { meal ->
+                        pendingMeal = meal
+                        tab = Tab.FOOD
+                    },
                 )
 
                 Tab.FOOD -> ProductsScreen(

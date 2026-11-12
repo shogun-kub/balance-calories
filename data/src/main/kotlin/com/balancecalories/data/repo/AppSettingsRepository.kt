@@ -1,6 +1,7 @@
 package com.balancecalories.data.repo
 
 import com.balancecalories.core.food.MacroNorm
+import com.balancecalories.core.food.MealTimes
 import com.balancecalories.data.db.BalanceCaloriesDatabase
 import com.balancecalories.data.db.entity.AppSettingEntity
 import kotlinx.coroutines.flow.Flow
@@ -71,10 +72,28 @@ class AppSettingsRepository(private val database: BalanceCaloriesDatabase) {
     /** Back to the norms the calorie target implies. */
     suspend fun clearMacroNorm(profileId: Long) = dao.remove(MACRO_NORM_PREFIX + profileId)
 
+    /**
+     * When this profile plans its three meals, or [MealTimes.DEFAULT] when nobody has said.
+     *
+     * A plan is not a measurement, so an unset value is the convention and not an error: the cards still need a
+     * time to print, and asking the person to set three clocks before logging breakfast would be a worse
+     * first run than a sensible default they can change.
+     */
+    suspend fun mealTimes(profileId: Long): MealTimes =
+        MealTimes.decode(dao.value(MEAL_TIMES_PREFIX + profileId))
+
+    fun observeMealTimes(profileId: Long): Flow<MealTimes> =
+        dao.observe(MEAL_TIMES_PREFIX + profileId).map { values -> MealTimes.decode(values.firstOrNull()) }
+
+    suspend fun setMealTimes(profileId: Long, times: MealTimes) {
+        dao.put(AppSettingEntity(MEAL_TIMES_PREFIX + profileId, times.encode()))
+    }
+
     companion object {
         const val KEY_ACTIVE_PROFILE_ID = "active_profile_id"
         const val TDEE_AUTO_APPLY_PREFIX = "tdee_auto_apply_"
         const val KEY_STARTER_PACK_VERSION = "starter_pack_version"
         const val MACRO_NORM_PREFIX = "macro_norm_"
+        const val MEAL_TIMES_PREFIX = "meal_times_"
     }
 }
