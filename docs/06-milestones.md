@@ -384,3 +384,22 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     filled form (`Rotation` and `250` came back). The keyboard bug was the missing half of the same story:
     `android:windowSoftInputMode="adjustResize"` plus `imePadding()` on the scroll container, and the focused
     `Углеводы` field now sits above the keyboard instead of behind it. Totals: 161 :core, 46 :data, 33 :app JVM.
+41. **The interface pass the owner asked for, and the correction to it** - five items in one request:
+    rounded shapes, the chart's resolution, macro presets, meals, and the scanner.
+    1. *Charts.* The gauge's arc got round caps with the gap recomputed from stroke width and radius (a round
+       cap reaches half a stroke past its end and swallowed the old 1.2 degree gap), legend swatches became
+       circles, and the third sentence inside the arc moved under it. Thirty and ninety days now draw one bar
+       per **week** through `ChartBuckets`, seven consecutive days so the newest bucket ends on today; the
+       target line is multiplied by seven, the legend says "в неделю", and a week holding one estimate is
+       drawn as an outline. History opens on seven days. Six JVM tests.
+    2. *The correction.* A first pass rounded every bar into a capsule, and the owner's answer was precise:
+       "in the upper part the corners are round, but in the lower part sharp, as if the bars are standing on
+       the axis". Bars are now drawn as capsules reaching half a width **below** the baseline inside a
+       `clipRect` at the axis, so the top stays circular and the foot is square, while the stacked bar's
+       internal dividers stay straight. Verified on the Honor with real data at 7 and 30 days.
+    3. *Scanner.* A decoded code turns the frame green, prints "Найдено <code>" on a dark pill, vibrates and
+       freezes the analyzer, then opens the product 400 ms later. Tap-to-focus works through a three-line
+       `MeteringPointFactory` subclass, because `PreviewView` in `COMPATIBLE` mode still escaped its box and
+       painted over the title (P-38). The found green is fixed rather than themed: the light theme's protein
+       green was an olive that vanished into video.
+    Presets and meals are still open.

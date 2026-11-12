@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -275,57 +276,67 @@ private fun ChartCanvas(
         val barWidth = (slot * 0.42f).coerceAtLeast(2f)
         val gap = slot * 0.04f
 
-        days.forEachIndexed { index, day ->
-            val slotStart = if (perDayWidth != null) index * slot else 0f
-            val groupCenter = if (perDayWidth != null) slotStart + slot / 2f else slot * index + slot / 2f
-            val eatenLeft = groupCenter - barWidth - gap / 2f
-            val burnLeft = groupCenter + gap / 2f
+        fun centreOf(index: Int): Float =
+            if (perDayWidth != null) index * slot + slot / 2f else slot * index + slot / 2f
 
-            if (day.logged && day.intakeKcal > 0.0) {
-                drawStackedBar(
-                    left = eatenLeft,
-                    barWidth = barWidth,
-                    bottom = plotHeight,
-                    split = day.macroSplit,
-                    proteinColor = proteinColor,
-                    fatColor = fatColor,
-                    carbsColor = carbsColor,
-                    otherColor = otherColor,
-                    dividerColor = dividerColor,
-                    scale = plotHeight / peak.toFloat(),
-                )
-            }
+        // Bars stand on the axis: they are drawn as capsules reaching half a width below the baseline, and
+        // the clip takes that half away, so the top is round and the foot is square. The owner asked for
+        // exactly this (2026-11-12): round everywhere made the bars look like floating pills.
+        val foot = barWidth / 2f
+        clipRect(top = 0f, bottom = plotHeight) {
+            days.forEachIndexed { index, day ->
+                val groupCenter = centreOf(index)
+                val eatenLeft = groupCenter - barWidth - gap / 2f
+                val burnLeft = groupCenter + gap / 2f
 
-            if (day.burnKcal > 0.0) {
-                val top = y(day.burnKcal)
-                val height = (plotHeight - top).coerceAtLeast(1f)
-                val corners = CornerRadius(barWidth / 2f, barWidth / 2f)
-                if (day.burnIsMeasured) {
-                    drawRoundRect(
-                        color = burnColor,
-                        topLeft = Offset(burnLeft, top),
-                        size = Size(barWidth, height),
-                        cornerRadius = corners,
-                    )
-                } else {
-                    // An estimate is an outline: a fence of solid bars for days nobody measured
-                    // would read as thirty measurements, and the eye should go to the solid ones.
-                    drawRoundRect(
-                        color = estimateColor,
-                        topLeft = Offset(burnLeft, top),
-                        size = Size(barWidth, height),
-                        cornerRadius = corners,
-                        style = Stroke(width = 1.dp.toPx()),
+                if (day.logged && day.intakeKcal > 0.0) {
+                    drawStackedBar(
+                        left = eatenLeft,
+                        barWidth = barWidth,
+                        bottom = plotHeight + foot,
+                        split = day.macroSplit,
+                        proteinColor = proteinColor,
+                        fatColor = fatColor,
+                        carbsColor = carbsColor,
+                        otherColor = otherColor,
+                        dividerColor = dividerColor,
+                        scale = plotHeight / peak.toFloat(),
                     )
                 }
-            }
 
-            // Day number under the group, thinned out so 90 days do not become a wall of digits.
-            val stride = when {
-                days.size <= 13 -> 1
-                days.size <= 31 -> 3
-                else -> 10
+                if (day.burnKcal > 0.0) {
+                    val top = y(day.burnKcal)
+                    val height = (plotHeight + foot - top).coerceAtLeast(1f)
+                    val corners = CornerRadius(foot, foot)
+                    if (day.burnIsMeasured) {
+                        drawRoundRect(
+                            color = burnColor,
+                            topLeft = Offset(burnLeft, top),
+                            size = Size(barWidth, height),
+                            cornerRadius = corners,
+                        )
+                    } else {
+                        // An estimate is an outline: a fence of solid bars for days nobody measured
+                        // would read as thirty measurements, and the eye should go to the solid ones.
+                        drawRoundRect(
+                            color = estimateColor,
+                            topLeft = Offset(burnLeft, top),
+                            size = Size(barWidth, height),
+                            cornerRadius = corners,
+                            style = Stroke(width = 1.dp.toPx()),
+                        )
+                    }
+                }
             }
+        }
+
+        // Day numbers sit under the axis, outside the clip that squares the feet.
+        val stride = when {
+            days.size <= 13 -> 1
+            days.size <= 31 -> 3
+            else -> 10
+        }
+        days.forEachIndexed { index, day ->
             if (index % stride == 0 || index == days.lastIndex) {
                 val text = dayLabel.format(day.date)
                 val laid = textMeasurer.measure(
@@ -334,7 +345,7 @@ private fun ChartCanvas(
                 )
                 drawText(
                     textLayoutResult = laid,
-                    topLeft = Offset(groupCenter - laid.size.width / 2f, plotHeight + 3.dp.toPx()),
+                    topLeft = Offset(centreOf(index) - laid.size.width / 2f, plotHeight + 3.dp.toPx()),
                 )
             }
         }
@@ -363,9 +374,8 @@ private fun DrawScope.drawStackedBar(
     val totalHeight = (segments.sumOf { it.first } * scale).toFloat()
     if (totalHeight <= 0f) return
 
-    // The bar is a capsule, so its two outer ends are round like the buttons on the same screen. The clip
-    // does the rounding: the segments inside stay rectangles, which keeps the internal dividers straight
-    // and stops a four-segment bar from looking like a stack of pills.
+    // A capsule; the caller's clip squares its foot so the bar stands on the axis. Clipping here keeps the
+    // segments themselves rectangular, so the internal dividers stay straight.
     val barPath = Path().apply {
         addRoundRect(
             RoundRect(
