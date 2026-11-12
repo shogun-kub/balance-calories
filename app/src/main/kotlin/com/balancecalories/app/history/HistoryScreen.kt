@@ -83,7 +83,7 @@ fun HistoryScreen(
 
     var days by remember(profile.id) { mutableStateOf<List<DaySummary>>(emptyList()) }
     // 30 days by default: a week is too short to show a trend and 90 flattens every bar into one pixel.
-    var rangeDays by remember(profile.id) { mutableIntStateOf(30) }
+    var rangeDays by remember(profile.id) { mutableIntStateOf(7) }
     var target by remember(profile.id) { mutableStateOf<Int?>(null) }
     var tdee by remember(profile.id) { mutableStateOf<AdaptiveTdeeRepository.Outcome?>(null) }
     var appliedTarget by remember(profile.id) { mutableStateOf<Int?>(null) }

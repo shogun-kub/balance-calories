@@ -18,11 +18,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -83,11 +87,26 @@ fun IntakeBurnChart(
 
     val textMeasurer = rememberTextMeasurer()
     val dayLabel = remember { DateTimeFormatter.ofPattern("d") }
+    val weekLabel = remember { DateTimeFormatter.ofPattern("d.MM") }
     val monthDay = remember { DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT) }
+
+    // Thirty and ninety days draw one bar per WEEK (see ChartBuckets): at 16 dp per day a bar was five
+    // pixels wide, and a chart nobody can read is not a chart. Seven days stay per-day, because a week of
+    // days is what a person actually wants to compare.
+    val chartDays = remember(days, rangeDays) { bucketForChart(days, rangeDays) }
+    val aggregated = chartDays.size != days.size
+    val targetScale = if (aggregated) WEEK_DAYS else 1
+    val barTarget = targetKcal * targetScale
+    // Bucketed bars are few, so they never need to scroll: 90 days is thirteen of them.
+    val scrollable = false
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = stringResource(R.string.chart_title),
+            text = if (aggregated) {
+                stringResource(R.string.chart_title_weeks)
+            } else {
+                stringResource(R.string.chart_title)
+            },
             style = MaterialTheme.typography.titleSmall,
         )
 
@@ -119,9 +138,6 @@ fun IntakeBurnChart(
             estimatedBurns,
         )
 
-        // 90 days at a readable bar width is wider than the phone: it scrolls sideways instead of
-        // squeezing ninety bars into 360 dp, which would be a texture rather than a chart.
-        val scrollable = rangeDays > 30
         val slotWidth = 16.dp
         val chartHeight = 180.dp
         // fillMaxWidth inside a horizontal scroll resolves against an unbounded width and collapses to
@@ -129,8 +145,8 @@ fun IntakeBurnChart(
         val chartWidth = if (scrollable) slotWidth * days.size.coerceAtLeast(1) else null
         val content = @Composable {
             ChartCanvas(
-                days = days,
-                targetKcal = targetKcal,
+                days = chartDays,
+                targetKcal = barTarget,
                 proteinColor = proteinColor,
                 fatColor = fatColor,
                 carbsColor = carbsColor,
@@ -141,7 +157,7 @@ fun IntakeBurnChart(
                 labelColor = labelColor,
                 dividerColor = dividerColor,
                 textMeasurer = textMeasurer,
-                dayLabel = dayLabel,
+                dayLabel = if (aggregated) weekLabel else dayLabel,
                 perDayWidth = if (scrollable) slotWidth else null,
                 modifier = (if (chartWidth != null) {
                     Modifier.width(chartWidth).height(chartHeight)
@@ -172,7 +188,13 @@ fun IntakeBurnChart(
         WrappingRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             LegendSwatch(color = burnColor) { stringResource(R.string.chart_legend_burn) }
             LegendSwatch(color = estimateColor) { stringResource(R.string.chart_legend_burn_estimate) }
-            LegendSwatch(color = axisColor, shape = SwatchShape.Dashed) { stringResource(R.string.chart_legend_target, targetKcal) }
+            LegendSwatch(color = axisColor, shape = SwatchShape.Dashed) {
+                if (aggregated) {
+                    stringResource(R.string.chart_legend_target_week, targetKcal)
+                } else {
+                    stringResource(R.string.chart_legend_target, targetKcal)
+                }
+            }
         }
 
         // The same sentence a screen reader gets, printed for everyone: the chart should be readable without
@@ -277,19 +299,22 @@ private fun ChartCanvas(
             if (day.burnKcal > 0.0) {
                 val top = y(day.burnKcal)
                 val height = (plotHeight - top).coerceAtLeast(1f)
+                val corners = CornerRadius(barWidth / 2f, barWidth / 2f)
                 if (day.burnIsMeasured) {
-                    drawRect(
+                    drawRoundRect(
                         color = burnColor,
                         topLeft = Offset(burnLeft, top),
                         size = Size(barWidth, height),
+                        cornerRadius = corners,
                     )
                 } else {
                     // An estimate is an outline: a fence of solid bars for days nobody measured
                     // would read as thirty measurements, and the eye should go to the solid ones.
-                    drawRect(
+                    drawRoundRect(
                         color = estimateColor,
                         topLeft = Offset(burnLeft, top),
                         size = Size(barWidth, height),
+                        cornerRadius = corners,
                         style = Stroke(width = 1.dp.toPx()),
                     )
                 }
@@ -297,7 +322,7 @@ private fun ChartCanvas(
 
             // Day number under the group, thinned out so 90 days do not become a wall of digits.
             val stride = when {
-                days.size <= 10 -> 1
+                days.size <= 13 -> 1
                 days.size <= 31 -> 3
                 else -> 10
             }
@@ -329,32 +354,53 @@ private fun DrawScope.drawStackedBar(
     dividerColor: Color,
     scale: Float,
 ) {
-    var cursor = bottom
     val segments = listOf(
         split.proteinKcal to proteinColor,
         split.fatKcal to fatColor,
         split.carbsKcal to carbsColor,
         split.otherKcal to otherColor,
     )
-    segments.forEachIndexed { index, (kcal, color) ->
-        if (kcal <= 0.0) return@forEachIndexed
-        val segmentHeight = (kcal * scale).toFloat()
-        val top = cursor - segmentHeight
-        drawRect(
-            color = color,
-            topLeft = Offset(left, top),
-            size = Size(barWidth, segmentHeight),
+    val totalHeight = (segments.sumOf { it.first } * scale).toFloat()
+    if (totalHeight <= 0f) return
+
+    // The bar is a capsule, so its two outer ends are round like the buttons on the same screen. The clip
+    // does the rounding: the segments inside stay rectangles, which keeps the internal dividers straight
+    // and stops a four-segment bar from looking like a stack of pills.
+    val barPath = Path().apply {
+        addRoundRect(
+            RoundRect(
+                left = left,
+                top = bottom - totalHeight,
+                right = left + barWidth,
+                bottom = bottom,
+                radiusX = barWidth / 2f,
+                radiusY = barWidth / 2f,
+            ),
         )
-        // A 1 dp gap between segments so they stay distinguishable in greyscale and at a glance.
-        if (index < segments.lastIndex && segments.drop(index + 1).any { it.first > 0.0 }) {
-            drawLine(
-                color = dividerColor,
-                start = Offset(left, top),
-                end = Offset(left + barWidth, top),
-                strokeWidth = 1.dp.toPx(),
+    }
+
+    clipPath(barPath) {
+        var cursor = bottom
+        segments.forEachIndexed { index, (kcal, color) ->
+            if (kcal <= 0.0) return@forEachIndexed
+            val segmentHeight = (kcal * scale).toFloat()
+            val top = cursor - segmentHeight
+            drawRect(
+                color = color,
+                topLeft = Offset(left, top),
+                size = Size(barWidth, segmentHeight),
             )
+            // A 1 dp gap between segments so they stay distinguishable in greyscale and at a glance.
+            if (index < segments.lastIndex && segments.drop(index + 1).any { it.first > 0.0 }) {
+                drawLine(
+                    color = dividerColor,
+                    start = Offset(left, top),
+                    end = Offset(left + barWidth, top),
+                    strokeWidth = 1.dp.toPx(),
+                )
+            }
+            cursor = top
         }
-        cursor = top
     }
 }
 

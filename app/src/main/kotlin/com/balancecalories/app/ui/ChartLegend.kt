@@ -60,10 +60,13 @@ fun LegendSwatch(
             when (shape) {
                 SwatchShape.Square -> {
                     val side = 10.dp.toPx()
-                    drawRect(
+                    // A rounded square, not a sharp one: every button on the same screens is rounded, and a
+                    // square swatch beside them read as a different visual language (owner feedback).
+                    drawRoundRect(
                         color = color,
                         topLeft = Offset((size.width - side) / 2f, middle - side / 2f),
                         size = Size(side, side),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(side * 0.3f),
                     )
                 }
                 SwatchShape.Dot -> drawCircle(color = color, radius = 3.dp.toPx(), center = Offset(size.width / 2f, middle))

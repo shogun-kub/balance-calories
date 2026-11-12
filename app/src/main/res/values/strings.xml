@@ -374,6 +374,7 @@
     <string name="weight_error_range">Outside 20–400 kg: check the number</string>
     <string name="unit_kilograms">kg</string>
     <string name="unit_pounds">lb</string>    <!-- M7.2: the intake/burn chart. Colour is decoration; the legend and the dividers carry the meaning. -->
+    <string name="chart_title_weeks">Eaten and burned, by week</string>
     <string name="chart_title">Eaten and burned</string>
     <string name="chart_range_days">%1$d d</string>
     <string name="chart_legend_protein">Protein %1$d%%</string>
@@ -382,9 +383,10 @@
     <string name="chart_legend_other">Unlabelled energy %1$d%%</string>
     <string name="chart_legend_burn">Burned</string>
     <string name="chart_legend_burn_estimate">Burned (estimate)</string>
+    <string name="chart_legend_target_week">Target %1$d kcal per week</string>
     <string name="chart_legend_target" tools:ignore="PluralsCandidate">Target %1$d kcal</string>
     <string name="chart_summary" tools:ignore="PluralsCandidate">%1$d of %2$d days logged: %3$d kcal eaten; burns average %4$d kcal a day, and %5$d of those days are estimates</string>
-    <string name="chart_no_data">No logged days in this range, so there is nothing to draw yet.</string>
+    <string name="chart_no_data">No day has a food log, so only burn is drawn.</string>
     <string name="chart_last_logged" tools:ignore="PluralsCandidate">Last logged day: %1$s, %2$d kcal</string>    <!-- M7.2b: the Today gauge. Colour is decoration; the grams beside it and the description carry the meaning. -->
     <string name="gauge_of_target" tools:ignore="PluralsCandidate">of %1$d kcal</string>
     <string name="gauge_target_today">target for today</string>

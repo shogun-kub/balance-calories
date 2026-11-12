@@ -118,7 +118,7 @@ fun MacroGauge(
                     y = size.height - diameter / 2f,
                 )
                 val arcSize = Size(diameter, diameter)
-                val stroke = Stroke(width = thickness, cap = StrokeCap.Butt)
+                val stroke = Stroke(width = thickness, cap = StrokeCap.Round)
 
                 // Track: the whole allowance, drawn first so the fill sits on top of it.
                 drawArc(
@@ -139,8 +139,15 @@ fun MacroGauge(
                         fill.other to otherColor,
                     ).filter { it.first > 0.0 }
 
-                    // A gap between segments, in degrees, so two adjacent macros never merge into one band.
-                    val gapDegrees = if (segments.size > 1) 1.2f else 0f
+                    // A gap between segments so two adjacent macros never merge into one band. The stroke has
+                    // round caps now, and a round cap extends thickness/2 past each end of its arc, so the gap
+                    // has to be at least thickness/radius in degrees or the caps swallow it and the segments
+                    // touch. 1.15 leaves a hairline visible at every size we draw.
+                    val gapDegrees = if (segments.size > 1) {
+                        Math.toDegrees((thickness / (diameter / 2f)).toDouble()).toFloat() * 1.15f
+                    } else {
+                        0f
+                    }
                     var start = 180f
                     segments.forEachIndexed { index, (fraction, color) ->
                         val sweep = (fraction * 180.0).toFloat()
@@ -193,21 +200,14 @@ fun MacroGauge(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                 )
-                // At a 200% font scale the phrases are twice as wide and no longer fit the opening, so the
-                // remaining/over line moves under the arc instead of being squeezed into it.
-                if (!largeType) {
-                    Text(
-                        text = centre,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                    )
-                }
             }
         }
 
-        // At a 200% font scale the phrases are twice as wide and no longer fit the opening, so the
-        // remaining/over line lives under the arc instead of being squeezed inside it.
-        if (largeType) {
+        // One summary line under the arc rather than a third line inside it. "осталось 306 ккал" is the
+        // answer to the day's question, so it gets its own line instead of the smallest type on the screen;
+        // and it is absent with nothing logged, because the big number already reads "цель на сегодня" and
+        // the section title below says the same thing in words.
+        if (intake.meals.isNotEmpty()) {
             Text(
                 text = centre,
                 style = MaterialTheme.typography.bodyMedium,
@@ -241,7 +241,9 @@ private fun MacroChip(color: Color, labelRes: Int, grams: Double) {
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Canvas(modifier = Modifier.size(10.dp)) { drawRect(color = color) }
+        // A round dot rather than a square: the arc it explains is round, and a square swatch beside a rounded
+        // button row read as a different visual language (owner feedback, 2026-11-12).
+        Canvas(modifier = Modifier.size(9.dp)) { drawCircle(color = color) }
         Text(
             text = stringResource(labelRes, grams.roundToInt()),
             style = MaterialTheme.typography.labelMedium,
