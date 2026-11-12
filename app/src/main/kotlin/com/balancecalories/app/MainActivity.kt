@@ -89,13 +89,25 @@ private fun Root() {
     val container = (LocalContext.current.applicationContext as BalanceCaloriesApp).container
     val scope = rememberCoroutineScope()
 
-    val allProfiles by container.profiles.observeAll()
-        .collectAsStateWithLifecycle(initialValue = emptyList())
+    // Both queries answer asynchronously, and "not answered yet" must not look like "nothing there": an
+    // empty list is indistinguishable from a phone with no profile, and a null id from a phone with no
+    // selection. Acting on either flashed the create-profile form on every cold start and, worse, let the
+    // repair below overwrite the stored profile with the first row in the table (P-39).
+    var loadedProfiles by remember { mutableStateOf<List<Profile>?>(null) }
+    var loadedActiveId by remember { mutableStateOf<ActiveProfileRead>(ActiveProfileRead.Loading) }
+
+    LaunchedEffect(Unit) {
+        container.profiles.observeAll().collect { loadedProfiles = it }
+    }
+    LaunchedEffect(Unit) {
+        container.settings.observeActiveProfileId().collect { loadedActiveId = ActiveProfileRead.Loaded(it) }
+    }
+
+    val allProfiles = loadedProfiles.orEmpty()
     val profiles = allProfiles.filterNot { it.isArchived }
     val archivedProfiles = allProfiles.filter { it.isArchived }
-
-    val activeId by container.settings.observeActiveProfileId()
-        .collectAsStateWithLifecycle(initialValue = null)
+    val settingsLoaded = loadedActiveId is ActiveProfileRead.Loaded
+    val activeId = (loadedActiveId as? ActiveProfileRead.Loaded)?.id
 
     // Saveable, so a phone that kills the app overnight does not send the person somewhere else.
     var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
@@ -130,15 +142,23 @@ private fun Root() {
         }
     }
 
-    LaunchedEffect(profiles, activeId) {
-        if (profiles.isNotEmpty() && profiles.none { it.id == activeId }) {
-            container.settings.setActiveProfile(profiles.first().id)
+    // Repair, not selection: runs only once the stored value is actually known, and only when it points at
+    // a profile that no longer exists.
+    LaunchedEffect(profiles, activeId, settingsLoaded) {
+        if (settingsLoaded && profiles.isNotEmpty()) {
+            val repaired = repairedActiveId(activeId, profiles.map { it.id })
+            if (repaired != null && repaired != activeId) {
+                container.settings.setActiveProfile(repaired)
+            }
         }
     }
 
     val active = profiles.firstOrNull { it.id == activeId } ?: profiles.firstOrNull()
 
     when {
+        // Nothing shown until both reads answer: one frame of blank beats a frame of the wrong screen.
+        loadedProfiles == null || !settingsLoaded -> Box(modifier = Modifier.fillMaxSize())
+
         // No profile at all: the only thing to do is create one, so the tabs would be four empty rooms.
         allProfiles.isEmpty() -> ProfileFormScreen(
             container = container,

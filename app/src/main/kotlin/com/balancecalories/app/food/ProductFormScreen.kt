@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -19,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,18 +54,18 @@ fun ProductFormScreen(
     onCancel: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    var name by remember { mutableStateOf(existing?.name.orEmpty()) }
-    var nameRu by remember { mutableStateOf(existing?.nameRu.orEmpty()) }
-    var kcal by remember { mutableStateOf(existing?.kcal100g?.let { trimNumber(it) }.orEmpty()) }
-    var protein by remember { mutableStateOf(existing?.protein100g?.let { trimNumber(it) }.orEmpty()) }
-    var fat by remember { mutableStateOf(existing?.fat100g?.let { trimNumber(it) }.orEmpty()) }
-    var carbs by remember { mutableStateOf(existing?.carbs100g?.let { trimNumber(it) }.orEmpty()) }
-    var barcode by remember { mutableStateOf(existing?.barcode ?: initialBarcode.orEmpty()) }
-    var liquid by remember { mutableStateOf(existing?.isLiquid ?: false) }
-    var error by remember { mutableStateOf<Int?>(null) }
+    var name by rememberSaveable { mutableStateOf(existing?.name.orEmpty()) }
+    var nameRu by rememberSaveable { mutableStateOf(existing?.nameRu.orEmpty()) }
+    var kcal by rememberSaveable { mutableStateOf(existing?.kcal100g?.let { trimNumber(it) }.orEmpty()) }
+    var protein by rememberSaveable { mutableStateOf(existing?.protein100g?.let { trimNumber(it) }.orEmpty()) }
+    var fat by rememberSaveable { mutableStateOf(existing?.fat100g?.let { trimNumber(it) }.orEmpty()) }
+    var carbs by rememberSaveable { mutableStateOf(existing?.carbs100g?.let { trimNumber(it) }.orEmpty()) }
+    var barcode by rememberSaveable { mutableStateOf(existing?.barcode ?: initialBarcode.orEmpty()) }
+    var liquid by rememberSaveable { mutableStateOf(existing?.isLiquid ?: false) }
+    var error by rememberSaveable { mutableStateOf<Int?>(null) }
     // Only one message takes a noun ("this barcode belongs to X"), so the argument rides beside the id.
     var errorArg by remember { mutableStateOf<String?>(null) }
-    var saving by remember { mutableStateOf(false) }
+    var saving by rememberSaveable { mutableStateOf(false) }
 
     // The energy of a food is 4/9/4 of its macros, so typing the macros and no kcal is a complete answer, not a
     // missing one. It comes from the same `MacroEnergy` the charts split bars with, so the number the form predicts
@@ -87,6 +89,7 @@ fun ProductFormScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .imePadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {

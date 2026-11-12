@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -22,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -64,13 +66,13 @@ fun RecipeEditorScreen(
     val scope = rememberCoroutineScope()
     val languageTag = LocalConfiguration.current.locales[0]?.toLanguageTag()
 
-    var name by remember { mutableStateOf(existing?.name.orEmpty()) }
-    var servings by remember { mutableStateOf(existing?.servings?.let { trimNumber(it) } ?: "1") }
-    var cookedWeight by remember { mutableStateOf(existing?.cookedWeightG?.let { trimNumber(it) }.orEmpty()) }
-    var query by remember { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf(existing?.name.orEmpty()) }
+    var servings by rememberSaveable { mutableStateOf(existing?.servings?.let { trimNumber(it) } ?: "1") }
+    var cookedWeight by rememberSaveable { mutableStateOf(existing?.cookedWeightG?.let { trimNumber(it) }.orEmpty()) }
+    var query by rememberSaveable { mutableStateOf("") }
     var found by remember { mutableStateOf<List<Product>>(emptyList()) }
-    var error by remember { mutableStateOf<Int?>(null) }
-    var saving by remember { mutableStateOf(false) }
+    var error by rememberSaveable { mutableStateOf<Int?>(null) }
+    var saving by rememberSaveable { mutableStateOf(false) }
 
     val rows: SnapshotStateList<EditableItem> = remember {
         mutableStateListOf<EditableItem>().also { list ->
@@ -99,7 +101,8 @@ fun RecipeEditorScreen(
     val perServing = RecipeMath.perServing(totals, basis, servingsValue)
 
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+            .imePadding().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -28,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -95,13 +97,13 @@ fun ProfileFormScreen(
     // Units are a profile preference; a new profile starts metric and can be switched in settings.
     val unitSystem = existing?.unitSystem ?: UnitSystem.METRIC
 
-    var name by remember(existing?.id) { mutableStateOf(existing?.name ?: "") }
-    var sex by remember(existing?.id) { mutableStateOf(existing?.sex ?: Sex.MALE) }
-    var birthDate by remember(existing?.id) { mutableStateOf(existing?.birthDate) }
+    var name by rememberSaveable(existing?.id) { mutableStateOf(existing?.name ?: "") }
+    var sex by rememberSaveable(existing?.id) { mutableStateOf(existing?.sex ?: Sex.MALE) }
+    var birthDate by rememberSaveable(existing?.id) { mutableStateOf(existing?.birthDate) }
     var heightText by remember(existing?.id) {
         mutableStateOf(existing?.heightCm?.let { formatHeight(it, unitSystem) } ?: "")
     }
-    var weightText by remember(existing?.id) { mutableStateOf("") }
+    var weightText by rememberSaveable(existing?.id) { mutableStateOf("") }
     var activity by remember(existing?.id) {
         mutableStateOf(existing?.activityLevel ?: ActivityLevel.LIGHT)
     }
@@ -116,10 +118,10 @@ fun ProfileFormScreen(
     var originalWeight by remember(existing?.id) { mutableStateOf<Double?>(null) }
     var validationError by remember { mutableStateOf<Int?>(null) }
     var saveError by remember { mutableStateOf<String?>(null) }
-    var saving by remember { mutableStateOf(false) }
-    var pickerOpen by remember { mutableStateOf(false) }
-    var activityMenuOpen by remember { mutableStateOf(false) }
-    var goalMenuOpen by remember { mutableStateOf(false) }
+    var saving by rememberSaveable { mutableStateOf(false) }
+    var pickerOpen by rememberSaveable { mutableStateOf(false) }
+    var activityMenuOpen by rememberSaveable { mutableStateOf(false) }
+    var goalMenuOpen by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(existing?.id) {
         val id = existing?.id ?: return@LaunchedEffect
@@ -230,6 +232,7 @@ fun ProfileFormScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .imePadding()
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -20,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -60,9 +62,9 @@ fun ProductScreen(
     val scope = rememberCoroutineScope()
     val languageTag = LocalConfiguration.current.locales[0]?.toLanguageTag()
     var portion by remember(product.id) { mutableStateOf("100") }
-    var meal by remember { mutableStateOf(defaultMeal()) }
+    var meal by rememberSaveable { mutableStateOf(defaultMeal()) }
     var error by remember { mutableStateOf<String?>(null) }
-    var saving by remember { mutableStateOf(false) }
+    var saving by rememberSaveable { mutableStateOf(false) }
 
     val grams = portion.replace(',', '.').toDoubleOrNull()
     val preview = if (grams != null && grams > 0) FoodMath.portion(product, grams) else null
@@ -71,6 +73,7 @@ fun ProductScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .imePadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {

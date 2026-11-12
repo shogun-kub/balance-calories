@@ -368,3 +368,19 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     `partial` while Today reads "Сожжено 1815 ккал / Баланс (оценка) -1815 ккал". The lesson generalises: a
     constant is the signature of a baseline, and a baseline must never borrow the authority of a measurement.
     Totals: 161 :core (+1), 46 :data, 25 :app JVM.
+40. **Three bugs from the owner's phone, two of them structural** - the owner reported landing on `Test`
+    although he had chosen his own profile, the manual product form losing everything it held when the phone
+    rotated, and the last fields of that form sitting under the keyboard.
+    The profile bug was P-39: a repair effect could not tell "the setting has not been read yet" from "no
+    setting", so on a cold start it persisted the first profile in the table over the chosen one, and the same
+    ambiguity let the create-profile form flash while the list was still empty. `MainActivity` now holds a
+    three-state read and shows nothing until both queries answer, and `repairedActiveId` is a pure function
+    with four JVM tests. The rule is covered by those tests and the loading gate is visible on the device; the
+    end-to-end check (two profiles, the newer one active, cold start keeps it) is **not** done: writing the
+    extra row into the app database needs a document provider on MIUI - `run-as cp` from `/sdcard`, the
+    external files directory and root all refused - so it stays on the owner's phone to confirm.
+    The form bug was `remember` where `rememberSaveable` belongs, in four screens (product, portion, profile,
+    recipe); the state now survives a configuration change, verified by rotating the Redmi in the middle of a
+    filled form (`Rotation` and `250` came back). The keyboard bug was the missing half of the same story:
+    `android:windowSoftInputMode="adjustResize"` plus `imePadding()` on the scroll container, and the focused
+    `Углеводы` field now sits above the keyboard instead of behind it. Totals: 161 :core, 46 :data, 33 :app JVM.

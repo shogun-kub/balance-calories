@@ -99,6 +99,18 @@ Check `vmware-usbarbitrator64` and `usbipd` (the WSL passthrough) **before** sus
 the error names permissions while the resource is exclusive, which is why an elevation test settles it in one
 step instead of an afternoon.
 
+**P-39 · "Not read yet" is not "not there", and a repair that cannot tell them apart writes the wrong row.**
+On a cold start both the profiles query and the settings query answer asynchronously, and a `null` active id
+means either "nothing stored" or "the read has not come back". The repair effect treated the second as the
+first and persisted the **first profile in the table**, so a phone that had been left on the owner's profile
+came back on `Test` - the older row, and the one the app had been told to leave alone (owner report,
+2026-11-12). The same ambiguity made an empty `profiles` list, which is also the initial value, indistinguishable
+from a phone with no profile: the create-profile form could flash on every cold start. The fix is a three-state
+read (`Loading` / `Loaded(null)` / `Loaded(id)`) and a loading branch that shows nothing, so no screen is
+chosen and nothing is written until both reads have answered; the repair rule itself is a pure function with a
+JVM test. Anywhere a Room flow feeds a nullable `rememberSaveable`-style state that also drives a *write*, ask
+which of the two nothings it is.
+
 ### Health Connect
 
 **P-12 · Declare `android.permission.health.READ_*` in the manifest.** Without the declarations the dialog
