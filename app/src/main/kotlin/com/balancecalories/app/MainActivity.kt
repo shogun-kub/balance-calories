@@ -43,11 +43,11 @@ import com.balancecalories.app.recipes.RecipeEditorScreen
 import com.balancecalories.app.recipes.RecipeScreen
 import com.balancecalories.app.recipes.RecipesScreen
 import com.balancecalories.app.scanner.ScannerScreen
+import com.balancecalories.app.settings.MealsScreen
 import com.balancecalories.app.settings.SettingsScreen
 import com.balancecalories.app.today.TodayScreen
 import com.balancecalories.app.ui.BalanceTheme
 import com.balancecalories.app.weight.WeightScreen
-import com.balancecalories.core.food.Meal
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.Recipe
 import com.balancecalories.core.profile.Profile
@@ -62,7 +62,7 @@ import kotlinx.coroutines.launch
 private enum class Tab { TODAY, FOOD, HISTORY, WEIGHT }
 
 /** Screens pushed over a tab. One is enough: nothing in this app is three levels deep. */
-private enum class Overlay { PROFILES, PROFILE_FORM, SETTINGS, BACKUP, DEBUG, PRODUCT, PRODUCT_FORM, SCAN, RECIPES, RECIPE, RECIPE_FORM }
+private enum class Overlay { PROFILES, PROFILE_FORM, SETTINGS, BACKUP, DEBUG, MEALS, PRODUCT, PRODUCT_FORM, SCAN, RECIPES, RECIPE, RECIPE_FORM }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,7 +117,7 @@ private fun Root() {
     var openedProduct by remember { mutableStateOf<Product?>(null) }
     // The meal a person tapped + on, carried into the portion screen. Not saved across a process death:
     // it belongs to the tap, and a restored half-flow would open a product nobody asked for.
-    var pendingMeal by remember { mutableStateOf<Meal?>(null) }
+    var pendingMealKey by remember { mutableStateOf<String?>(null) }
     var formEditing by remember { mutableStateOf<Product?>(null) }
     var openedRecipe by remember { mutableStateOf<Recipe?>(null) }
     var recipeEditing by remember { mutableStateOf<Recipe?>(null) }
@@ -231,6 +231,13 @@ private fun Root() {
             onOpenDebug = { overlay = Overlay.DEBUG },
             onOpenData = { overlay = Overlay.BACKUP },
             onOpenProfiles = { overlay = Overlay.PROFILES },
+            onOpenMeals = { overlay = Overlay.MEALS },
+        )
+
+        overlay == Overlay.MEALS -> MealsScreen(
+            container = container,
+            profile = active,
+            onBack = { overlay = Overlay.SETTINGS },
         )
 
         overlay == Overlay.BACKUP -> BackupScreen(
@@ -311,9 +318,9 @@ private fun Root() {
             product = openedProduct!!,
             container = container,
             profileId = active.id,
-            initialMeal = pendingMeal,
+            initialMealKey = pendingMealKey,
             onBack = {
-                pendingMeal = null
+                pendingMealKey = null
                 overlay = null
             },
             onEdit = {
@@ -323,7 +330,7 @@ private fun Root() {
             },
             onLogged = {
                 openedProduct = null
-                pendingMeal = null
+                pendingMealKey = null
                 formEditing = null
                 overlay = null
                 tab = Tab.TODAY
@@ -367,8 +374,8 @@ private fun Root() {
                 Tab.TODAY -> TodayScreen(
                     profile = active,
                     container = container,
-                    onAddFood = { meal ->
-                        pendingMeal = meal
+                    onAddFood = { key ->
+                        pendingMealKey = key
                         tab = Tab.FOOD
                     },
                 )

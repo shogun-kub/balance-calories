@@ -21,23 +21,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.balancecalories.app.food.MealChips
 import com.balancecalories.app.ui.WrappingRow
+import java.time.LocalTime
 import com.balancecalories.app.AppContainer
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.food.trimNumber
 import com.balancecalories.app.ui.WrappingRow
-import com.balancecalories.app.today.localized
 import com.balancecalories.app.ui.WrappingRow
-import com.balancecalories.core.food.Meal
+import com.balancecalories.core.food.MealSlot
+import com.balancecalories.core.food.guessMealKey
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.Recipe
 import com.balancecalories.app.ui.WrappingRow
@@ -71,10 +75,21 @@ fun RecipeScreen(
     var portion by remember(recipe.id) {
         mutableStateOf(perServing?.grams?.let { trimNumber(it) } ?: "100")
     }
-    var meal by remember { mutableStateOf(defaultMeal()) }
+    var slots by remember(profileId) { mutableStateOf<List<MealSlot>>(emptyList()) }
+    var mealKey by rememberSaveable(profileId) { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
     var confirmingDelete by remember { mutableStateOf(false) }
+
+    // The picker is this profile's slots, not a constant list (schema v7).
+    LaunchedEffect(profileId) {
+        val loaded = container.meals.slots(profileId)
+        slots = loaded
+        if (mealKey == null) {
+            val now = LocalTime.now()
+            mealKey = guessMealKey(loaded, now.hour * 60 + now.minute)
+        }
+    }
 
     val grams = portion.replace(',', '.').toDoubleOrNull()
     val preview = if (grams != null && grams > 0) RecipeMath.portion(totals, basis, grams) else null
@@ -162,15 +177,7 @@ fun RecipeScreen(
         )
 
         Text(text = stringResource(R.string.product_meal), style = MaterialTheme.typography.titleSmall)
-        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (option in Meal.entries) {
-                FilterChip(
-                    selected = meal == option,
-                    onClick = { meal = option },
-                    label = { Text(option.localized()) },
-                )
-            }
-        }
+        MealChips(slots = slots, selectedKey = mealKey, onSelect = { mealKey = it })
 
         error?.let { Text(text = it, color = MaterialTheme.colorScheme.error) }
 
@@ -180,7 +187,9 @@ fun RecipeScreen(
                 saving = true
                 error = null
                 scope.launch {
-                    runCatching { container.food.logRecipe(profileId, recipe, value, meal) }
+                    runCatching {
+                        container.food.logRecipe(profileId, recipe, value, mealKey ?: return@runCatching)
+                    }
                         .onSuccess { onLogged() }
                         .onFailure {
                             error = it.message
@@ -235,13 +244,3 @@ private fun MacroLine(label: String, value: Double?) {
     }
 }
 
-/** Rough default by the clock, same rule as the product screen: a dish is eaten when the clock says so. */
-private fun defaultMeal(): Meal {
-    val hour = java.time.LocalTime.now().hour
-    return when {
-        hour < 11 -> Meal.BREAKFAST
-        hour < 16 -> Meal.LUNCH
-        hour < 21 -> Meal.DINNER
-        else -> Meal.SNACK
-    }
-}

@@ -5,7 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.balancecalories.core.energy.ActivityLevel
 import com.balancecalories.core.energy.Sex
-import com.balancecalories.core.food.Meal
+import com.balancecalories.core.food.MealDefaults
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.ProductSource
 import com.balancecalories.core.food.Recipe
@@ -130,7 +130,7 @@ class RecipeRepositoryTest {
         val stored = pilaf(RecipeItem(chicken(), 300.0), RecipeItem(rice(), 150.0))
         now += 1_000L
 
-        val entry = food.logRecipe(1L, stored, grams = 250.0, meal = Meal.DINNER, on = today)
+        val entry = food.logRecipe(1L, stored, grams = 250.0, mealKey = MealDefaults.DINNER, on = today)
 
         assertEquals("Chicken pilaf", entry.name)
         assertEquals(250.0, entry.grams, 1e-9)
@@ -142,7 +142,7 @@ class RecipeRepositoryTest {
     @Test
     fun editingTheRecipeAfterwardsDoesNotRewriteWhatWasEaten() = runBlocking {
         val stored = pilaf(RecipeItem(chicken(), 300.0), RecipeItem(rice(), 150.0))
-        val before = food.logRecipe(1L, stored, grams = 250.0, meal = Meal.DINNER, on = today)
+        val before = food.logRecipe(1L, stored, grams = 250.0, mealKey = MealDefaults.DINNER, on = today)
 
         // The user decides the dish actually had twice the rice.
         recipes.save(stored.copy(items = listOf(RecipeItem(chicken(), 300.0), RecipeItem(rice(), 300.0))))
@@ -154,7 +154,7 @@ class RecipeRepositoryTest {
     @Test
     fun deletingARecipeKeepsTheMealThatWasLoggedFromIt() = runBlocking {
         val stored = pilaf(RecipeItem(chicken(), 300.0), RecipeItem(rice(), 150.0))
-        val logged = food.logRecipe(1L, stored, grams = 250.0, meal = Meal.DINNER, on = today)
+        val logged = food.logRecipe(1L, stored, grams = 250.0, mealKey = MealDefaults.DINNER, on = today)
 
         recipes.delete(stored.id)
 

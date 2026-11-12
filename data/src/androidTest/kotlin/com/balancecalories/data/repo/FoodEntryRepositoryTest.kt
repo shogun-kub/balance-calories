@@ -5,7 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.balancecalories.core.energy.ActivityLevel
 import com.balancecalories.core.energy.Sex
-import com.balancecalories.core.food.Meal
+import com.balancecalories.core.food.MealDefaults
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.ProductSource
 import com.balancecalories.data.db.BalanceCaloriesDatabase
@@ -82,11 +82,11 @@ class FoodEntryRepositoryTest {
     fun loggingScalesThePortionAndSnapshotsTheNumbers() = runBlocking {
         val product = oats()
 
-        val entry = food.log(profileId = 1L, product = product, grams = 50.0, meal = Meal.BREAKFAST, on = today)
+        val entry = food.log(profileId = 1L, product = product, grams = 50.0, mealKey = MealDefaults.BREAKFAST, on = today)
 
         assertEquals(194.5, entry.kcal, 1e-9)
         assertEquals(8.45, entry.proteinG!!, 1e-9)
-        assertEquals(Meal.BREAKFAST, entry.meal)
+        assertEquals(MealDefaults.BREAKFAST, entry.mealKey)
         assertEquals("Oats, dry", entry.name)
         assertEquals("Овсяные хлопья", entry.nameRu)
         assertFalse(entry.wasEstimated)
@@ -95,22 +95,22 @@ class FoodEntryRepositoryTest {
     @Test
     fun theDayAddsUpAcrossMeals() = runBlocking {
         val product = oats()
-        food.log(1L, product, 50.0, Meal.BREAKFAST, today)
-        food.log(1L, product, 100.0, Meal.LUNCH, today)
+        food.log(1L, product, 50.0, MealDefaults.BREAKFAST, today)
+        food.log(1L, product, 100.0, MealDefaults.LUNCH, today)
 
         val day = food.day(profileId = 1L, on = today, targetKcal = 2000)
 
         assertEquals(583.5, day.eatenKcal, 1e-9) // 194.5 + 389.0
         assertEquals(1416.5, day.remainingKcal, 1e-9)
         assertFalse(day.isOverBudget)
-        assertEquals(1, day.entriesFor(Meal.BREAKFAST).size)
-        assertEquals(389.0, day.eatenFor(Meal.LUNCH), 1e-9)
+        assertEquals(1, day.entriesFor(MealDefaults.BREAKFAST).size)
+        assertEquals(389.0, day.eatenFor(MealDefaults.LUNCH), 1e-9)
     }
 
     @Test
     fun eatingOverTheTargetIsReportedNotBlocked() = runBlocking {
         val product = oats()
-        food.log(1L, product, 600.0, Meal.DINNER, today) // 2334 kcal
+        food.log(1L, product, 600.0, MealDefaults.DINNER, today) // 2334 kcal
 
         val day = food.day(1L, today, targetKcal = 2000)
 
@@ -121,9 +121,9 @@ class FoodEntryRepositoryTest {
     @Test
     fun anotherProfileAndAnotherDayAreNotCounted() = runBlocking {
         val product = oats()
-        food.log(1L, product, 100.0, Meal.LUNCH, today)
-        food.log(2L, product, 100.0, Meal.LUNCH, today)
-        food.log(1L, product, 100.0, Meal.LUNCH, today.minusDays(1))
+        food.log(1L, product, 100.0, MealDefaults.LUNCH, today)
+        food.log(2L, product, 100.0, MealDefaults.LUNCH, today)
+        food.log(1L, product, 100.0, MealDefaults.LUNCH, today.minusDays(1))
 
         val day = food.day(1L, today, targetKcal = 2000)
 
@@ -133,7 +133,7 @@ class FoodEntryRepositoryTest {
     @Test
     fun renamingTheProductDoesNotRewriteWhatWasEaten() = runBlocking {
         val product = oats()
-        val entry = food.log(1L, product, 50.0, Meal.BREAKFAST, today)
+        val entry = food.log(1L, product, 50.0, MealDefaults.BREAKFAST, today)
 
         products.saveUserProduct(product.copy(name = "Oats (renamed)", kcal100g = 400.0))
 
@@ -147,7 +147,7 @@ class FoodEntryRepositoryTest {
     @Test
     fun deletingAnEntryKeepsTheRowButRemovesItFromTheDay() = runBlocking {
         val product = oats()
-        val entry = food.log(1L, product, 100.0, Meal.LUNCH, today)
+        val entry = food.log(1L, product, 100.0, MealDefaults.LUNCH, today)
 
         food.delete(entry.id)
 
@@ -158,7 +158,7 @@ class FoodEntryRepositoryTest {
     @Test
     fun editingTheWeightRescalesTheEntriesOwnSnapshot() = runBlocking {
         val product = oats()
-        val entry = food.log(1L, product, 100.0, Meal.BREAKFAST, today)
+        val entry = food.log(1L, product, 100.0, MealDefaults.BREAKFAST, today)
 
         val edited = food.updateGrams(entry.id, 50.0)
 
@@ -171,7 +171,7 @@ class FoodEntryRepositoryTest {
     @Test
     fun anEditScalesTheSnapshotNotTheCurrentProduct() = runBlocking {
         val product = oats()
-        val entry = food.log(1L, product, 100.0, Meal.BREAKFAST, today)
+        val entry = food.log(1L, product, 100.0, MealDefaults.BREAKFAST, today)
         // The product is corrected afterwards: the logged entry is history and must not absorb it.
         products.saveUserProduct(product.copy(kcal100g = 1000.0))
 
@@ -182,7 +182,7 @@ class FoodEntryRepositoryTest {
 
     @Test
     fun editingToAnImpossibleWeightIsRefused() = runBlocking {
-        val entry = food.log(1L, oats(), 100.0, Meal.LUNCH, today)
+        val entry = food.log(1L, oats(), 100.0, MealDefaults.LUNCH, today)
 
         assertTrue(runCatching { food.updateGrams(entry.id, 0.0) }.isFailure)
         assertTrue(runCatching { food.updateGrams(entry.id, -5.0) }.isFailure)
@@ -192,8 +192,8 @@ class FoodEntryRepositoryTest {
     @Test
     fun copyingADayDuplicatesTheVisibleEntriesAndLeavesTheOriginalAlone() = runBlocking {
         val product = oats()
-        val kept = food.log(1L, product, 100.0, Meal.BREAKFAST, today)
-        val removed = food.log(1L, product, 50.0, Meal.LUNCH, today)
+        val kept = food.log(1L, product, 100.0, MealDefaults.BREAKFAST, today)
+        val removed = food.log(1L, product, 50.0, MealDefaults.LUNCH, today)
         food.delete(removed.id)
         val tomorrow = today.plusDays(1)
 
@@ -203,7 +203,7 @@ class FoodEntryRepositoryTest {
         val tomorrowIntake = food.day(1L, tomorrow, 2000)
         assertEquals(389.0, tomorrowIntake.eatenKcal, 1e-9)
         assertEquals("the snapshot travels with the copy", "Oats, dry", tomorrowIntake.meals.single().name)
-        assertEquals(Meal.BREAKFAST, tomorrowIntake.meals.single().meal)
+        assertEquals(MealDefaults.BREAKFAST, tomorrowIntake.meals.single().mealKey)
         assertEquals(389.0, food.day(1L, today, 2000).eatenKcal, 1e-9)
         assertEquals(1, food.countForDay(1L, tomorrow))
     }
@@ -220,7 +220,7 @@ class FoodEntryRepositoryTest {
             Product(name = "Mystery", source = ProductSource.USER, kcal100g = null),
         )
 
-        val failure = runCatching { food.log(1L, unknown, 100.0, Meal.SNACK, today) }
+        val failure = runCatching { food.log(1L, unknown, 100.0, MealDefaults.SNACK, today) }
 
         assertTrue("expected a refusal, got $failure", failure.isFailure)
         assertEquals(0.0, food.eatenKcal(1L, today), 1e-9)
@@ -235,7 +235,7 @@ class FoodEntryRepositoryTest {
             energyEstimated = true,
         )
 
-        val entry = food.log(1L, estimated, 100.0, Meal.SNACK, today)
+        val entry = food.log(1L, estimated, 100.0, MealDefaults.SNACK, today)
 
         assertTrue("the day can then say it contains estimates", entry.wasEstimated)
         assertTrue(food.day(1L, today, 2000).hasEstimates)
@@ -252,16 +252,16 @@ class FoodEntryRepositoryTest {
         )
 
         now = 1_000L
-        food.log(1L, oats, 50.0, Meal.BREAKFAST)
+        food.log(1L, oats, 50.0, MealDefaults.BREAKFAST)
         now = 2_000L
-        food.log(1L, banana, 120.0, Meal.SNACK)
+        food.log(1L, banana, 120.0, MealDefaults.SNACK)
         now = 3_000L
-        food.log(1L, oats, 60.0, Meal.BREAKFAST)
+        food.log(1L, oats, 60.0, MealDefaults.BREAKFAST)
         // A deleted row is not a meal the user ate; it must not count towards the habit either.
-        val deleted = food.log(1L, banana, 100.0, Meal.SNACK)
+        val deleted = food.log(1L, banana, 100.0, MealDefaults.SNACK)
         food.delete(deleted.id)
         // Someone else's plate never leaks into these recents.
-        food.log(2L, banana, 90.0, Meal.LUNCH)
+        food.log(2L, banana, 90.0, MealDefaults.LUNCH)
 
         val recents = food.recentlyEaten(1L)
 
@@ -284,7 +284,7 @@ class FoodEntryRepositoryTest {
                 Product(name = "Product $index", source = ProductSource.USER, kcal100g = 100.0),
             )
             now += 1_000L
-            food.log(1L, product, 100.0, Meal.LUNCH)
+            food.log(1L, product, 100.0, MealDefaults.LUNCH)
         }
 
         assertEquals(2, food.recentlyEaten(1L, limit = 2).size)

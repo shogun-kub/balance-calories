@@ -20,6 +20,7 @@ import com.balancecalories.data.repo.HistoryRepository
 import com.balancecalories.data.repo.DebugRepository
 import com.balancecalories.data.repo.FoodEntryRepository
 import com.balancecalories.data.repo.RecipeRepository
+import com.balancecalories.data.repo.MealRepository
 import com.balancecalories.data.repo.ProductRepository
 import com.balancecalories.data.repo.ProfileRepository
 import com.balancecalories.data.backup.BackupService
@@ -44,6 +45,8 @@ class AppContainer(context: Context) {
     val debug: DebugRepository = DebugRepository(database)
     val products: ProductRepository = ProductRepository(database)
     val food: FoodEntryRepository = FoodEntryRepository(database)
+    /** The meal slots of a profile: data since schema v7, seeded from the defaults. */
+    val meals: MealRepository = MealRepository(database)
     val recipes: RecipeRepository = RecipeRepository(database)
     val history: HistoryRepository = HistoryRepository(database)
     /** JSON backup, restore and the CSV report. Blocking calls; run them on the IO dispatcher. */

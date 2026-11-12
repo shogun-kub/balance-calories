@@ -7,7 +7,7 @@ import com.balancecalories.core.energy.ActivityLevel
 import com.balancecalories.core.energy.Sex
 import com.balancecalories.core.energy.TdeeConfidence
 import com.balancecalories.core.energy.toStorage
-import com.balancecalories.core.food.Meal
+import com.balancecalories.core.food.MealDefaults
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.ProductSource
 import com.balancecalories.core.profile.Profile
@@ -104,7 +104,7 @@ class AdaptiveTdeeRepositoryTest {
                 carbs100g = 100.0,
             ),
         )
-        food.log(profileId = profile.id, product = product, grams = 100.0, meal = Meal.LUNCH, on = date)
+        food.log(profileId = profile.id, product = product, grams = 100.0, mealKey = MealDefaults.LUNCH, on = date)
     }
 
     private suspend fun weigh(

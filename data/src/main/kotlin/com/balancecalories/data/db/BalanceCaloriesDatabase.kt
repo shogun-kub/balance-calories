@@ -7,6 +7,7 @@ import com.balancecalories.data.db.dao.BodyMeasurementDao
 import com.balancecalories.data.db.dao.DailyActivityDao
 import com.balancecalories.data.db.dao.DebugDao
 import com.balancecalories.data.db.dao.FoodEntryDao
+import com.balancecalories.data.db.dao.MealDao
 import com.balancecalories.data.db.dao.PendingLookupDao
 import com.balancecalories.data.db.dao.ProductDao
 import com.balancecalories.data.db.dao.ProfileDao
@@ -17,6 +18,7 @@ import com.balancecalories.data.db.entity.AppSettingEntity
 import com.balancecalories.data.db.entity.BodyMeasurementEntity
 import com.balancecalories.data.db.entity.DailyActivityEntity
 import com.balancecalories.data.db.entity.FoodEntryEntity
+import com.balancecalories.data.db.entity.MealEntity
 import com.balancecalories.data.db.entity.PendingLookupEntity
 import com.balancecalories.data.db.entity.ProductEntity
 import com.balancecalories.data.db.entity.ProductFtsEntity
@@ -48,12 +50,13 @@ import com.balancecalories.data.db.entity.TargetHistoryEntity
         RecipeEntity::class,
         RecipeItemEntity::class,
         FoodEntryEntity::class,
+        MealEntity::class,
         TargetHistoryEntity::class,
         PendingLookupEntity::class,
         SyncStateEntity::class,
         AppSettingEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -68,6 +71,8 @@ abstract class BalanceCaloriesDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
     abstract fun pendingLookupDao(): PendingLookupDao
     abstract fun foodEntryDao(): FoodEntryDao
+
+    abstract fun mealDao(): MealDao
 
     abstract fun recipeDao(): RecipeDao
 

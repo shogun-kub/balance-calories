@@ -43,7 +43,7 @@ The daily answer is a single signed number: `intake − burned`. Negative = defi
 | Profiles | Universal profile model: 1 by default, more allowed; each with sex, birth date, height, activity level, goal rate. Body data is entered by the user, nothing is hardcoded |
 | Targets | BMR via Mifflin–St Jeor, TDEE via PAL seed, daily kcal target, macro targets optional |
 | Food DB | OFF v3 lookup by barcode, local cache, full manual product creation, edit/override of cached product, **~150-item starter pack of cooking ingredients** imported on first run |
-| Logging | add product + grams to a meal (breakfast/lunch/dinner/snack), edit, delete, copy yesterday, quick-add kcal |
+| Logging | add product + grams to any meal of the profile (four by default: breakfast/lunch/dinner/snack; the set is editable, the snack bucket is fixed), edit, delete, copy yesterday, quick-add kcal |
 | Recipes | build a recipe from logged products, store raw component weights + measured cooked weight + servings, log a portion by grams or by fraction |
 | Band data | Health Connect read of active kcal, BMR, steps, weight, sleep duration — attached to **at most one profile per phone**; "Sync band" button via GB intent; manual refresh |
 | Daily view | eaten / burned / remaining, macro rings, meals list, "day complete" confidence marker |

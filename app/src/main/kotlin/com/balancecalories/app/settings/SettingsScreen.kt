@@ -63,6 +63,7 @@ fun SettingsScreen(
     onOpenDebug: () -> Unit,
     onOpenData: () -> Unit,
     onOpenProfiles: () -> Unit,
+    onOpenMeals: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
@@ -124,7 +125,10 @@ fun SettingsScreen(
 
         HorizontalDivider()
         MacroNormSetting(container = container, profile = profile)
-        MealTimesSetting(container = container, profile = profile)
+        Text(stringResource(R.string.settings_meals_note), style = MaterialTheme.typography.bodySmall)
+        OutlinedButton(onClick = onOpenMeals, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.meals_title))
+        }
 
         HorizontalDivider()
         Text(stringResource(R.string.settings_data), style = MaterialTheme.typography.titleMedium)
@@ -156,78 +160,6 @@ fun SettingsScreen(
  * whenever the target moves. Typing numbers stores them for this profile for good, because a person who wrote
  * their own norms has said something the derivation cannot know (ADR-035).
  */
-/**
- * When the three named meals are planned, per profile.
- *
- * The times label the cards on Today and are stored per profile, because two people sharing a phone do not eat
- * at the same hours. Nothing is measured against them: eating at 15:00 instead of 13:00 is life, not an error.
- */
-@Composable
-private fun MealTimesSetting(container: AppContainer, profile: Profile) {
-    val scope = rememberCoroutineScope()
-    var breakfast by rememberSaveable(profile.id) { mutableStateOf("") }
-    var lunch by rememberSaveable(profile.id) { mutableStateOf("") }
-    var dinner by rememberSaveable(profile.id) { mutableStateOf("") }
-    var message by remember { mutableStateOf<Int?>(null) }
-
-    LaunchedEffect(profile.id) {
-        val times = container.settings.mealTimes(profile.id)
-        breakfast = MealTimes.formatClock(times.breakfastMinutes)
-        lunch = MealTimes.formatClock(times.lunchMinutes)
-        dinner = MealTimes.formatClock(times.dinnerMinutes)
-    }
-
-    HorizontalDivider()
-    Text(text = stringResource(R.string.meal_times_title), style = MaterialTheme.typography.titleMedium)
-    Text(
-        text = stringResource(R.string.meal_times_note),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.secondary,
-    )
-
-    val labels = listOf(R.string.meal_breakfast, R.string.meal_lunch, R.string.meal_dinner)
-    val values = listOf(breakfast, lunch, dinner)
-    val setters = listOf<(String) -> Unit>({ breakfast = it }, { lunch = it }, { dinner = it })
-    for (index in labels.indices) {
-        OutlinedTextField(
-            value = values[index],
-            onValueChange = setters[index],
-            label = { Text(stringResource(labels[index])) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-
-    Button(
-        onClick = {
-            val parsed = listOf(
-                MealTimes.parseClock(breakfast),
-                MealTimes.parseClock(lunch),
-                MealTimes.parseClock(dinner),
-            )
-            if (parsed.any { it == null }) {
-                message = R.string.meal_time_invalid
-                return@Button
-            }
-            scope.launch {
-                container.settings.setMealTimes(
-                    profile.id,
-                    MealTimes(parsed[0]!!, parsed[1]!!, parsed[2]!!),
-                )
-                message = R.string.meal_times_saved
-            }
-        },
-    ) {
-        Text(stringResource(R.string.action_save))
-    }
-    message?.let {
-        Text(
-            text = stringResource(it),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.secondary,
-        )
-    }
-}
 
 @Composable
 private fun MacroNormSetting(container: AppContainer, profile: Profile) {

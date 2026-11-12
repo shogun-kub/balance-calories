@@ -3,7 +3,6 @@ package com.balancecalories.data.repo
 import com.balancecalories.core.food.DailyIntake
 import com.balancecalories.core.food.FoodMath
 import com.balancecalories.core.food.LoggedEntry
-import com.balancecalories.core.food.Meal
 import com.balancecalories.core.food.Recipe
 import com.balancecalories.core.food.RecipeMath
 import com.balancecalories.core.food.RecentlyEaten
@@ -38,7 +37,7 @@ class FoodEntryRepository(
         profileId: Long,
         product: Product,
         grams: Double,
-        meal: Meal,
+        mealKey: String,
         on: LocalDate = LocalDate.now(),
     ): LoggedEntry {
         require(grams > 0.0) { "a portion must be positive, was $grams" }
@@ -50,7 +49,7 @@ class FoodEntryRepository(
             profileId = profileId,
             consumedAt = clock(),
             localDate = on.toString(),
-            meal = Meal.toStorage(meal),
+            meal = mealKey,
             productId = product.id.takeIf { it != Product.NEW },
             productName = product.name,
             productNameRu = product.nameRu,
@@ -83,7 +82,7 @@ class FoodEntryRepository(
         profileId: Long,
         recipe: Recipe,
         grams: Double,
-        meal: Meal,
+        mealKey: String,
         on: LocalDate = LocalDate.now(),
     ): LoggedEntry {
         require(grams > 0.0) { "a portion must be positive, was $grams" }
@@ -98,7 +97,7 @@ class FoodEntryRepository(
             profileId = profileId,
             consumedAt = clock(),
             localDate = on.toString(),
-            meal = Meal.toStorage(meal),
+            meal = mealKey,
             productId = null,
             productName = recipe.name,
             productNameRu = null,
@@ -206,7 +205,7 @@ class FoodEntryRepository(
         productId = productId,
         name = productName ?: "",
         nameRu = productNameRu,
-        meal = Meal.fromStorage(meal),
+        mealKey = meal,
         grams = grams,
         kcal = kcal,
         proteinG = proteinG,

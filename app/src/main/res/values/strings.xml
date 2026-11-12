@@ -31,6 +31,20 @@
     <string name="goal_maintain">Maintain weight</string>
     <string name="goal_gain">Gain 0.25 kg a week</string>
     <string name="preview_target" tools:ignore="PluralsCandidate">Estimated target: %1$d kcal a day</string>
+    <string name="meals_title">Meals</string>
+    <string name="meals_note">Names and times. The snack bucket always stays: anything that fits no other meal lands there, and it cannot be deleted.</string>
+    <string name="meals_fixed_hint">always present</string>
+    <string name="meals_name">Name</string>
+    <string name="meals_time">Time, HH:MM</string>
+    <string name="meals_new">New meal</string>
+    <string name="meals_saved">Saved</string>
+    <string name="meals_name_required">A meal needs a name</string>
+    <string name="meals_has_entries">This meal still has food in it - empty it first</string>
+    <string name="meals_cannot_delete">This meal cannot be deleted</string>
+    <string name="meals_last">At least one meal must remain</string>
+    <string name="meal_fallback_title">Meal</string>
+    <string name="settings_meals_note">How many meals there are, what they are called and when they are planned.</string>
+    <string name="action_add">Add</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_ok">OK</string>

@@ -1,27 +1,18 @@
 package com.balancecalories.core.food
 
 /**
- * When the three named meals are supposed to happen, in minutes from midnight.
+ * The clock helpers for planned meal times: `08:30` to 510 and back, plus the stored form of the old
+ * three-times setting.
  *
- * The owner asked for pre-defined meals with a planned time (2026-11-12): a card that says "Завтрак 08:00"
- * answers "what is still ahead today" without opening anything, and a time is a plan, not a measurement, so
- * it is stored per profile as a setting rather than inferred from when food happened to be logged.
- *
- * Eating earlier or later than the plan is not an error and nothing is compared against these minutes: they
- * label the card and sort nothing. Snacks have no time - they happen when they happen.
+ * The times themselves moved into the `meal` table with schema v7, because the owner wanted to add, rename and
+ * delete meals rather than only retime three of them. What is left here is the parsing every screen shares, and
+ * [encode]/[decode] because the v6 -> v7 migration reads the per-profile setting this replaced.
  */
 data class MealTimes(
     val breakfastMinutes: Int,
     val lunchMinutes: Int,
     val dinnerMinutes: Int,
 ) {
-
-    fun minutesOf(meal: Meal): Int? = when (meal) {
-        Meal.BREAKFAST -> breakfastMinutes
-        Meal.LUNCH -> lunchMinutes
-        Meal.DINNER -> dinnerMinutes
-        Meal.SNACK -> null
-    }
 
     /** `480,780,1140`, the same comma-separated shape the macro norm uses in `app_setting`. */
     fun encode(): String = "$breakfastMinutes,$lunchMinutes,$dinnerMinutes"
@@ -30,8 +21,10 @@ data class MealTimes(
 
         const val MINUTES_PER_DAY = 24 * 60
 
-        /** 08:00, 13:00, 19:00 - three meals a person can keep, and what the owner named. */
+        /** 08:00, 13:00, 19:00 - what [MealDefaults] seeds a new profile with. */
         val DEFAULT = MealTimes(8 * 60, 13 * 60, 19 * 60)
+
+        fun of(breakfast: Int, lunch: Int, dinner: Int): MealTimes = MealTimes(breakfast, lunch, dinner)
 
         /**
          * Parse a stored value, falling back to [DEFAULT] as a whole.

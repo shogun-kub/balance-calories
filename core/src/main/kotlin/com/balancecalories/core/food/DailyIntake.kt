@@ -13,7 +13,7 @@ data class LoggedEntry(
     val productId: Long?,
     val name: String,
     val nameRu: String? = null,
-    val meal: Meal,
+    val mealKey: String,
     val grams: Double,
     val kcal: Double,
     val proteinG: Double? = null,
@@ -44,17 +44,17 @@ data class DailyIntake(
 
     val isOverBudget: Boolean get() = eatenKcal > targetKcal
 
-    fun entriesFor(meal: Meal): List<LoggedEntry> = meals.filter { it.meal == meal }
+    fun entriesFor(mealKey: String): List<LoggedEntry> = meals.filter { it.mealKey == mealKey }
 
-    fun eatenFor(meal: Meal): Double = entriesFor(meal).sumOf { it.kcal }
+    fun eatenFor(mealKey: String): Double = entriesFor(mealKey).sumOf { it.kcal }
 
     val proteinG: Double get() = meals.sumOf { it.proteinG ?: 0.0 }
     val fatG: Double get() = meals.sumOf { it.fatG ?: 0.0 }
     val carbsG: Double get() = meals.sumOf { it.carbsG ?: 0.0 }
 
     /** What one meal contributed, for the four cards on Today. */
-    fun totalsFor(meal: Meal): MealTotals {
-        val entries = entriesFor(meal)
+    fun totalsFor(mealKey: String): MealTotals {
+        val entries = entriesFor(mealKey)
         return MealTotals(
             kcal = entries.sumOf { it.kcal },
             proteinG = entries.sumOf { it.proteinG ?: 0.0 },
@@ -71,9 +71,9 @@ data class DailyIntake(
      * this meal", and a proportion of a total still being written would change every time a snack was added.
      * A target of zero has no share to speak of and answers 0.
      */
-    fun shareOfTargetFor(meal: Meal): Int {
+    fun shareOfTargetFor(mealKey: String): Int {
         if (targetKcal <= 0) return 0
-        return (totalsFor(meal).kcal / targetKcal * 100.0).roundToInt()
+        return (totalsFor(mealKey).kcal / targetKcal * 100.0).roundToInt()
     }
 
     /** True when any logged entry carries a derived number, so the screen can say "estimated". */

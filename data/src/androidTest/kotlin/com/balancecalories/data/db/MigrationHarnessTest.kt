@@ -175,6 +175,64 @@ class MigrationHarnessTest {
         }
     }
 
+    /**
+     * 6 -> 7 turns meal slots into data.
+     *
+     * The test seeds two profiles, an existing breakfast entry and a custom time table for one profile, then
+     * proves three things: every profile gets the four default slots, the entry still points at `breakfast`
+     * (which is its key, so no history moves), and the times a person had set are the times the rows carry -
+     * not the defaults, which would silently reset somebody's schedule.
+     */
+    @Test
+    fun migration6To7SeedsMealSlotsAndKeepsEntriesAndTimes() {
+        helper.createDatabase(TEST_DB, 6).use { db ->
+            db.execSQL(
+                "INSERT INTO `profile` (`id`,`name`,`sex`,`birth_date`,`height_cm`,`activity_level`," +
+                    "`goal_rate_kg_per_week`,`day_start_hour`,`unit_system`,`created_at`) " +
+                    "VALUES (1,'Owner','MALE','1990-01-01',180.0,'MODERATE',-0.5,4,'METRIC',1)",
+            )
+            db.execSQL(
+                "INSERT INTO `profile` (`id`,`name`,`sex`,`birth_date`,`height_cm`,`activity_level`," +
+                    "`goal_rate_kg_per_week`,`day_start_hour`,`unit_system`,`created_at`) " +
+                    "VALUES (2,'Wife','FEMALE','1992-02-02',168.0,'LIGHT',-0.2,4,'METRIC',2)",
+            )
+            db.execSQL(
+                "INSERT INTO `food_entry` (`profile_id`,`consumed_at`,`local_date`,`meal`,`grams`,`kcal`,`was_estimated`) " +
+                    "VALUES (1, 1760000000000, '2026-11-11', 'breakfast', 61.0, 122.0, 0)",
+            )
+            // A schedule this person actually set, which the migration must keep.
+            db.execSQL("INSERT INTO `app_setting` (`key`,`value`) VALUES ('meal_times_1','435,760,1200')")
+        }
+        helper.runMigrationsAndValidate(TEST_DB, 7, true, Migrations.MIGRATION_6_7).use { db ->
+            db.query(
+                "SELECT profile_id, meal_key, planned_minutes, fixed FROM meal " +
+                    "ORDER BY profile_id, sort_order",
+            ).use { c ->
+                val rows = mutableListOf<String>()
+                while (c.moveToNext()) {
+                    rows += "${c.getLong(0)}:${c.getString(1)}:" +
+                        (if (c.isNull(2)) "none" else c.getInt(2).toString()) + ":" + c.getInt(3)
+                }
+                assertEquals(
+                    listOf(
+                        "1:breakfast:435:0", "1:lunch:760:0", "1:dinner:1200:0", "1:snack:none:1",
+                        "2:breakfast:480:0", "2:lunch:780:0", "2:dinner:1140:0", "2:snack:none:1",
+                    ),
+                    rows,
+                )
+            }
+            db.query("SELECT meal, kcal FROM food_entry").use { c ->
+                assertTrue("the entry must survive the migration", c.moveToFirst())
+                assertEquals("breakfast", c.getString(0))
+                assertEquals(122.0, c.getDouble(1), 0.001)
+            }
+            db.query("SELECT COUNT(*) FROM app_setting WHERE `key` LIKE 'meal_times_%'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("the setting is now a row, not a setting", 0, c.getInt(0))
+            }
+        }
+    }
+
     private fun androidx.sqlite.db.SupportSQLiteDatabase.tableNames(): List<String> {
         val names = mutableListOf<String>()
         query("SELECT name FROM sqlite_master WHERE type = 'table'").use { cursor ->

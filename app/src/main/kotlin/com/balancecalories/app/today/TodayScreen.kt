@@ -48,6 +48,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.PermissionController
+import com.balancecalories.app.food.title
 import com.balancecalories.app.ui.ChartPalette
 import com.balancecalories.app.ui.displayNumber
 import com.balancecalories.app.ui.LabelValueRow
@@ -63,7 +64,7 @@ import com.balancecalories.core.energy.TargetLimit
 import com.balancecalories.core.food.DailyIntake
 import com.balancecalories.core.food.Macro
 import com.balancecalories.core.food.MacroNorm
-import com.balancecalories.core.food.Meal
+import com.balancecalories.core.food.MealSlot
 import com.balancecalories.core.food.MealTimes
 import com.balancecalories.core.food.MealTotals
 import com.balancecalories.core.food.LoggedEntry
@@ -90,7 +91,7 @@ import kotlinx.coroutines.launch
 fun TodayScreen(
     profile: Profile,
     container: AppContainer,
-    onAddFood: (Meal?) -> Unit,
+    onAddFood: (String?) -> Unit,
 ) {
     val today = remember { LocalDate.now() }
     val scope = rememberCoroutineScope()
@@ -100,7 +101,7 @@ fun TodayScreen(
     var intake by remember(profile.id) { mutableStateOf<DailyIntake?>(null) }
     var refresh by remember { mutableIntStateOf(0) }
     var yesterdayCount by remember { mutableIntStateOf(0) }
-    var mealTimes by remember(profile.id) { mutableStateOf(MealTimes.DEFAULT) }
+    var slots by remember(profile.id) { mutableStateOf<List<MealSlot>>(emptyList()) }
     var editingEntry by remember { mutableStateOf<LoggedEntry?>(null) }
     var editGrams by remember { mutableStateOf("") }
 
@@ -124,7 +125,7 @@ fun TodayScreen(
             intake = container.food.day(profile.id, today, target.kcal)
             yesterdayCount = container.food.countForDay(profile.id, today.minusDays(1))
             burn = container.activity.burn(profile.id, today, target.bmrKcal, target.tdeeKcal)
-            mealTimes = container.settings.mealTimes(profile.id)
+            slots = container.meals.slots(profile.id)
         }
     }
 
@@ -300,16 +301,17 @@ fun TodayScreen(
             }
         }
 
-        // Four cards, always - an empty meal is an invitation with a time on it, not a reason to hide the row.
-        for (meal in Meal.entries) {
+        // One card per slot this profile has - an empty meal is an invitation with a time on it, not a reason to
+        // hide the row. The set is data since schema v7, so a meal somebody added is a card like any other.
+        for (slot in slots) {
             MealCard(
-                title = meal.localized(),
-                planned = mealTimes.minutesOf(meal)?.let { MealTimes.formatClock(it) },
-                totals = loadedIntake.totalsFor(meal),
-                share = loadedIntake.shareOfTargetFor(meal),
-                onAdd = { onAddFood(meal) },
+                title = slot.title(),
+                planned = slot.plannedMinutes?.let { MealTimes.formatClock(it) },
+                totals = loadedIntake.totalsFor(slot.key),
+                share = loadedIntake.shareOfTargetFor(slot.key),
+                onAdd = { onAddFood(slot.key) },
             ) {
-                for (entry in loadedIntake.entriesFor(meal)) {
+                for (entry in loadedIntake.entriesFor(slot.key)) {
                     EntryRow(
                         entry = entry,
                         norm = macroNorm,
@@ -593,15 +595,6 @@ private fun MealCard(
     }
 }
 
-@Composable
-fun Meal.localized(): String = stringResource(
-    when (this) {
-        Meal.BREAKFAST -> R.string.meal_breakfast
-        Meal.LUNCH -> R.string.meal_lunch
-        Meal.DINNER -> R.string.meal_dinner
-        Meal.SNACK -> R.string.meal_snack
-    },
-)
 
 @Composable
 private fun TargetLimit.localized(): String = stringResource(

@@ -5,7 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.balancecalories.core.energy.ActivityLevel
 import com.balancecalories.core.energy.Sex
-import com.balancecalories.core.food.Meal
+import com.balancecalories.core.food.MealDefaults
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.ProductSource
 import com.balancecalories.core.profile.Profile
@@ -278,14 +278,14 @@ class RepositoryTest {
             profileId = profileId,
             product = oats,
             grams = 100.0,
-            meal = Meal.BREAKFAST,
+            mealKey = MealDefaults.BREAKFAST,
             on = twoDaysAgo,
         )
         foods.log(
             profileId = profileId,
             product = oats,
             grams = 50.0,
-            meal = Meal.BREAKFAST,
+            mealKey = MealDefaults.BREAKFAST,
             on = today,
         )
         // yesterday has no entry on purpose
@@ -332,7 +332,7 @@ class RepositoryTest {
             ),
         )
 
-        val logged = foods.log(profileId = profileId, product = apple, grams = 200.0, meal = Meal.SNACK, on = today)
+        val logged = foods.log(profileId = profileId, product = apple, grams = 200.0, mealKey = MealDefaults.SNACK, on = today)
         foods.delete(logged.id)
 
         val rows = db.foodEntryDao().macroTotalsBetween(profileId, today.toString(), today.toString())

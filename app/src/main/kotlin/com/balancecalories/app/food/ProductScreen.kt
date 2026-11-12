@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -30,15 +31,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.balancecalories.app.ui.WrappingRow
+import java.time.LocalTime
 import com.balancecalories.app.AppContainer
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
 import com.balancecalories.app.ui.WrappingRow
-import com.balancecalories.app.today.localized
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.FoodMath
 import com.balancecalories.app.ui.WrappingRow
-import com.balancecalories.core.food.Meal
+import com.balancecalories.core.food.MealSlot
+import com.balancecalories.core.food.guessMealKey
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.Product
 import kotlinx.coroutines.launch
@@ -58,14 +60,26 @@ fun ProductScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onLogged: () -> Unit,
-    initialMeal: Meal? = null,
+    initialMealKey: String? = null,
 ) {
     val scope = rememberCoroutineScope()
     val languageTag = LocalConfiguration.current.locales[0]?.toLanguageTag()
     var portion by remember(product.id) { mutableStateOf("100") }
-    var meal by rememberSaveable { mutableStateOf(initialMeal ?: defaultMeal()) }
+    var slots by remember(profileId) { mutableStateOf<List<MealSlot>>(emptyList()) }
+    var mealKey by rememberSaveable(profileId) { mutableStateOf(initialMealKey) }
     var error by remember { mutableStateOf<String?>(null) }
     var saving by rememberSaveable { mutableStateOf(false) }
+
+    // The slots are data now, so the picker cannot be a constant list: it is whatever this profile has, and a
+    // meal added yesterday is a place today's food can go.
+    LaunchedEffect(profileId) {
+        val loaded = container.meals.slots(profileId)
+        slots = loaded
+        if (mealKey == null) {
+            val now = LocalTime.now()
+            mealKey = guessMealKey(loaded, now.hour * 60 + now.minute)
+        }
+    }
 
     val grams = portion.replace(',', '.').toDoubleOrNull()
     val preview = if (grams != null && grams > 0) FoodMath.portion(product, grams) else null
@@ -126,15 +140,7 @@ fun ProductScreen(
         )
 
         Text(text = stringResource(R.string.product_meal), style = MaterialTheme.typography.titleSmall)
-        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (option in Meal.entries) {
-                FilterChip(
-                    selected = meal == option,
-                    onClick = { meal = option },
-                    label = { Text(option.localized()) },
-                )
-            }
-        }
+        MealChips(slots = slots, selectedKey = mealKey, onSelect = { mealKey = it })
 
         error?.let { Text(text = it, color = MaterialTheme.colorScheme.error) }
 
@@ -145,7 +151,7 @@ fun ProductScreen(
                 error = null
                 scope.launch {
                     runCatching {
-                        container.food.log(profileId, product, value, meal)
+                        container.food.log(profileId, product, value, mealKey ?: return@launch)
                     }.onSuccess {
                         onLogged()
                     }.onFailure {
@@ -173,13 +179,3 @@ private fun PerHundredRow(label: String, value: Double?) {
     }
 }
 
-/** Rough default by the clock: breakfast before 11, lunch before 16, dinner before 21, else a snack. */
-private fun defaultMeal(): Meal {
-    val hour = java.time.LocalTime.now().hour
-    return when {
-        hour < 11 -> Meal.BREAKFAST
-        hour < 16 -> Meal.LUNCH
-        hour < 21 -> Meal.DINNER
-        else -> Meal.SNACK
-    }
-}

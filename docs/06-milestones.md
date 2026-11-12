@@ -425,4 +425,22 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
        Honor X7c: the four cards with the owner's real day, `+` on Обед opening Яблоко with Обед preselected and
        nothing logged, and Save storing `480,780,1140` with his 29 entries, 90 products, 64 activity days and
        two weigh-ins unchanged.
-
+42. **The meals became data (schema v7)** - the owner's follow-up: "we should not limit ourselves with 3 meals",
+    so the count, the names and the times are his, and Завтрак/Обед/Ужин are only what a new profile starts with.
+    A `meal` table (one row per profile per slot) now holds `name`, `sort_order`, `planned_minutes` and `fixed`;
+    `food_entry.meal` keeps storing the slot's **key**, which for every existing row is already `breakfast` /
+    `lunch` / `dinner` / `snack`, so the migration rewrote no entry and 29 of the owner's rows moved intact.
+    Identity is the key, never the name: a rename writes one column and cannot rewrite a year of entries.
+    `name` empty means "print the localized default for this key", which keeps translations out of the database.
+    "Перекус" is the single fixed slot: no name field, no time, no delete button - it is where unplanned food goes.
+    Deleting a slot that still holds entries is **refused** with a sentence rather than silently re-homing somebody's
+    lunch, and the last remaining slot cannot be deleted either; a new slot is inserted before the fixed bucket by
+    pushing the bucket's order, so unplanned food stays last. The v6 -> v7 migration also carried the times a person
+    had set in `meal_times_<id>` into the rows they described and removed the old keys.
+    Verified: `MigrationHarnessTest` 7/7 on the Honor X7c, the new case included and schema-validated against the
+    exported v7 json; the migration simulated on a copy of the owner's database, then run for real on the Honor X7c
+    (`user_version` 6 -> 7, 29 entries, 90 products, 64 activity days, two weigh-ins, macro norm and active profile
+    unchanged, zero orphan entries); on the device a fifth meal was added ("Second", 11:00), renamed, retimed,
+    shown as its own card before Перекус, and deleted; deleting a meal with food in it was refused and left the
+    entries alone. `MealSlot`, `MealDefaults`, `guessMealKey` and the card maths are in `:core` with tests (177),
+    `MealRepository` owns the three rules, and ADR-040 records the shape.

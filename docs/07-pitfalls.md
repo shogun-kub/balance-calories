@@ -329,3 +329,28 @@ weights, and a lit disc face on each outer end is what says *weight seen from th
 depth leaves a gap wherever the object is thinner than that depth; at the slice's tip it showed as two
 prongs with the background between them. The side is the shape plus its copy plus a quad on every edge, one
 colour, one path.
+
+### P-40: `connectedDebugAndroidTest` does not honour `ANDROID_ADB_SERVER_PORT`
+
+**Symptom.** Adb lists the phone (`adb devices` on port 5039 is fine), the Gradle task starts and even prints
+`Running tests on devices: ALT-LX1 - 14`, and then fails with
+`Failed to get device API level for <serial> via ADB ... device not found`, or, when the env var is absent,
+with `No connected devices!`.
+
+**Cause.** The Android Gradle plugin invokes `adb` itself. It picks up `ANDROID_ADB_SERVER_PORT` while
+*discovering* devices but the test-runner side falls back to the default port, so the two halves talk to two
+different servers. The plain-`adb` workflow of this project runs on **5039** (P-08), which is exactly the gap.
+
+**Fix.** For an instrumentation run, move adb to the default port first and put it back afterwards:
+
+```powershell
+adb kill-server
+Get-Process adb -ErrorAction SilentlyContinue | Stop-Process -Force
+Remove-Item Env:\ANDROID_ADB_SERVER_PORT -ErrorAction SilentlyContinue
+adb start-server            # now on 5037, and the phone appears
+.\gradlew.bat :data:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<class>
+```
+
+Switching back is the same dance with `$env:ANDROID_ADB_SERVER_PORT = '5039'` set again. Cost: two runs that
+looked like device problems and were port problems, 2026-11-12.
+
