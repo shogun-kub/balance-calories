@@ -425,6 +425,16 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
        Honor X7c: the four cards with the owner's real day, `+` on Обед opening Яблоко with Обед preselected and
        nothing logged, and Save storing `480,780,1140` with his 29 entries, 90 products, 64 activity days and
        two weigh-ins unchanged.
+    6. *Round ends only.* The owner's second correction on the gauge: rounding belongs to the two ends of the
+       coloured part, while the three macro bands should meet **sharply and without gaps**. Previously every
+       segment was its own round-capped arc with a computed degree gap between them (a round cap reaches half a
+       stroke past its end, so the gap had to be at least thickness/radius or the caps swallowed it), which gave the
+       doughnut four visible pill ends and three hairlines. The bands are now drawn butt-capped and back to back -
+       green meets yellow meets red with nothing between them - and the outer ends are rounded afterwards by a
+       half-thickness disc in the first and in the last band's own colour, which is exactly what a round cap is
+       minus the internal ones. The grey track is unchanged. Verified on the Honor X7c at 689 of 2283 kcal, zoomed
+       to pixel scale: three flush joins, two round outer ends, no hairline anywhere.
+
 42. **The meals became data (schema v7)** - the owner's follow-up: "we should not limit ourselves with 3 meals",
     so the count, the names and the times are his, and Завтрак/Обед/Ужин are only what a new profile starts with.
     A `meal` table (one row per profile per slot) now holds `name`, `sort_order`, `planned_minutes` and `fixed`;

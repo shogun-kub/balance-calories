@@ -32,7 +32,9 @@ import com.balancecalories.app.ui.ChartPalette
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.CalorieGauge
 import com.balancecalories.core.food.DailyIntake
+import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 /**
  * Today at a glance: a half-doughnut of the day's energy, split by macro, with the grams beside it.
@@ -139,30 +141,41 @@ fun MacroGauge(
                         fill.other to otherColor,
                     ).filter { it.first > 0.0 }
 
-                    // A gap between segments so two adjacent macros never merge into one band. The stroke has
-                    // round caps now, and a round cap extends thickness/2 past each end of its arc, so the gap
-                    // has to be at least thickness/radius in degrees or the caps swallow it and the segments
-                    // touch. 1.15 leaves a hairline visible at every size we draw.
-                    val gapDegrees = if (segments.size > 1) {
-                        Math.toDegrees((thickness / (diameter / 2f)).toDouble()).toFloat() * 1.15f
-                    } else {
-                        0f
-                    }
+                    // Sharp joins, rounded only at the two ends of the coloured part (owner's note, 2026-11-12).
+                    // The segments are butt-capped and drawn back to back, so green meets yellow meets red with
+                    // no hairline between them; the outer ends are then rounded by a half-thickness disc in the
+                    // first and in the last segment's own colour, which is precisely what a round cap is - just
+                    // without giving every internal edge one.
+                    val radius = diameter / 2f
                     var start = 180f
-                    segments.forEachIndexed { index, (fraction, color) ->
+                    segments.forEach { (fraction, color) ->
                         val sweep = (fraction * 180.0).toFloat()
-                        val drawn = if (index == segments.lastIndex) sweep else (sweep - gapDegrees).coerceAtLeast(0.4f)
                         drawArc(
                             color = color,
                             startAngle = start,
-                            sweepAngle = drawn,
+                            sweepAngle = sweep,
                             useCenter = false,
                             topLeft = topLeft,
                             size = arcSize,
-                            style = stroke,
+                            style = Stroke(width = thickness, cap = StrokeCap.Butt),
                         )
                         start += sweep
                     }
+
+                    // Angles run clockwise from three o'clock, so the point on the arc is centre + radius at that
+                    // angle; the disc is centred on the stroke's midline, which is where a cap sits.
+                    val centre = Offset(topLeft.x + radius, topLeft.y + radius)
+                    fun pointOnArc(angle: Float): Offset {
+                        val radians = Math.toRadians(angle.toDouble())
+                        return Offset(
+                            x = centre.x + radius * cos(radians).toFloat(),
+                            y = centre.y + radius * sin(radians).toFloat(),
+                        )
+                    }
+                    val capRadius = thickness / 2f
+                    drawCircle(color = segments.first().second, radius = capRadius, center = pointOnArc(180f))
+                    drawCircle(color = segments.last().second, radius = capRadius, center = pointOnArc(start))
+
                 }
             }
 
