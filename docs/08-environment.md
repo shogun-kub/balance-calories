@@ -63,6 +63,22 @@ appears after Honor Suite's driver is installed; MagicOS then shows the `Allow U
 An adb server started from this sandbox dies with the shell that launched it, so bootstrap and query
 in the same command.
 
+The Redmi Note 8 Pro (`begonia_ru`, Android 11 / SDK 30, MIUI `V12.5.3.0.RGGRUXM`, arm64-v8a,
+1080×2340 @ 440, locale `ru-RU`) exposes adb on `MI_01`, also bound to `WINUSB`, and needs no vendor
+driver. It was invisible to adb for an hour for a reason that looks like a permissions bug and is not
+(P-35): **VMware's USB arbitrator held the interface** — `VMUSBArbService`, process
+`vmware-usbarbitrator64` — so `CreateFile` returned `Error [5]: Access denied` for this user *and* for an
+elevated daemon. `sc stop VMUSBArbService` fixes it until VMware raises the service again; the service is
+`Automatic`, so a reboot brings the problem back. With it stopped, a plain unelevated daemon opens the
+phone:
+
+```powershell
+# 4lvscukrauuwkrzh   device   product:begonia_ru model:Redmi_Note_8_Pro device:begonia
+```
+
+Android 11 has no system Health Connect: on this phone the app is a separate install
+(`com.google.android.apps.healthdata`), and without it the whole activity side reads as unavailable.
+
 ## Build and test
 
 ```powershell

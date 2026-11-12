@@ -86,6 +86,19 @@ anything in the lower half, check `dumpsys input_method | grep mIsInputViewShown
 `keyevent 4` may close it, and tapping a non-field area (a title) defocuses the field for good. Also:
 `input text` is ASCII only, so a Cyrillic product cannot be typed — pick a row by what is visible.
 
+**P-35 · Windows can hide a phone from adb with `Access denied`, and it is not a permission problem.**
+The symptom is `adb devices` empty while the Device Manager shows `Android Composite ADB Interface` with
+status OK and MTP still works, and `ADB_TRACE=usb` prints `Failed to open device handle … Error [5]:
+Access denied`. Every natural hypothesis is wrong: it survives killing every `adb` process, closing the
+vendor suites (Honor Suite, Microsoft Phone Link), a replug, and both adb 36.0.0 and 41 — and the decisive
+tell is that a daemon started **elevated** fails identically. VMware Workstation's `VMUSBArbService`
+(`vmware-usbarbitrator64`) claims USB devices exclusively so it can hand one to a virtual machine, and a
+handle claimed that way is refused to everybody, administrators included. Fix: `sc stop VMUSBArbService`
+(reversible with `sc start`, and VMware raises it again by itself on the next launch), then `adb kill-server`.
+Check `vmware-usbarbitrator64` and `usbipd` (the WSL passthrough) **before** suspecting a driver or an ACL:
+the error names permissions while the resource is exclusive, which is why an elevation test settles it in one
+step instead of an afternoon.
+
 ### Health Connect
 
 **P-12 · Declare `android.permission.health.READ_*` in the manifest.** Without the declarations the dialog
