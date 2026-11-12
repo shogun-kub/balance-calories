@@ -36,8 +36,8 @@
     <string name="meals_fixed_hint">always present</string>
     <string name="meals_name">Name</string>
     <string name="meals_edit_title">Edit meal</string>
-    <string name="meals_no_time">No time</string>
     <string name="meals_time_label">Time</string>
+    <string name="meals_pick_time">Choose time</string>
     <string name="meals_new">New meal</string>
     <string name="meals_saved">Saved</string>
     <string name="meals_name_required">A meal needs a name</string>

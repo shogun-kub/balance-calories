@@ -457,3 +457,8 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
        and the fixed bucket; "Изменить" on Завтрак opening prefilled (supporting text "Завтрак", time 08:00); the
        clock face setting 09:00 and saving `planned_minutes = 540`; then back to 08:00 the same way, leaving the
        four default slots exactly as they were.
+    7. *No "Без времени".* The owner's last correction on this screen: a meal without a planned time should say
+       nothing at all, not label the absence. The list therefore prints a time only when there is one, and the
+       editor lost its clear action entirely - a meal that never got a time simply has none, and the picker button
+       reads "Выбрать время" when there is nothing to show yet. `meals_no_time` was deleted from both languages,
+       so the sentence cannot come back by accident.

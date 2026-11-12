@@ -36,8 +36,8 @@
     <string name="meals_fixed_hint">остаётся всегда</string>
     <string name="meals_name">Название</string>
     <string name="meals_edit_title">Изменить приём</string>
-    <string name="meals_no_time">Без времени</string>
     <string name="meals_time_label">Время</string>
+    <string name="meals_pick_time">Выбрать время</string>
     <string name="meals_new">Новый приём</string>
     <string name="meals_saved">Сохранено</string>
     <string name="meals_name_required">У приёма должно быть название</string>

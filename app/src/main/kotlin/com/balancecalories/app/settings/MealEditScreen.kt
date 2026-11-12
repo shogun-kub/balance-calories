@@ -131,18 +131,13 @@ fun MealEditScreen(
         )
 
         Text(text = stringResource(R.string.meals_time_label), style = MaterialTheme.typography.titleSmall)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedButton(onClick = { pickerOpen = true }) {
-                Text(
-                    text = shownMinutes?.let(MealTimes::formatClock)
-                        ?: stringResource(R.string.meals_no_time),
-                )
-            }
-            if (shownMinutes != null) {
-                TextButton(onClick = { minutes = null }) {
-                    Text(stringResource(R.string.meals_no_time))
-                }
-            }
+        // The picker is the only way in, and there is no "clear": a meal that never got a time simply has none,
+        // which keeps the absence of a plan from looking like a field somebody forgot to fill.
+        OutlinedButton(onClick = { pickerOpen = true }) {
+            Text(
+                text = shownMinutes?.let(MealTimes::formatClock)
+                    ?: stringResource(R.string.meals_pick_time),
+            )
         }
 
         error?.let { Text(text = stringResource(it), color = MaterialTheme.colorScheme.error) }

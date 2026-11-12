@@ -80,12 +80,15 @@ fun MealsScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = slot.title(), style = MaterialTheme.typography.titleSmall)
-                    Text(
-                        text = slot.plannedMinutes?.let(MealTimes::formatClock)
-                            ?: stringResource(R.string.meals_no_time),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
+                    // A meal without a planned time says nothing rather than "no time": the absence is the fact,
+                    // and printing a sentence about a missing clock made the list read like a form with an error.
+                    slot.plannedMinutes?.let {
+                        Text(
+                            text = MealTimes.formatClock(it),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                    }
                 }
                 if (slot.fixed) {
                     Text(
