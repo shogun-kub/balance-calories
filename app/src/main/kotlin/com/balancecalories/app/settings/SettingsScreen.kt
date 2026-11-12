@@ -37,7 +37,9 @@ import com.balancecalories.app.R
 import com.balancecalories.app.food.trimNumber
 import com.balancecalories.app.ui.NumberField
 import com.balancecalories.app.ui.WrappingRow
+import com.balancecalories.core.food.Macro
 import com.balancecalories.core.food.MacroNorm
+import com.balancecalories.core.food.MacroPreset
 import com.balancecalories.core.profile.Profile
 import com.balancecalories.core.profile.UnitSystem
 import kotlinx.coroutines.launch
@@ -174,17 +176,58 @@ private fun MacroNormSetting(container: AppContainer, profile: Profile) {
 
     Text(stringResource(R.string.macro_norm_title), style = MaterialTheme.typography.titleMedium)
     Text(stringResource(R.string.macro_norm_note), style = MaterialTheme.typography.bodySmall)
+    // The split a stored norm represents, computed rather than remembered: a chip is "selected" when the
+    // grams in effect are the ones it produces, so editing a field below clears the selection by itself.
+    val selectedPreset = if (targetKcal != null && targetKcal!! > 0 && storedNorm != null) {
+        MacroPreset.matching(storedNorm!!, targetKcal!!)
+    } else {
+        null
+    }
+
     Text(
-        text = if (storedNorm != null) {
-            stringResource(R.string.macro_norm_own)
-        } else if (derived != null) {
-            stringResource(R.string.macro_norm_derived, targetKcal!!)
-        } else {
-            stringResource(R.string.macro_norm_own)
+        text = when {
+            selectedPreset != null -> stringResource(R.string.macro_norm_preset, presetName(selectedPreset))
+            storedNorm != null -> stringResource(R.string.macro_norm_own)
+            derived != null -> stringResource(R.string.macro_norm_derived, targetKcal!!)
+            else -> stringResource(R.string.macro_norm_own)
         },
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.secondary,
     )
+
+    // Presets first, grams second: "30/30/40" is a split a person can recognise, "96 g of protein" is not
+    // (owner request, 2026-11-12). Choosing one writes the grams it implies through the same setting a typed
+    // norm uses, so nothing about a stored norm changed.
+    WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        for (preset in MacroPreset.entries) {
+            FilterChip(
+                selected = preset == selectedPreset,
+                onClick = {
+                    val kcal = targetKcal ?: return@FilterChip
+                    val grams = preset.grams(kcal)
+                    protein = trimNumber(grams.proteinG)
+                    fat = trimNumber(grams.fatG)
+                    carbs = trimNumber(grams.carbsG)
+                    scope.launch {
+                        container.settings.setMacroNorm(profile.id, grams)
+                        storedNorm = grams
+                        message = R.string.macro_norm_saved
+                    }
+                },
+                label = {
+                    Text(
+                        stringResource(
+                            R.string.macro_preset_label,
+                            presetName(preset),
+                            preset.percent(Macro.PROTEIN),
+                            preset.percent(Macro.FAT),
+                            preset.percent(Macro.CARBS),
+                        ),
+                    )
+                },
+            )
+        }
+    }
 
     NumberField(R.string.macro_norm_protein, protein) { protein = it }
     NumberField(R.string.macro_norm_fat, fat) { fat = it }
@@ -273,3 +316,13 @@ private fun LanguageSetting() {
         )
     }
 }
+
+@Composable
+private fun presetName(preset: MacroPreset): String = stringResource(
+    when (preset) {
+        MacroPreset.BY_TARGET -> R.string.macro_preset_target
+        MacroPreset.EVEN -> R.string.macro_preset_even
+        MacroPreset.PROTEIN -> R.string.macro_preset_protein
+        MacroPreset.HIGH_PROTEIN -> R.string.macro_preset_high_protein
+    },
+)

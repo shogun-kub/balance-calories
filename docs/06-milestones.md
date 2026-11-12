@@ -402,4 +402,15 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
        `MeteringPointFactory` subclass, because `PreviewView` in `COMPATIBLE` mode still escaped its box and
        painted over the title (P-38). The found green is fixed rather than themed: the light theme's protein
        green was an olive that vanished into video.
-    Presets and meals are still open.
+    4. *Macro presets.* The owner does not think in grams: "30/30/40" is a split a person recognises, "96 g of
+       protein" is not. Four presets now sit above the fields - по цели 25/30/45, ровно 30/30/40, больше белка
+       40/30/30, много белка 45/25/30 - and a chip computes the grams for the current target, writes them
+       through the same `setMacroNorm` a typed norm uses, and the fields show what was stored. `MacroPreset`
+       lives in `:core` with seven tests: the shares are of **energy**, so the grams divide by each macro's
+       Atwater factor, and they are whole grams because a rounded preset reads as a number somebody chose.
+       A chip is selected by recomputing which preset the stored grams represent (exact grams first, then the
+       energy split within two percent), so editing a field clears the selection without extra state.
+       Verified on the Honor X7c twice: the owner's own `171,76,228` is recognised as "ровно" without being
+       rewritten, and on the Test profile the 45/25/30 chip stored `214,53,143` for a 1904 kcal target.
+    Meals are still open.
+
