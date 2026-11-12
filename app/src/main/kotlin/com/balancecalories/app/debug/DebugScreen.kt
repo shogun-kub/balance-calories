@@ -85,6 +85,7 @@ fun DebugScreen(
             stringResource(
                 when (hcState) {
                     HealthConnectState.AVAILABLE -> R.string.hc_available
+                    HealthConnectState.NOT_INSTALLED -> R.string.hc_not_installed
                     HealthConnectState.UPDATE_REQUIRED -> R.string.hc_update_required
                     HealthConnectState.NOT_SUPPORTED -> R.string.hc_not_supported
                 },

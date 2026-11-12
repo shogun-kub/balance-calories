@@ -112,6 +112,7 @@
     <string name="limit_floor">raised to safety floor</string>
 
     <string name="hc_available">available</string>
+    <string name="hc_not_installed">not installed</string>
     <string name="hc_update_required">update required</string>
     <string name="hc_not_supported">not supported</string>
 

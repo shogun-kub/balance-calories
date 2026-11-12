@@ -228,6 +228,12 @@ at 21:00 and a day where the band stayed home.
 
 - [ ] Device matrix pass on both real phones: HC permission flows (system UI vs HC app), camera and
       torch, background sync under MIUI battery management, low-storage behaviour, font scaling
+      - **Redmi Note 8 Pro (Android 11, MIUI 12.5.3) — first pass, 2026-11-12**: adb restored (P-35),
+        the debug build installed, onboarding completed with a fixture profile, and Today correct in the
+        light theme at 1080×2340 (estimate path, macro line, tab bar). One defect found and fixed:
+        Health Connect **not installed** was reported as "требуется обновление" (P-36, `NOT_INSTALLED`).
+        Health Connect itself is not on the phone yet, so the permission flow, the camera and MIUI's
+        background behaviour are still open.
 - [x] JSON export/import (schema-versioned) + CSV export; round-trip test — `:data/backup`, ADR-025
 - [ ] Full i18n pass (en/ru), plurals, RTL-safe layouts (cheap insurance)
 - [ ] Accessibility pass: TalkBack, contrast, 48 dp targets — font scaling to 200% is done (ADR-026)

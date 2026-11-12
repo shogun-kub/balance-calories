@@ -334,3 +334,26 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     продуктом «Nutella»". A bad check digit stays a hint, because a shop's internal code is a real identifier.
     Verified on the Honor X7c end to end, including the search by digits; two device cases added (122 :data).
     ADR-037.
+38. **The second phone, and the state it changed** - the Redmi Note 8 Pro came online for the M6 matrix
+    (Android 11 / SDK 30, MIUI 12.5.3.0, 1080x2340 @ 440, `ru-RU`). Getting it to appear took P-35: VMware's
+    USB arbitrator held the adb interface exclusively, so `Error 5` came back to this user *and* to an
+    elevated daemon. With the service stopped the phone is a plain unelevated adb target. The first Android
+    11 findings, in the order they were found:
+    1. Onboarding renders and works in the **light** theme at 1080x2340, and its live preview prints
+       "Примерная цель: 1540 ккал в день" before the profile exists. The «Сохранить» button sits at the very
+       bottom of a scrollable column and needs a scroll before a tap can reach it (`uiautomator` reported it
+       clipped to 23 px) - not a defect, but the reason a careless tap at the screenshot's coordinates lands
+       on the navigation bar.
+    2. Today on a phone with no band shows "Сожжено 1815 ккал", "Баланс (оценка) -1815 ккал" and
+       "нет данных браслета - показана оценка за весь день", which is hard rule 4 doing its job, and the
+       macro line prints "Белки 0 г Жиры 0 г Углеводы 0 г" - the M7.7 fix holds on a second device.
+    3. **A real defect**: with Health Connect absent the app said "требуется обновление" about an app that
+       was not installed. `HealthConnectClient.getSdkStatus` returns
+       `SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED` both for a missing provider and for an outdated one, and
+       only the package table separates them. `HealthConnectState` gained `NOT_INSTALLED`, the mapping moved
+       to a pure `HealthConnectStateMapping.decide(available, updateRequired, providerInstalled)` in
+       `:data/health/HealthConnectState.kt`, and four JVM tests pin the precedence. Verified on the Redmi:
+       the row now reads "Health Connect   не установлен".
+    Totals after the change: 46 :data JVM (+4), 25 :app JVM, 122 :data and 4 :app device tests unchanged.
+    Still to do on this phone: install Health Connect, the permission flow, the camera, and MIUI's
+    background-sync behaviour.

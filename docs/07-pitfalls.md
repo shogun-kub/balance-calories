@@ -118,6 +118,16 @@ with `adb shell pm grant` instead.
 classes, so `PRAGMA user_version` stays behind and "the migration was verified" is false. Rebuild `:app`
 before believing a device test after a schema bump.
 
+**P-36 · "Update required" can mean "not installed at all".**
+`HealthConnectClient.getSdkStatus` answers `SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED` for **both** "this
+device has no provider" and "the provider is too old to serve this client", so an app that maps the code
+straight to a sentence tells the user to update something that is not there. Measured on the Redmi Note 8
+Pro (Android 11, Health Connect never installed): the Today row read "требуется обновление". The package
+table is the fact that separates the two — `packageManager.getPackageInfo("com.google.android.apps.healthdata",
+0)` — so the state enum carries `NOT_INSTALLED` on its own and the decision is a pure function with a JVM
+test pinning the precedence. The same idiom applies to any provider API that collapses "missing" and
+"outdated" into one code: check the package, do not trust the status for the sentence the user reads.
+
 ### Camera
 
 **P-16 · `PreviewView`'s internal `SurfaceView` ignores its parent's bounds.** The preview painted over the

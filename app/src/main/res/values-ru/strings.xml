@@ -112,6 +112,7 @@
     <string name="limit_floor">поднята до безопасного минимума</string>
 
     <string name="hc_available">доступен</string>
+    <string name="hc_not_installed">не установлен</string>
     <string name="hc_update_required">требуется обновление</string>
     <string name="hc_not_supported">не поддерживается</string>
 
