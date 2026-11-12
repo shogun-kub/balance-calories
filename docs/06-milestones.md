@@ -462,3 +462,11 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
        editor lost its clear action entirely - a meal that never got a time simply has none, and the picker button
        reads "Выбрать время" when there is nothing to show yet. `meals_no_time` was deleted from both languages,
        so the sentence cannot come back by accident.
+    8. *The name field is a value, not a hint.* A hint under an empty field asked a person to retype "Завтрак" to
+       change it, which is not an edit - the owner's last note on this screen. The editor now **prefills** the name
+       with what the list shows, so the localization of a default slot is what it starts from and can be edited
+       directly. Saving it untouched stores an empty name again (`trimmed == default name` means "keep the
+       default"), so the slot still follows the phone language; anything typed is stored as typed, and clearing an
+       existing name returns it to the default. Verified on the Honor X7c: "Завтрак" prefilled and saved unchanged
+       leaving `name = ''`; Обед renamed to "LunchX" and stored; cleared back to empty and listed as "Обед" again;
+       29 entries and the active profile untouched.

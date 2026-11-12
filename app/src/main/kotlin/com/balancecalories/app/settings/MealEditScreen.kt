@@ -65,19 +65,18 @@ fun MealEditScreen(
     var saving by remember { mutableStateOf(false) }
     var pickerOpen by remember { mutableStateOf(false) }
 
+    // Prefilled with the name the person sees, which for a default slot is the localized one kept out of the
+    // database: an empty field asked somebody to retype "Завтрак" to change it, which is not an edit.
+    val context = LocalContext.current
     LaunchedEffect(profile.id, mealKey) {
         if (mealKey == null) return@LaunchedEffect
         val slot = container.meals.slots(profile.id).firstOrNull { it.key == mealKey }
-        name = slot?.name.orEmpty()
+        name = slot?.name?.takeIf { it.isNotBlank() } ?: defaultNameOf(mealKey, context)
         minutes = slot?.plannedMinutes
     }
 
     val editing = mealKey != null
     val shownMinutes = minutes
-    // A default slot keeps an empty `name` in the database, so the field shows the name the person actually reads as
-    // a placeholder. Saving an empty name therefore means "keep the default", not "a meal with no name".
-    val context = LocalContext.current
-    val defaultName = mealKey?.let { defaultNameOf(it, context) }.orEmpty()
 
     if (pickerOpen) {
         val initial = shownMinutes ?: (8 * 60)
@@ -123,9 +122,6 @@ fun MealEditScreen(
             value = name,
             onValueChange = { name = it },
             label = { Text(stringResource(R.string.meals_name)) },
-            // Under the field, not inside it: an empty M3 field shows its label in the placeholder slot, so a
-            // placeholder would never be read while the label matters.
-            supportingText = { if (defaultName.isNotEmpty()) Text(defaultName) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -156,7 +152,10 @@ fun MealEditScreen(
                     if (mealKey == null) {
                         container.meals.create(profile.id, trimmed, minutes)
                     } else {
-                        container.meals.rename(profile.id, mealKey, trimmed)
+                        // Leaving the localized default untouched stores an empty name, so the slot keeps following
+                        // the phone's language; anything the person typed is stored as typed.
+                        val keepDefault = trimmed == defaultNameOf(mealKey, context)
+                        container.meals.rename(profile.id, mealKey, if (keepDefault) "" else trimmed)
                         container.meals.setPlannedMinutes(profile.id, mealKey, minutes)
                     }
                     saving = false
