@@ -35,7 +35,9 @@
     <string name="meals_note">Names and times. The snack bucket always stays: anything that fits no other meal lands there, and it cannot be deleted.</string>
     <string name="meals_fixed_hint">always present</string>
     <string name="meals_name">Name</string>
-    <string name="meals_time">Time, HH:MM</string>
+    <string name="meals_edit_title">Edit meal</string>
+    <string name="meals_no_time">No time</string>
+    <string name="meals_time_label">Time</string>
     <string name="meals_new">New meal</string>
     <string name="meals_saved">Saved</string>
     <string name="meals_name_required">A meal needs a name</string>
@@ -155,7 +157,6 @@
     <string name="meal_times_title">Meal times</string>
     <string name="meal_times_note">The time only labels the cards on Today: eating earlier or later is not an error.</string>
     <string name="meal_times_saved">Times saved</string>
-    <string name="meal_time_invalid">Enter the time as 08:00</string>
     <string name="meal_card_planned">" ·\u00A0%1$s"</string>
     <string name="meal_card_empty">nothing yet</string>
     <string name="meal_card_summary">%1$s · %2$d%% of target</string>

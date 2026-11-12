@@ -444,3 +444,16 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     shown as its own card before Перекус, and deleted; deleting a meal with food in it was refused and left the
     entries alone. `MealSlot`, `MealDefaults`, `guessMealKey` and the card maths are in `:core` with tests (177),
     `MealRepository` owns the three rules, and ADR-040 records the shape.
+
+    6. *The meals screen split in two.* The first version edited every meal in place - four names, four times and a
+       save button - and the owner's answer was that this is not the interface he wants. It is now a **list** (name
+       and time read-only, "Изменить" and "Удалить" on each row, one "Добавить" button) and a separate **editor**
+       that serves both add and edit, with the fields prefilled when editing. Time is chosen with the Material 3
+       **clock face** rather than parsed from text: a picker cannot produce `8.30` or `0830`, so `parseClock` and its
+       eight assertions were deleted along with the two strings that only the text field used. A default slot keeps
+       an empty `name` in the database, and the editor shows that default as supporting text under the name field -
+       a placeholder would be hidden behind the M3 label - so saving an untouched name keeps the localized default,
+       and only a **new** meal is required to have one. Verified on the Honor X7c: the list with three editable rows
+       and the fixed bucket; "Изменить" on Завтрак opening prefilled (supporting text "Завтрак", time 08:00); the
+       clock face setting 09:00 and saving `planned_minutes = 540`; then back to 08:00 the same way, leaving the
+       four default slots exactly as they were.

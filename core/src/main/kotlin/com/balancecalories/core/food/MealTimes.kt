@@ -40,26 +40,6 @@ data class MealTimes(
             return MealTimes(minutes[0], minutes[1], minutes[2])
         }
 
-        /**
-         * `"08:30"` to 510, or null when the text is not a clock time.
-         *
-         * Strict on purpose: `toIntOrNull` on "8.30", "8 30" or "0830" would quietly accept three ways of
-         * typing the same thing and then store whichever one came out, and the person would see the field
-         * rewrite itself after leaving it.
-         */
-        fun parseClock(text: String): Int? {
-            val trimmed = text.trim()
-            if (trimmed.length !in 4..5) return null
-            val separator = trimmed.indexOf(':')
-            if (separator < 1 || separator > 2) return null
-            val hours = trimmed.substring(0, separator).toIntOrNull() ?: return null
-            val minutesText = trimmed.substring(separator + 1)
-            if (minutesText.length != 2) return null
-            val minutes = minutesText.toIntOrNull() ?: return null
-            if (hours !in 0..23 || minutes !in 0..59) return null
-            return hours * 60 + minutes
-        }
-
         /** 510 to `"08:30"`. A zero-padded 24-hour clock, which both languages here read the same way. */
         fun formatClock(minutes: Int): String {
             val clamped = minutes.coerceIn(0, MINUTES_PER_DAY - 1)

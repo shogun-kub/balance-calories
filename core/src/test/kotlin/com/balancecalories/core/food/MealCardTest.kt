@@ -95,21 +95,6 @@ class MealCardTest {
     }
 
     @Test
-    fun `clock text is strict about its shape`() {
-        assertEquals(8 * 60 + 30, MealTimes.parseClock("08:30"))
-        assertEquals(8 * 60 + 30, MealTimes.parseClock("8:30"))
-        assertEquals(0, MealTimes.parseClock("00:00"))
-        assertEquals(23 * 60 + 59, MealTimes.parseClock("23:59"))
-
-        assertNull(MealTimes.parseClock("8.30"))
-        assertNull(MealTimes.parseClock("0830"))
-        assertNull(MealTimes.parseClock("24:00"))
-        assertNull(MealTimes.parseClock("12:60"))
-        assertNull(MealTimes.parseClock(""))
-        assertNull(MealTimes.parseClock("ab:cd"))
-    }
-
-    @Test
     fun `a clock time is printed zero padded`() {
         assertEquals("08:00", MealTimes.formatClock(8 * 60))
         assertEquals("00:05", MealTimes.formatClock(5))

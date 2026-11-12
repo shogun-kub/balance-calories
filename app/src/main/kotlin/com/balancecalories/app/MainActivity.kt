@@ -43,6 +43,7 @@ import com.balancecalories.app.recipes.RecipeEditorScreen
 import com.balancecalories.app.recipes.RecipeScreen
 import com.balancecalories.app.recipes.RecipesScreen
 import com.balancecalories.app.scanner.ScannerScreen
+import com.balancecalories.app.settings.MealEditScreen
 import com.balancecalories.app.settings.MealsScreen
 import com.balancecalories.app.settings.SettingsScreen
 import com.balancecalories.app.today.TodayScreen
@@ -62,7 +63,7 @@ import kotlinx.coroutines.launch
 private enum class Tab { TODAY, FOOD, HISTORY, WEIGHT }
 
 /** Screens pushed over a tab. One is enough: nothing in this app is three levels deep. */
-private enum class Overlay { PROFILES, PROFILE_FORM, SETTINGS, BACKUP, DEBUG, MEALS, PRODUCT, PRODUCT_FORM, SCAN, RECIPES, RECIPE, RECIPE_FORM }
+private enum class Overlay { PROFILES, PROFILE_FORM, SETTINGS, BACKUP, DEBUG, MEALS, MEAL_EDIT, PRODUCT, PRODUCT_FORM, SCAN, RECIPES, RECIPE, RECIPE_FORM }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -118,6 +119,10 @@ private fun Root() {
     // The meal a person tapped + on, carried into the portion screen. Not saved across a process death:
     // it belongs to the tap, and a restored half-flow would open a product nobody asked for.
     var pendingMealKey by remember { mutableStateOf<String?>(null) }
+    // Which slot the meal editor is working on, and whether it is creating one. Both null means the
+    // editor is not open; `mealCreating` distinguishes "new" from "no slot chosen yet".
+    var mealEditingKey by remember { mutableStateOf<String?>(null) }
+    var mealCreating by remember { mutableStateOf(false) }
     var formEditing by remember { mutableStateOf<Product?>(null) }
     var openedRecipe by remember { mutableStateOf<Recipe?>(null) }
     var recipeEditing by remember { mutableStateOf<Recipe?>(null) }
@@ -237,7 +242,25 @@ private fun Root() {
         overlay == Overlay.MEALS -> MealsScreen(
             container = container,
             profile = active,
+            onCreate = {
+                mealCreating = true
+                mealEditingKey = null
+                overlay = Overlay.MEAL_EDIT
+            },
+            onEdit = { key ->
+                mealCreating = false
+                mealEditingKey = key
+                overlay = Overlay.MEAL_EDIT
+            },
             onBack = { overlay = Overlay.SETTINGS },
+        )
+
+        overlay == Overlay.MEAL_EDIT -> MealEditScreen(
+            container = container,
+            profile = active,
+            mealKey = if (mealCreating) null else mealEditingKey,
+            onSaved = { overlay = Overlay.MEALS },
+            onBack = { overlay = Overlay.MEALS },
         )
 
         overlay == Overlay.BACKUP -> BackupScreen(

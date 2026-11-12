@@ -35,7 +35,9 @@
     <string name="meals_note">Названия и время. «Перекус» остаётся всегда: в него попадает всё, что не попало в другие приёмы, и удалить его нельзя.</string>
     <string name="meals_fixed_hint">остаётся всегда</string>
     <string name="meals_name">Название</string>
-    <string name="meals_time">Время, ЧЧ:ММ</string>
+    <string name="meals_edit_title">Изменить приём</string>
+    <string name="meals_no_time">Без времени</string>
+    <string name="meals_time_label">Время</string>
     <string name="meals_new">Новый приём</string>
     <string name="meals_saved">Сохранено</string>
     <string name="meals_name_required">У приёма должно быть название</string>
@@ -155,7 +157,6 @@
     <string name="meal_times_title">Время приёмов пищи</string>
     <string name="meal_times_note">Время только подписывает карточки на «Сегодня»: поел раньше или позже — это не ошибка.</string>
     <string name="meal_times_saved">Время сохранено</string>
-    <string name="meal_time_invalid">Время вводится как 08:00</string>
     <string name="meal_card_planned">" ·\u00A0%1$s"</string>
     <string name="meal_card_empty">пока пусто</string>
     <string name="meal_card_summary">%1$s · %2$d %% от цели</string>
