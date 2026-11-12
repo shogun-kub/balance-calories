@@ -58,15 +58,21 @@ data class DayActivityTotals(
     /**
      * Whether an installed app wrote this day's data, as opposed to Health Connect's own platform layer.
      *
-     * Observed on the Honor X7c: the platform layer contributes a **constant 1858.25 kcal/day** with no steps
-     * and an **empty** origin set — a device baseline, not a measurement of the person wearing it. Requiring an
-     * attributed writer is therefore the difference between "the band recorded a quiet day" and "nothing was
-     * ever measured, but a number appeared anyway".
+     * Observed twice, in two different shapes. On the Honor X7c the platform layer contributes a **constant
+     * 1858.25 kcal/day** with no steps and an **empty** origin set. On the Redmi Note 8 Pro (Android 11) it
+     * contributes **1564.5 kcal/day for every day** with the pseudo-origin **`_platform`**, which is not an
+     * app at all but the name Health Connect gives its own computed records. Treating that string as an
+     * attribution is what turned a device baseline into a `complete` day. Requiring an attributed writer is
+     * therefore the difference between "the band recorded a quiet day" and "nothing was ever measured, but a
+     * number appeared anyway".
      */
-    val hasAttributedOrigin: Boolean get() = origins.isNotEmpty()
+    val hasAttributedOrigin: Boolean get() = origins.any { it.isNotBlank() && it != PLATFORM_ORIGIN }
 
     val hasAnyData: Boolean get() = steps != null || hasEnergy
 }
+
+/** Health Connect's own pseudo-origin for records it computes itself, rather than one written by an app. */
+const val PLATFORM_ORIGIN: String = "_platform"
 
 /**
  * Folds Health Connect buckets into **our** local days.

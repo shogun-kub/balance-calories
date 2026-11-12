@@ -4,6 +4,7 @@ import com.balancecalories.core.activity.ActivityBucketMapper
 import com.balancecalories.core.activity.ActivityQuality
 import com.balancecalories.core.activity.ActivityQualityRules
 import com.balancecalories.core.activity.DailyBurn
+import com.balancecalories.core.activity.PLATFORM_ORIGIN
 import com.balancecalories.core.activity.activityQualityFromStorage
 import com.balancecalories.core.activity.toStorage
 import com.balancecalories.core.profile.Profile
@@ -134,10 +135,14 @@ class DailyActivityRepository(
         val hasEnergy = row.totalKcal != null || row.activeKcal != null
         if (!hasEnergy) return DailyBurn.estimated(bmrKcal, palKcal)
 
-        // Energy that no app claims is Health Connect's own platform baseline (observed on the Honor: a constant
-        // 1858.25 kcal/day with no steps). It is not a measurement of this person, so the formula stands in and
-        // the screen says so, rather than lending a baseline the authority of a band reading.
-        if (row.dataOrigins.isNullOrBlank()) return DailyBurn.estimated(bmrKcal, palKcal)
+        // Energy that no app claims is Health Connect's own platform baseline. Observed twice: a constant
+        // 1858.25 kcal/day with an **empty** origin on the Honor X7c, and a constant 1564.5 kcal/day tagged
+        // `_platform` on the Redmi Note 8 Pro. Neither is a measurement of this person, so the formula stands in
+        // and the screen says so, rather than lending a baseline the authority of a band reading.
+        val attributed = row.dataOrigins.orEmpty()
+            .split(',')
+            .any { it.isNotBlank() && it != PLATFORM_ORIGIN }
+        if (!attributed) return DailyBurn.estimated(bmrKcal, palKcal)
 
         return DailyBurn(
             quality = quality,

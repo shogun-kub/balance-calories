@@ -357,3 +357,14 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     Totals after the change: 46 :data JVM (+4), 25 :app JVM, 122 :data and 4 :app device tests unchanged.
     Still to do on this phone: install Health Connect, the permission flow, the camera, and MIUI's
     background-sync behaviour.
+39. **The platform baseline came back wearing a name** - with Health Connect installed and permissions
+    granted on the Redmi, the sync read 30 days and Today stopped saying "оценка": "Сожжено 271 ккал",
+    "Баланс -271 ккал". The database explained it: every one of the 30 rows had `steps`, `active_kcal` and
+    `distance_m` empty, `total_kcal` frozen at **1564.5**, and `data_origins = _platform`. So Health Connect's
+    own layer was answering with a constant, and the app - which had already learned to distrust an *empty*
+    origin on the Honor - counted `_platform` as an attribution. Two fixes, one rule: `PLATFORM_ORIGIN` is
+    excluded in `:core`'s `hasAttributedOrigin`, and both read paths (Today and History) use the same
+    predicate instead of `isNullOrBlank()`. One JVM test pins it, and after a re-sync all 30 days are stored
+    `partial` while Today reads "Сожжено 1815 ккал / Баланс (оценка) -1815 ккал". The lesson generalises: a
+    constant is the signature of a baseline, and a baseline must never borrow the authority of a measurement.
+    Totals: 161 :core (+1), 46 :data, 25 :app JVM.

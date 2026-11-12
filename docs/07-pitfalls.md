@@ -195,6 +195,17 @@ ADR-026 family, this time inside a `Canvas`.
 **P-25 · `Int.times(Dp)` does not exist and `min` over `Dp` needs `minOf`.** `2 * arcThickness` does not
 compile for `Dp`. Trivial, and it costs a build cycle every time it is forgotten.
 
+**P-37 · A platform baseline wears an origin, so "has an origin" is not "was measured".**
+Health Connect's own layer writes a daily `TotalCaloriesBurned` figure that no installed app produced, and it
+shows up in two different shapes. On the Honor X7c the origin set was **empty** and the constant was
+1858.25 kcal/day, which the app already treated as unattributed. On the Redmi Note 8 Pro (Android 11, Health
+Connect app, no band) the same baseline arrived tagged **`_platform`** — a non-empty origin — so a check of
+the form `origins.isNotEmpty()` called it attributed, the day became `complete`, and the screen printed HC's
+BMR guess (a constant 1564.5 kcal/day for thirty consecutive days) as if a band had measured it. The
+constant is the tell: scan the history for a value that does not move. The rule now excludes the
+`_platform` pseudo-origin explicitly (`PLATFORM_ORIGIN` in `:core`, used by the mapper and by both read
+paths), and the two symptoms are documented together, because fixing one shape left the other alive.
+
 ### Data and storage
 
 **P-26 · A backup must be self-consistent.** The first export skipped the 69 starter products to save

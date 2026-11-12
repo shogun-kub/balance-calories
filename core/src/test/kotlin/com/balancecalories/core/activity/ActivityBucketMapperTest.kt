@@ -148,4 +148,21 @@ class ActivityBucketMapperTest {
         assertEquals(30, day.sleepMinutes)
         assertEquals(12.345, day.activeKcal!!, 1e-9)
     }
+
+    @Test
+    fun `health connect's own platform origin is not an attribution`() {
+        val baselineOnly = DayActivityTotals(
+            origins = setOf(PLATFORM_ORIGIN),
+            totalKcal = 1564.5,
+        )
+        val bandWritten = DayActivityTotals(
+            origins = setOf(PLATFORM_ORIGIN, "nodomain.freeyourgadget.gadgetbridge"),
+            totalKcal = 1980.0,
+        )
+        val nothing = DayActivityTotals()
+
+        assertFalse(baselineOnly.hasAttributedOrigin, "a platform baseline must not look like a measurement")
+        assertTrue(bandWritten.hasAttributedOrigin, "one real writer is enough")
+        assertFalse(nothing.hasAttributedOrigin, "no writer at all is not an attribution either")
+    }
 }

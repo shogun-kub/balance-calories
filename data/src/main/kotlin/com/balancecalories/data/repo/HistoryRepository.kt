@@ -2,6 +2,7 @@ package com.balancecalories.data.repo
 
 import androidx.room.ColumnInfo
 import com.balancecalories.core.activity.ActivityQuality
+import com.balancecalories.core.activity.PLATFORM_ORIGIN
 import com.balancecalories.core.food.MacroEnergy
 import com.balancecalories.core.food.MacroSplit
 import com.balancecalories.core.energy.DayEnergy
@@ -148,7 +149,11 @@ class HistoryRepository(
             val intake = macros?.kcal ?: 0.0
             val row = activities.forDay(profileId, dayKey)
             val hasEnergy = row != null && (row.totalKcal != null || row.activeKcal != null)
-            val measured = hasEnergy && !row!!.dataOrigins.isNullOrBlank()
+            // Same rule as the Today screen: Health Connect's own platform layer writes a constant baseline
+            // (empty origin on the Honor, `_platform` on the Redmi), and a baseline is not a measurement.
+            val measured = hasEnergy && row!!.dataOrigins.orEmpty()
+                .split(',')
+                .any { it.isNotBlank() && it != PLATFORM_ORIGIN }
 
             val burn = when {
                 measured -> row!!.totalKcal ?: (bmrKcal + row.activeKcal!!)
