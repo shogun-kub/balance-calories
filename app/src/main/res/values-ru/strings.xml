@@ -170,6 +170,7 @@
     <string name="entry_edit_kcal">%1$.0f ккал после изменения</string>
     <string name="action_copy_yesterday">Повторить вчерашнее (%1$d)</string>
     <string name="scan_title">Сканировать штрихкод</string>
+    <string name="scan_found">Найдено %1$s</string>
     <string name="scan_hint">Наведите камеру на штрихкод на упаковке</string>
     <string name="scan_torch_on">Фонарик включён</string>
     <string name="scan_torch_off">Фонарик выключен</string>

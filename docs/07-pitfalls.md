@@ -141,6 +141,18 @@ Diagnose with the view hierarchy, not with screenshots.
 queue worked perfectly and the app simply could not open a socket. The error text names the cause; read the
 recorded `last_error` before suspecting the network.
 
+**P-38 · `PreviewView` in `COMPATIBLE` mode still escapes its bounds, so tap-to-focus costs the layout.**
+Tapping the camera preview to focus wants `PreviewView.meteringPointFactory`, and the obvious move is to
+swap the plain `TextureView` for a `PreviewView` with `implementationMode = COMPATIBLE` - which is
+documented as using a `TextureView` underneath. Measured on the Redmi Note 8 Pro (Android 11, MIUI 12.5.3,
+1080x2340): the camera image started at y = 0, painted over the screen title, and the preview's own box
+(240 dp) was ignored. That is the same failure the original code comment warned about, so `COMPATIBLE` is
+not the fix. The working arrangement is a plain `TextureView` plus a three-line `MeteringPointFactory`
+subclass: `convertPoint` returns its input, `createPoint` is fed coordinates normalised to [0..1] of the
+view, and the surface's aspect ratio is passed to the superclass constructor. Check a preview's bounds with a
+screenshot at the *top* of the screen, not just around the frame: the overflow is upward and hides the
+header.
+
 ### Strings and localisation
 
 **P-18 · A format string and its call site drift apart silently.** The device threw

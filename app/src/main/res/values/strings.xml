@@ -170,6 +170,7 @@
     <string name="entry_edit_kcal">%1$.0f kcal after the change</string>
     <string name="action_copy_yesterday">Repeat yesterday (%1$d)</string>
     <string name="scan_title">Scan a barcode</string>
+    <string name="scan_found">Found %1$s</string>
     <string name="scan_hint">Point the camera at the barcode on the package</string>
     <string name="scan_torch_on">Torch on</string>
     <string name="scan_torch_off">Torch off</string>

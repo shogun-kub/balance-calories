@@ -9,11 +9,17 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,11 +43,18 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -51,6 +64,7 @@ import android.view.Surface
 import android.view.TextureView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.balancecalories.app.ui.ChartPalette
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
 import com.balancecalories.app.ui.WrappingRow
@@ -60,9 +74,20 @@ import com.balancecalories.core.food.Product
 import com.balancecalories.data.off.UnusableReason
 import com.balancecalories.data.repo.Lookup
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** What the screen is doing, so the user sees a reason rather than a silent camera. */
+/** How long the green frame and the vibration are on screen before the product opens. */
+private const val SCAN_CONFIRM_MS = 400L
+
+/** Bright green for the "code read" state: the overlay is drawn on camera pixels, not on a themed surface. */
+private val ScanFoundGreen = Color(0xFF81C784)
+
+/** How long a tap-to-focus reticle stays visible. */
+private const val FOCUS_RETICLE_MS = 600L
+
 private sealed interface ScanState {
     data object Scanning : ScanState
     data class Looking(val barcode: String) : ScanState
@@ -104,6 +129,12 @@ fun ScannerScreen(
     var manualCode by remember { mutableStateOf("") }
     var torch by remember { mutableStateOf(false) }
     var camera by remember { mutableStateOf<Camera?>(null) }
+    // The code the camera just read. Non-null means "we saw it", which is a different moment from "we found
+    // the product": the frame turns green and says the number immediately, before the lookup answers.
+    var detected by remember { mutableStateOf<String?>(null) }
+    val haptics = LocalHapticFeedback.current
+    // Where the last tap-to-focus landed, in the preview's own pixels; cleared after a moment.
+    var focusTap by remember { mutableStateOf<Offset?>(null) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -116,6 +147,13 @@ fun ScannerScreen(
         if (!granted) permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
+    LaunchedEffect(focusTap) {
+        if (focusTap != null) {
+            delay(FOCUS_RETICLE_MS)
+            focusTap = null
+        }
+    }
+
     fun lookup(raw: String) {
         val barcode = Barcode.normalize(raw)
         if (barcode == null) {
@@ -123,24 +161,44 @@ fun ScannerScreen(
             return
         }
         if (state is ScanState.Looking) return
+        // Confirmation first, resolution second: a scanner that waits for the network to say "I read it"
+        // makes the person move the phone away at the exact moment the code was captured.
+        detected = barcode
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         state = ScanState.Looking(barcode)
         scope.launch {
             val result = container.barcodes.resolve(barcode) { container.offClient.lookup(it) }
             state = when (result) {
                 is Lookup.Cached -> {
+                    // The green frame and the vibration have already said "read"; this pause is only long
+                    // enough for the eye to land on the confirmation before the screen changes.
+                    delay(SCAN_CONFIRM_MS)
                     onProduct(result.product)
                     ScanState.Scanning
                 }
 
                 is Lookup.Fetched -> {
+                    delay(SCAN_CONFIRM_MS)
                     onProduct(result.product)
                     ScanState.Scanning
                 }
 
-                Lookup.NotFound, Lookup.KnownMiss -> ScanState.NotFound(barcode)
-                is Lookup.Offline -> ScanState.Offline(barcode)
-                is Lookup.Unusable -> ScanState.Unusable(barcode, result.reason)
-                is Lookup.Invalid -> ScanState.Invalid(result.barcode)
+                Lookup.NotFound, Lookup.KnownMiss -> {
+                    detected = null
+                    ScanState.NotFound(barcode)
+                }
+                is Lookup.Offline -> {
+                    detected = null
+                    ScanState.Offline(barcode)
+                }
+                is Lookup.Unusable -> {
+                    detected = null
+                    ScanState.Unusable(barcode, result.reason)
+                }
+                is Lookup.Invalid -> {
+                    detected = null
+                    ScanState.Invalid(result.barcode)
+                }
             }
         }
     }
@@ -168,23 +226,59 @@ fun ScannerScreen(
                     lifecycleOwner = lifecycleOwner,
                     onBarcode = ::lookup,
                     onCamera = { camera = it },
+                    frozen = detected != null,
+                    onFocus = { focusTap = it },
                     modifier = Modifier.fillMaxSize(),
                 )
-                // A frame, not a scanning laser: the user aims the whole code at it.
+                // A frame, not a scanning laser: the user aims the whole code at it. It turns green the
+                // moment a code is read, which is the confirmation the screen was missing.
+                val found = detected
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(0.75f)
                         .height(90.dp)
-                        .border(2.dp, Color.White, RoundedCornerShape(6.dp)),
+                        .border(
+                            width = if (found != null) 3.dp else 2.dp,
+                            color = if (found != null) ScanFoundGreen else Color.White,
+                            shape = RoundedCornerShape(8.dp),
+                        ),
                 )
                 Text(
-                    text = stringResource(R.string.scan_hint),
-                    color = Color.White,
+                    text = if (found != null) {
+                        stringResource(R.string.scan_found, found)
+                    } else {
+                        stringResource(R.string.scan_hint)
+                    },
+                    // The overlay sits on camera pixels, not on the app surface, so it uses a fixed bright
+                    // green and a dark pill rather than the theme's tones: the light theme's protein green
+                    // is a dark olive and disappeared into the video (measured on the Redmi, light theme).
+                    color = if (found != null) ScanFoundGreen else Color.White,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(8.dp),
+                        .padding(8.dp)
+                        .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(50))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
                 )
+                // A reticle where the tap landed, so a touch-focus is visible rather than an invisible
+                // guess about whether the tap registered.
+                val tap = focusTap
+                if (tap != null) {
+                    val density = LocalDensity.current
+                    val side = 56.dp
+                    val sidePx = with(density) { side.toPx() }
+                    Box(
+                        modifier = Modifier
+                            .offset {
+                                IntOffset(
+                                    x = (tap.x - sidePx / 2f).toInt(),
+                                    y = (tap.y - sidePx / 2f).toInt(),
+                                )
+                            }
+                            .size(side)
+                            .border(2.dp, Color.White, CircleShape),
+                    )
+                }
             }
             WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(
@@ -254,6 +348,8 @@ private fun CameraPreview(
     lifecycleOwner: androidx.lifecycle.LifecycleOwner,
     onBarcode: (String) -> Unit,
     onCamera: (Camera?) -> Unit,
+    frozen: Boolean,
+    onFocus: (Offset) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -261,6 +357,10 @@ private fun CameraPreview(
     val scanner = remember { ZxingBarcodeScanner() }
     var lastCode by remember { mutableStateOf<String?>(null) }
     var lastAt by remember { mutableLongStateOf(0L) }
+    // The touch listener is created inside the AndroidView factory, which cannot read composable state, so
+    // the camera handle lives in a holder both sides can reach, and `frozen` is read through a state object.
+    val cameraHolder = remember { mutableStateOf<Camera?>(null) }
+    val frozenNow = rememberUpdatedState(frozen)
 
     DisposableEffect(Unit) {
         onDispose {
@@ -276,6 +376,33 @@ private fun CameraPreview(
             // 720x1280 inside a 656x240 parent and painted over the title and the buttons (measured with
             // `dumpsys activity top`). A TextureView we own is clipped by its parent like any other view.
             val textureView = TextureView(ctx)
+            textureView.setOnTouchListener { view, event ->
+                if (event.actionMasked == android.view.MotionEvent.ACTION_UP) {
+                    val width = view.width.toFloat()
+                    val height = view.height.toFloat()
+                    val camera = cameraHolder.value
+                    if (camera != null && width > 0f && height > 0f) {
+                        // A PreviewView would hand us a metering factory; a TextureView we own does not, so
+                        // the factory is built from the view's own pixel size, which is all it needs to map
+                        // a tap to a sensor region.
+                        val factory = ViewMeteringPointFactory(width, height)
+                        // CameraX takes the metering point in the factory's own units: [0..1] across the
+                        // preview, which the factory then scales by the surface's aspect ratio.
+                        val point = factory.createPoint(
+                            (event.x / width).coerceIn(0f, 1f),
+                            (event.y / height).coerceIn(0f, 1f),
+                        )
+                        val action = FocusMeteringAction.Builder(
+                            point,
+                            FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE,
+                        ).setAutoCancelDuration(3, TimeUnit.SECONDS).build()
+                        camera.cameraControl.startFocusAndMetering(action)
+                        onFocus(Offset(event.x, event.y))
+                    }
+                    view.performClick()
+                }
+                true
+            }
             val providerFuture = ProcessCameraProvider.getInstance(ctx)
             providerFuture.addListener({
                 val provider = providerFuture.get()
@@ -296,6 +423,12 @@ private fun CameraPreview(
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
                 analysis.setAnalyzer(executor) { image ->
+                    // Frozen while a code is being resolved: decoding the same barcode again would only
+                    // re-trigger the confirmation and the vibration.
+                    if (frozenNow.value) {
+                        image.close()
+                        return@setAnalyzer
+                    }
                     val code = runCatching { scanner.scan(image) }.getOrNull()
                     image.close()
                     if (code != null) {
@@ -316,10 +449,27 @@ private fun CameraPreview(
                         preview,
                         analysis,
                     )
+                    cameraHolder.value = camera
                     onCamera(camera)
                 }
             }, ContextCompat.getMainExecutor(ctx))
             textureView
         },
     )
+}
+
+/**
+ * Metering points for a `TextureView` we own.
+ *
+ * `PreviewView.getMeteringPointFactory()` is the usual way, but `PreviewView` laid its surface outside its
+ * bounds on the Redmi and painted over the title (measured 2026-11-12), so the preview stays a plain
+ * `TextureView` and this factory supplies the mapping: coordinates are given in the view's pixels and passed
+ * through unchanged, because the preview fills the view.
+ */
+private class ViewMeteringPointFactory(width: Float, height: Float) :
+    androidx.camera.core.MeteringPointFactory(
+        android.util.Rational(width.toInt().coerceAtLeast(1), height.toInt().coerceAtLeast(1)),
+    ) {
+    override fun convertPoint(x: Float, y: Float): android.graphics.PointF =
+        android.graphics.PointF(x, y)
 }
