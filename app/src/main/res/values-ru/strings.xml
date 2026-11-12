@@ -398,7 +398,9 @@
 <string name="action_macro_norm_reset">Из цели</string>
 <string name="macro_norm_saved">Нормы сохранены</string>
 <string name="error_macro_norm_value">Введите граммы или возьмите из цели</string>
+    <string name="settings_profiles_note">Кто пользуется приложением, его цель, нормы БЖУ и время приёмов пищи.</string>
     <string name="settings_data_note">Резервная копия, восстановление и таблица по дням.</string>
+    <string name="settings_data_button">Управление данными</string>
     <!-- M7.1: the four tabs and the weight screen. -->
     <string name="nav_today">Сегодня</string>
     <string name="nav_food">Еда</string>

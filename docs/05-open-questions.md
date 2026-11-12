@@ -122,12 +122,13 @@ These are spikes (M0) and need the real phones and 3–4 days:
 3. Section D.1–D.3 (scale and weigh-in habit) — it decides whether the app can self-correct or stays a
    formula with a nice UI.
 
-### E. A second food source for Russia — researched 2026-11-11, waiting for a decision
+### E (continued). A second food source for Russia — **closed 2026-11-12: none**
 
-Measured: Open Food Facts holds **37 439** Russian products against **1 294 861** French ones, and only
-about **15 807** of them carry a Russian barcode (prefix 460–469) — of which roughly **86 % have no complete
-nutrition block** (`docs/02-research.md` §3.1.3). Every other route was checked and closed, forbidden or
-paid:
+The owner's decision after the research: Open Food Facts search is enough, and no bundled Russian pack is
+built. That closes the three options below and removes them from the plan, so the coverage numbers stay in
+`docs/02-research.md` §3.1.3 as a **known limitation** rather than as work waiting to be done: a Russian
+packaged product that OFF does not hold with a full nutrition block reaches the app the two ways it already
+has - typed once by hand, or scanned from a pack whose label we type.
 
 | Route | Status |
 | --- | --- |
@@ -137,20 +138,38 @@ paid:
 | health-diet.ru, kalorizator.ru | ToS forbids extraction, parsers and republishing; database-maker right claimed |
 | Edamam / Nutritionix / FatSecret / spoonacular / CalorieNinjas | paid, caching bans, English-only or shutting down; UPCitemdb resolved **0 of 4** real Russian codes |
 | barcodelookup, EAN-Search | $99/month and paid-per-lookup |
+| Bundled OFF pack (460–469, complete nutrition) | **not built** - the owner does not want it |
+| Hand-typed generic-food pack | **not built** - the starter ingredient pack already covers cooking |
 
-The realistic options, in order of value per hour:
+### H. Writing our products back to Open Food Facts — open since 2026-11-12
 
-1. **Bundled Russian pack from Open Food Facts, filtered to complete nutrition.** A one-off `tools/` pipeline
-   downloads the products with a 460–469 barcode that have kcal **and** all three macros, dedupes by code,
-   prefers a Russian name, and emits an asset imported once exactly like the 69-item starter pack (versioned
-   guard, `source='off_ru'`). ODbL: attribution and share-alike, which for a private two-person app means a
-   header in the file and an ADR. Answers scans **with no network**.
-2. **A one-off pack of generic foods** (cereals, dairy, meat, vegetables) typed from published tables and
-   marked estimated. Legally fine as facts with a cited source; hours of careful typing, and the composition
-   of a buckwheat groat does not change, so it does not rot.
-3. **Contribute the labels back to Open Food Facts** when adding a product by hand, which improves the only
-   source that also covers barcodes. Needs a network call at save time and a licence statement.
-4. No second commercial API: the report found none worth a subscription for this household.
+The owner asked whether a product typed here can also be **added to** Open Food Facts instead of only being
+stored locally. **Yes**, and this is what the current documentation says (`API v2`, marked deprecated, and
+`API v3` which supersedes it):
 
-**The decision needed:** whether to build option 1 now (a few hours, one commit, no new dependency, no
-network at runtime), and whether option 2 is worth doing by hand in parallel.
+| Fact | Source |
+| --- | --- |
+| `POST /cgi/product_jqm2.pl` with `code` **creates** the product when the barcode is unknown and **edits** it when it is known (v3: `POST /api/v3/product/{barcode}`, with `PATCH` for partial updates) | [Edit Product](https://openfoodfacts.github.io/documentation/docs/Product-Opener/v2/products/post-cgi-product_jqm2.pl/) |
+| Every write needs a user: a session cookie from `/cgi/session.pl`, or `user_id` + `password` in the body | same |
+| **Anonymous creation** of a *new* product is possible; anonymous *modification* of an existing one is not | [API/Write](https://wiki.openfoodfacts.org/API/Write) |
+| Fields available: `product_name_<lang>`, `brands`, `quantity`, `serving_size`, `nutrition_data_per`, `nutriment_*`, `comment`, and `app_name` / `app_version` / `app_uuid` for an app that writes under one account | [Edit Product](https://openfoodfacts.github.io/documentation/docs/Product-Opener/v2/products/post-cgi-product_jqm2.pl/) |
+| A wrong password fails **silently** with an HTML 200 page | [API/Write](https://wiki.openfoodfacts.org/API/Write) |
+| The server now checks that a write carries an identified user, where it previously did not | [openfoodfacts-server #11596](https://github.com/openfoodfacts/openfoodfacts-server/pull/11596) |
+| Whatever is written is public under the **ODbL** and can be edited by anybody afterwards | [Open Food Facts](https://world.openfoodfacts.org/data) |
+
+Three ways to do it, with the consequence of each:
+
+1. **The person's own OFF account**, logged in inside the app. Honest attribution, but the app then holds a
+   password for a third-party service, and we have a hard rule against storing credentials it does not own;
+   it also needs a network call at save time, which is the one place the app is currently absolute about.
+2. **One house account**, with `app_uuid` per person as OFF itself suggests for apps. One tap to contribute,
+   but the password ships inside the APK, which is a public repository's worst place for a secret, and every
+   edit would be attributed to us rather than to the person who typed the label.
+3. **No write from the app**: type the product locally, and offer a share/copy of the values so a person can
+   paste them into the OFF site from a browser when they care. Nothing leaves the phone by itself, no
+   credentials, no new network host, and the offline rule stays intact.
+
+**Recommendation, to be decided rather than assumed:** option 3 now, option 1 later if contributing becomes
+something the household actually wants, and option 2 never - an embedded credential in a published APK is a
+leak waiting to be found, and the licence consequence (a public, editable record) deserves a deliberate
+decision rather than a convenient one. Nothing is implemented until the owner picks.

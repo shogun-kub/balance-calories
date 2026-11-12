@@ -376,7 +376,9 @@
 <string name="action_macro_norm_reset">Use the target</string>
 <string name="macro_norm_saved">Norms saved</string>
 <string name="error_macro_norm_value">Enter grams, or use the target</string>
+    <string name="settings_profiles_note">Who uses the app, their target, macro norms and meal times.</string>
     <string name="settings_data_note">Backup, restore, and a spreadsheet of your days.</string>
+    <string name="settings_data_button">Manage data</string>
     <!-- M7.1: the four tabs and the weight screen. -->
     <string name="nav_today">Today</string>
     <string name="nav_food">Food</string>

@@ -124,18 +124,22 @@ fun SettingsScreen(
 
         HorizontalDivider()
         MacroNormSetting(container = container, profile = profile)
-    MealTimesSetting(container = container, profile = profile)
-
-        // Profiles moved here when the four tabs took the Today screen's navigation column: switching
-        // profile is a rare act on a phone that belongs to one person, so it earns neither a tab nor a
-        // button on Today.
-        TextButton(onClick = onOpenProfiles) { Text(stringResource(R.string.profiles_title)) }
+        MealTimesSetting(container = container, profile = profile)
 
         HorizontalDivider()
         Text(stringResource(R.string.settings_data), style = MaterialTheme.typography.titleMedium)
+
+        // Two items, one shape: a line saying what the place is for, then the button. Profiles used to be a
+        // bare coloured link, which is not an obvious way in for a place that also holds the targets and the
+        // norms (owner's note, 2026-11-12).
+        Text(stringResource(R.string.settings_profiles_note), style = MaterialTheme.typography.bodySmall)
+        OutlinedButton(onClick = onOpenProfiles, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.profiles_title))
+        }
+
         Text(stringResource(R.string.settings_data_note), style = MaterialTheme.typography.bodySmall)
         OutlinedButton(onClick = onOpenData, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.backup_title))
+            Text(stringResource(R.string.settings_data_button))
         }
 
         TextButton(onClick = onOpenDebug) { Text(stringResource(R.string.action_debug)) }

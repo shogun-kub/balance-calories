@@ -666,7 +666,9 @@ slow response). Minutes later both **v2 and v3 answered in 0.18–0.19 s** with 
 the search endpoint answered in 0.24 s throughout. The cause is unresolved — soft throttling after a burst is
 the best guess — and nothing in the client changed: it already spaces barcode lookups 6 s apart, retries
 network errors, 429 and 5xx with a bound, records a cached 404, and queues offline lookups for retry. What
-this does argue for is a **local first** path: a bundled Russian pack answers a scan with no network at all.
+this does argue for is a **local first** path: a bundled Russian pack would answer a scan with no network
+at all. **The owner declined that pack on 2026-11-12** (search is enough), so the numbers above stand as a
+known limit of coverage rather than as a to-do: a Russian product OFF does not hold is typed by hand.
 
 ## 4. Barcode scanning
 
