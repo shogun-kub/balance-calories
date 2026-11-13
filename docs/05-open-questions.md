@@ -222,3 +222,33 @@ is the record. The phone migration is done: the owner exported, uninstalled and 
 household key (diary item 57), so later builds install over the current one. What is *not* done, and was
 deliberately left as a choice rather than a task: **no F-Droid client is installed, so no repository is added**
 and updates stay manual until somebody wants the button. The main index remains a February task, unchanged.
+
+### K. "We see no band data" is two different facts, and only one of them is fixable in the app — open since 2026-11-13
+
+Measured on the Redmi (P-48): for as long as the app had existed on that phone, every day carried Health
+Connect's own `_platform` baseline and nothing else, because **Gadgetbridge had never been granted write access**
+— its Health Connect export was off and its permissions were never asked for. What the screen said during all
+that time was *"нет данных браслета — показана оценка за весь день"*, which is true, unhelpful, and
+indistinguishable from the same sentence printed for a person who genuinely did not move. The fix in that case
+was two taps inside a *different* app.
+
+Can this app tell the difference? Partly, and the parts matter:
+
+| Signal | Available to us? |
+| --- | --- |
+| Record origins other than `_platform` | **yes** — a read gives `DataOrigin.packageName` per bucket, which is how the `_platform` rule works (P-37) |
+| Gadgetbridge installed | **yes** — `<queries>` already declares it, so `PackageManager` answers honestly on Android 11+ |
+| Gadgetbridge's Health Connect export switch | **no** — it is a preference inside GB's private storage; there is no documented contract for it (§1.4) and this project does not patch third parties (hard rule 9) |
+| Whether Gadgetbridge holds HC write permissions | **no** — Health Connect exposes *our* grants to *us*; another app's grants are not readable |
+
+So the honest version is a hint, not a check: when the last several days hold nothing but `_platform` *and*
+Gadgetbridge is installed, say which app the switch lives in — *"Gadgetbridge не передал данные в Health Connect:
+Настройки → Внешние интеграции → Health Connect app → Включить экспорт"* — and keep the wording about our own
+permissions separate. US-8 in `docs/01-product.md` promises exactly this kind of check, with a deep link, and
+the promise is currently unimplemented for the Gadgetbridge half.
+
+Open because it is a product decision, not a mechanism: how many empty days make the hint appear (one? three?),
+whether it belongs on the band card or in settings, and whether a "проверить настройки Gadgetbridge" button
+should deep-link into GB's `HealthConnectPreferencesActivity` — a component name of a third-party app, which
+is exactly the sort of thing that breaks silently on a GB update. Recommended: the hint, no deep link, three
+empty days, and one line in the band card rather than a new screen.

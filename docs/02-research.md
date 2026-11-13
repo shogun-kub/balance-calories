@@ -166,14 +166,52 @@ Gadgetbridge was therefore installed over adb and paired:
 | HC permissions for GB | granted all write types via `PermissionsActivity` |
 | First export run | `Синхронизация данных Health Connect завершена (синхронизировать нечего)` — GB had no activity yet, because the band had just been reset |
 
-Open item: the end-to-end write is **not yet observed**. Health Connect still reports
-`Contributed Data: false` for Gadgetbridge, because the freshly reset band has recorded no steps or
+Open item: the end-to-end write is **not yet observed on the Honor**. Health Connect still reports
+`Contributed Data: false` for Gadgetbridge there, because the freshly reset band has recorded no steps or
 active calories. The next device sync after real activity is the test that closes it — and it is also
-the precondition for the §1.6 calorie-semantics spike.
+the precondition for the §1.6 calorie-semantics spike. *Observed on the Redmi instead, see §1.4.3.*
 
 Note for the wife's Redmi (Android 11): the same Gadgetbridge path applies, but it needs the
 standalone Health Connect app from Play Store, and the Band 11 pairing will hit the same
 account-key question — so decide **before** resetting whether her band's history matters.
+
+### 1.4.3 The write, measured end to end on the Redmi Note 8 Pro (2026-11-13)
+
+The Redmi runs MIUI on Android 11, so Health Connect is the standalone Play Store app
+(`com.google.android.apps.healthdata` **2026.10.01.00.release**, `versionCode 283955`) and Gadgetbridge is
+**2026.11.1** (`versionCode 257`), installed that afternoon. The chain did not work, and the reason was one
+switch plus one permission dialog, both on Gadgetbridge's side:
+
+| Check | Result before the fix |
+| --- | --- |
+| Health Connect → *Разрешения для приложений* | **"Gadgetbridge — Доступ запрещен"**, *"Приложений с доступом: 1 из 4"* |
+| Health Connect → *Доступ за последнее время* | only `com.balancecalories`, at 21:51 / 21:53 / 22:28 — Gadgetbridge never touched the store |
+| Gadgetbridge → *Настройки → Внешние интеграции → Health Connect app* | *"Включить экспорт Health Connect"* **off**, *"Синхронизация после синхронизации устройства"* **off**, *"Детали синхронизации тренировок"* on |
+| Our app's stored days (from the pre-migration backup, `schema 7`, `appVersion 1.0.0`) | 30 rows, all `steps = null`, `active_kcal = null`, `total_kcal = 1564.5…`, `data_origins = "_platform"` |
+
+So the failure had been silent since the app was first installed: Health Connect still answers reads with its
+own `_platform` baseline, which is exactly the row set the app refuses to treat as a measurement
+(`DailyActivityRepository.burn()`, trap **P-37**).
+
+Enabling it, in the order that works: export switch on → device list (*Выбрать устройства*) → band
+(`HUAWEI Band 11-F29`) → permissions dialog for the write types (*Разрешить все* → *Открыть доступ*) → initial
+sync range **30 дней** (*Принять*) → *Синхронизировать сейчас* → *"Синхронизация после синхронизации
+устройства"* on. Gadgetbridge then reported, at 22:34:55:
+
+```
+Синхронизация данных Health Connect завершена
+(ActiveCaloriesBurnedRecord: 50, StepsRecord: 19, DistanceRecord: 7, Workout: 2, HeartRate: 1)
+```
+
+Read back through our app 40 s later: *Шаги: 734* (identical to Gadgetbridge's own figure for the day),
+*Сожжено 1453 ккал* where the estimate had been 2140, and the card said *"данные браслета ещё уточняются"*
+because the day was not over. Two facts for the design:
+
+- **Gadgetbridge writes active calories, not totals.** No `TotalCaloriesBurnedRecord` appears in its export,
+  so a synced day's burn is our own BMR plus the band's active kcal — consistent with ADR-004's split, and the
+  reason `DailyActivityRepository` computes `bmrKcal` from the profile rather than reading one.
+- **Only 19 step records over a 30-day window**, from a band that had been paired hours earlier: the range is
+  a maximum, not a promise, and an empty history is not a bug.
 
 ### 1.5 Topology — confirmed: one phone per person
 

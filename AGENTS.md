@@ -41,7 +41,11 @@ repository on the home LAN** — `http://KATANA:8080/repo`, served by `tools/ser
 — because uploads above about a megabyte do not leave this machine (**P-45**), which is what killed the GitHub
 Pages attempt. **The phones are on that key since 2026-11-13, so a new build installs over the current one**; no
 F-Droid client is installed, so for now a release is `adb install -r`, and the LAN repository is ready but
-unread. The device matrix (Honor X7c, Android 14; Redmi Note 8 Pro, Android 11) and
+unread. Both phones are on `1.0.2` / `versionCode 4`, and both carry their own data: the Redmi's history came
+back as a **103-row** restore (diary item 58, and **P-47** for the MIUI picker that made it hard), and its band
+now reaches the app because **Gadgetbridge's Health Connect export was finally switched on** — until 2026-11-13
+the app had only ever seen Health Connect's `_platform` baseline there (**P-48**, `docs/02-research.md` §1.4.3).
+The device matrix (Honor X7c, Android 14; Redmi Note 8 Pro, Android 11) and
 the TalkBack pass are done, diary items 50 and 51; the submission is items 53 and 54, the repository 55. The
 source is published (Apache-2.0, tag `v1.0.2`) at <https://github.com/shogun-kub/balance-calories>; pushes go
 through the Windows ssh-agent (P-42), and the GitLab side works the same way (P-44).
@@ -84,6 +88,8 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | **P-44** | fdroiddata fails a metadata file that has comments in it (`rewritemeta` strips them, the job diffs the file) and git refuses a newline in a push option, so the MR description cannot be set from the CLI |
 | **P-45** | uploads above about 1 MB never leave this machine, throttling only lifts the limit to ~5 MB, and a git object cannot be split: the repository is served on the home LAN instead (`tools/serve_lan_repo.ps1`) |
 | **P-46** | fdroidserver is a Linux tool: it splits walked paths on `/` (run `tools/patch_fdroidserver.py`) and decodes UTF-8 JSON as cp1251 (set `PYTHONUTF8=1`) |
+| **P-47** | a backup that arrives by `adb push` is a document MIUI will not open ("0 Б"): serve it (`tools/serve_backup.py`), let the browser download it, and select it in the picker with `TAB`/`DPAD_DOWN`/`ENTER` |
+| **P-48** | an empty band in our app usually means Gadgetbridge's *Health Connect export* is off and its permissions were never granted — Health Connect then answers only with its `_platform` baseline |
 
 ## Naming and the visible language
 
@@ -102,7 +108,7 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | --- | --- | --- |
 | `docs/` | Design and findings | Numbered Markdown, tracked in git. |
 | `app/`, `core/`, `data/` | Gradle modules | `:core` is pure Kotlin, zero Android imports. `:data` owns Room, Health Connect, OpenFoodFacts, Gadgetbridge. `:app` owns Compose UI. |
-| `tools/` | Build-time generators | Starter-ingredient pack generator, icon geometry, fixture capture. Runs on the host, never in the app. |
+| `tools/` | Build-time generators | Starter-ingredient pack generator, icon geometry, fixture capture, plus the two host-side helpers that talk to a phone (`serve_lan_repo.ps1`, `serve_backup.py`). Runs on the host, never in the app. |
 | `fixtures/` | Test inputs | Sanitised OpenFoodFacts payloads, synthetic Health Connect dumps, barcode images. **No real personal data.** |
 | `gradle/libs.versions.toml` | Version truth | Every dependency version lives here and nowhere else. |
 | `build/`, `.gradle/`, `local.properties`, `*.keystore`, `*.apk`, `*.aab` | Build output and secrets | Never tracked. |

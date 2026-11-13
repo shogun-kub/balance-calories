@@ -111,6 +111,29 @@ chosen and nothing is written until both reads have answered; the repair rule it
 JVM test. Anywhere a Room flow feeds a nullable `rememberSaveable`-style state that also drives a *write*, ask
 which of the two nothings it is.
 
+**P-47 — a file `adb push`ed into `/sdcard/Download` is a document MIUI will not open: it reads "0 Б" in the
+picker and taps do nothing.** Observed on the Redmi Note 8 Pro (Android 11, MIUI) while restoring a backup into
+the app's SAF `ACTION_OPEN_DOCUMENT` dialog. Three scratch files written with `adb push` sat in `Download/`
+next to a download from September; the picker listed the pushed ones with size **0 Б** and a tap did nothing
+(`input tap` and `input motionevent DOWN`/`UP` alike), while the downloaded `transborder.pdf` read **273 КБ**.
+`MediaStore` was *not* the missing piece: `content query content://media/external/file` reported
+`_size=57480`, `mime_type=application/json`, `is_pending=0` for the pushed file, and setting `media_type` to
+`DOCUMENT` (6) to match the working row changed nothing. What did work, in two parts:
+
+1. **Let an app create the file.** `tools/serve_backup.py` serves the JSON from this machine with
+   `Content-Disposition: attachment`, so the phone's browser *downloads* it: `irina_restore.json`, 57 480
+   bytes, and the picker immediately read **57,48 КБ** and offered it as a normal document.
+2. **Select it with the keyboard, not a tap.** Even for that good file, taps on the picker's tiles still did
+   nothing (its toolbar and its scrolling respond normally, so touches do reach the window - the tiles are the
+   part that does not react). `input keyevent KEYCODE_TAB` plus `KEYCODE_DPAD_DOWN` moves focus onto a tile
+   (`focused="true"`, bounds reported by `uiautomator`), and `KEYCODE_ENTER` returns the URI to the app. Restore
+   then completed: *"восстановлено строк: 103, копия схемы 7"* - 1 profile, 1 weight, 1 target, 70 products, 30
+   days.
+
+So: for a backup travelling to a phone, do not push it, serve it (**P-45** already made a LAN server cheap to
+run), and drive the picker with keys. `adb push` is still correct for pulling data *out* and for anything under
+`/data/local/tmp`. [2026-11-13]
+
 ### Health Connect
 
 **P-12 · Declare `android.permission.health.READ_*` in the manifest.** Without the declarations the dialog
@@ -139,6 +162,33 @@ table is the fact that separates the two — `packageManager.getPackageInfo("com
 0)` — so the state enum carries `NOT_INSTALLED` on its own and the decision is a pure function with a JVM
 test pinning the precedence. The same idiom applies to any provider API that collapses "missing" and
 "outdated" into one code: check the package, do not trust the status for the sentence the user reads.
+
+**P-48 — Gadgetbridge's Health Connect export is off on a fresh install, and its permissions are not ours.**
+Symptom from the app's side: the band block says *"нет данных браслета — показана оценка за весь день"*, the
+stored days carry `total_kcal = 1564.5` with `data_origins = "_platform"` and `steps = null`, and every sync
+reports *"Синхронизировано 30 дней"* while the balance stays an estimate. Gadgetbridge itself looks healthy:
+734 steps for the day, band paired, activity synced. The gap is one step further left:
+
+- Health Connect → *Разрешения для приложений* listed **"Gadgetbridge — Доступ запрещен"**, "Приложений с
+  доступом: 1 из 4", and *Доступ за последнее время* named only our app. Gadgetbridge 2026.11.1 had been
+  installed that day, so its settings were defaults.
+- In Gadgetbridge: *Настройки → Внешние интеграции → Health Connect app* had **"Включить экспорт Health
+  Connect" off** and *"Синхронизация после синхронизации устройства"* off. These are two separate switches,
+  and the second one is what makes the data flow unattended.
+
+Fix, in this order: turn the export on (a device-selection dialog appears - pick the band), grant the write
+permissions in the Health Connect dialog (*"Разрешить все"*, then *"Открыть доступ"*), choose the initial
+sync (**30 дней**), answer *"Синхронизировать сейчас"*, then turn on *"Синхронизация после синхронизации
+устройства"*. Measured result: Gadgetbridge reported *"Синхронизация данных Health Connect завершена
+(ActiveCaloriesBurnedRecord: 50, StepsRecord: 19, DistanceRecord: 7, Workout: 2, HeartRate: 1)"*, and the next
+tap on *"Синхронизировать браслет"* in our app turned *Сожжено* from `2140 ккал` (estimate) into `1453 ккал`
+with **Шаги: 734**, matching Gadgetbridge exactly.
+
+Two consequences worth keeping: **the app cannot distinguish "the person did not move" from "Gadgetbridge
+never wrote"** - both read as no band data, and the second one is fixable in thirty seconds if the screen said
+so (open question **K**); and **Gadgetbridge writes no `TotalCaloriesBurnedRecord`** at all, only active
+calories, so a synced day's burn is our own BMR plus the band's active kcal, never a device-supplied total.
+[2026-11-13]
 
 ### Camera
 

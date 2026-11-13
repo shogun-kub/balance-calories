@@ -815,3 +815,32 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     Not verified from here: both phones were disconnected by the time this was written, so `versionCode 4` and
     the certificate on each device are the owner's report. Next time either is plugged in,
     `adb shell dumpsys package com.balancecalories` settles it in a line.
+
+58. **The wife's Redmi moves to 1.0.2, gets its data back, and the band finally reaches the app** - 2026-11-13.
+    The owner had migrated the Honor; the Redmi was still on the debug-signed **1.0.0 / versionCode 2**, so this
+    was the one install that still needed an uninstall, and it was done only after a backup had been pulled and
+    verified (57 480 bytes, `format balancecalories.backup`, schema 7: 1 profile, 1 weight, 1 target, 70
+    products, 30 days). Then `adb install` of the 1.0.2 APK from the LAN repository: `versionCode 4`, certificate
+    `2b3b0271…`.
+
+    Restore was the hard part, and not because of the app: **the MIUI document picker will not open a file that
+    `adb push` created** — three scratch files sat in `Download/` reading "0 Б" while a real download next to
+    them read 273 КБ, and `MediaStore` reported the right `_size` for all of them (**P-47**). The way in:
+    `tools/serve_backup.py` served the JSON with `Content-Disposition: attachment`, the phone's browser
+    downloaded it (57 480 bytes, listed as **57,48 КБ**), and the picker's tile was selected with
+    `TAB`/`DPAD_DOWN`/`ENTER` because taps on tiles do nothing there. Result: *"восстановлено строк: 103, копия
+    схемы 7"* — the same 103 rows that went in, and the profile came back as «Ирина» with her own target
+    (1865 kcal), her 65 kg goal and the 70 products.
+
+    The band issue was not the app either: **Gadgetbridge's Health Connect export was off**, its permissions had
+    never been granted, and Health Connect had been answering our reads with its own `_platform` baseline for as
+    long as the app had existed on that phone — 30 days of `total_kcal = 1564.5`, `steps = null`. Enabled the
+    export (30-day backfill, band selected, *sync after device sync* on), Gadgetbridge wrote
+    `ActiveCaloriesBurnedRecord: 50, StepsRecord: 19, DistanceRecord: 7, Workout: 2, HeartRate: 1`, and the next
+    tap on «Синхронизировать браслет» turned *Сожжено* from the 2140 kcal estimate into **1453 kcal with
+    Шаги: 734** — the same 734 Gadgetbridge showed. **P-48** carries the steps and the two consequences (the app
+    cannot yet tell "did not move" from "never written"; Gadgetbridge writes no total-calories record).
+
+    Also fixed on the way: the phone had been left locked in landscape by an earlier instrumentation run
+    (`settings put system accelerometer_rotation 1`, `user_rotation 0`, then `accelerometer_rotation 0` — the
+    override only clears when the rotation is toggled through the enabled state, **P-08**'s neighbour).

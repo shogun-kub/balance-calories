@@ -131,9 +131,50 @@ reinstalled whenever a dependency is added — the test APK alone resolves class
 - Ask before installing, uninstalling or clearing anything on the Redmi. A debug build replacing a
   release build with a different signing key requires an uninstall — which wipes data. Say so first.
 - Band data is only valid if Gadgetbridge is installed, paired, and has Health Connect export enabled
-  for that device. If the numbers look empty, check that chain before suspecting the app.
+  for that device. If the numbers look empty, check that chain before suspecting the app. The two places
+  that answer it in under a minute, both with the phone in hand: **Health Connect → Разрешения для
+  приложений** (does it list Gadgetbridge under *Доступ разрешен*?) and **Gadgetbridge → Настройки →
+  Внешние интеграции → Health Connect app** (is *Включить экспорт Health Connect* on?). Traps **P-48**
+  and §1.4.3 of `docs/02-research.md` have the full walk-through.
 - Logcat is evidence, not conversation: capture it to a file, quote the relevant lines, and keep it
   out of git if it contains personal data.
+
+### Restoring a backup onto a phone (MIUI, tested 2026-11-13)
+
+`adb push` of a `.json` backup into `/sdcard/Download` is *not* enough on the Redmi: the picker shows it as
+"0 Б" and will not open it (**P-47**). The working route:
+
+```powershell
+# 1. serve the backup so the phone downloads it (a download is a first-class document)
+python tools\serve_backup.py tmp\balancecalories-backup.json      # prints http://<lan-ip>:8081/<name>
+
+# 2. on the phone: open that URL in the browser, confirm «Загрузить»
+adb shell am start -a android.intent.action.VIEW -d "http://192.168.88.100:8081/balancecalories-backup.json"
+
+# 3. in the app: Настройки → Управление данными → «Восстановить из копии»
+#    moving the picker with keys, because taps on its tiles do nothing:
+adb shell input keyevent KEYCODE_TAB
+adb shell input keyevent KEYCODE_DPAD_DOWN     # repeat until the wanted row is focused
+adb shell input keyevent KEYCODE_ENTER
+```
+
+Check the result on the app's own screen: it prints *"восстановлено строк: N, копия схемы 7"*, and `N` is the
+row count of the file. The 2026-11-13 run restored **103** rows (1 profile, 1 weight, 1 target, 70 products,
+30 days). Restore replaces everything and takes no `app_setting` rows, so the sync timestamp reads
+*"Синхронизаций ещё не было"* afterwards — a band sync rebuilds it.
+
+### Un-sticking a phone left in landscape
+
+An instrumentation run leaves the display override behind and `settings put ... user_rotation 0` alone does
+not clear it. The toggle through the enabled state does:
+
+```powershell
+adb shell settings put system accelerometer_rotation 1     # let the sensor speak once
+adb shell settings put system user_rotation 0
+adb shell settings put system accelerometer_rotation 0     # then lock portrait
+adb shell dumpsys display | Select-String "mOverrideDisplayInfo"   # expect cur=1080x2340 app=1080x2134
+```
+
 
 ### Previewing English on a Russian phone
 
