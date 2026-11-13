@@ -1,7 +1,7 @@
-# Draft of `metadata/com.balancecalories.yml` for fdroiddata.
+# Submitted to https://gitlab.com/fdroid/fdroiddata as `metadata/com.balancecalories.yml`.
 #
-# This file is the merge-request payload for https://gitlab.com/fdroid/fdroiddata, not something the build
-# reads. It is kept here so the recipe can be reviewed together with the commit it builds.
+# This file is the merge-request payload, kept here so the recipe can be reviewed next to the commit it
+# builds. Its comments travel to the merge request, so they are written for a reviewer.
 #
 # Notes on the two deliberate absences:
 #   * no `subdir` - the Gradle project root is the repository root (`settings.gradle.kts` includes :app,

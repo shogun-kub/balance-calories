@@ -251,3 +251,20 @@ Two cautions. `fdroid lint` needs fdroiddata's own `config/categories.yml` next 
 valid category such as `Sports & Health` invalid - and with that file in place it crashed on this Python
 build, so `rewritemeta` is the check that counts here. And `fdroid build` is not run locally at all: the
 real build happens on the F-Droid buildserver, which is the point of the exercise.
+
+`rewritemeta` **strips every comment** from the file it rewrites. The comments in
+`docs/fdroid/metadata/com.balancecalories.yml` are the notes a reviewer needs, so it is normal for the
+rewritten copy to differ only by those lines: compare the non-comment lines, not the whole file.
+
+### GitLab, for the merge request
+
+The same key that pushes to GitHub authenticates at GitLab: `ssh -T git@gitlab.com` answers
+`Welcome to GitLab, @Ne_Che_Guevara!`, and `git ls-remote` works against any repository that account can
+read. Two things it cannot do:
+
+- **Fork.** `POST /projects/:id/fork` needs an `api`-scoped personal access token. Git Credential Manager
+  does hold a gitlab.com entry for `Ne_Che_Guevara`, but it is the account password and GitLab answers
+  `401` to it on `/api/v4/user`, so the fork is a browser click and nothing else on the list is.
+- **Open the merge request from the API**, for the same reason. Push options carry it instead
+  (`-o merge_request.create -o merge_request.target=master`), which needs only the SSH key.
+

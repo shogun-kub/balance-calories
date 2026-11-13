@@ -1,7 +1,8 @@
 # BalanceCalories — merge request to fdroiddata
 
 Paste the block below into the merge request description. It is written for a reviewer who has never seen
-this repository, and every claim in it can be checked from the metadata or the repository.
+this repository, and every claim in it can be checked from the metadata or the repository. It is delimited
+by the two `---` lines, so the exact text can be extracted with a script instead of by hand.
 
 ---
 
@@ -53,20 +54,41 @@ None claimed. No ads, no tracking, no non-free network service, no non-free depe
 
 ## What to do (for the owner)
 
-The merge request itself needs the GitLab account, so these are the steps:
+Everything except one click is prepared. The steps in order:
 
-1. Fork <https://gitlab.com/fdroid/fdroiddata>.
-2. In the fork, add [`metadata/com.balancecalories.yml`](metadata/com.balancecalories.yml) — exactly the file
-   in this directory, nothing else.
-3. Open a merge request against `fdroiddata` `master` with the description above.
-4. Watch the pipeline: `fdroid build --test com.balancecalories` runs on their buildserver. If it fails on
-   `compileSdk 36` (Android 16) because their SDK image is older, the fix is on their side — reply in the MR
-   rather than lowering the SDK here.
+1. **Fork — the one step that needs the GitLab web session.** Open
+   <https://gitlab.com/fdroid/fdroiddata/-/forks/new> and fork into `Ne_Che_Guevara` (public, `master`).
+   Why it cannot be scripted: the API can fork only with a personal access token, and the only credential
+   this machine holds for gitlab.com is a stored password, which GitLab answers with `401`.
+2. **Then the branch and the merge request are mechanical.** Shallow-clone the fork, add
+   [`metadata/com.balancecalories.yml`](metadata/com.balancecalories.yml) as the only change, commit, and
+   push to branch `com.balancecalories` with the merge request created by push options:
+
+   ```powershell
+   git clone --depth 1 git@gitlab.com:Ne_Che_Guevara/fdroiddata.git
+   Copy-Item docs\fdroid\metadata\com.balancecalories.yml fdroiddata\metadata\
+   git -C fdroiddata checkout -b com.balancecalories
+   git -C fdroiddata add metadata/com.balancecalories.yml
+   git -C fdroiddata commit -m "New app: BalanceCalories"
+   git -C fdroiddata push -o merge_request.create -o merge_request.target=master `
+       -o merge_request.title="New app: BalanceCalories" `
+       -o merge_request.description="$desc" origin HEAD
+   ```
+
+   `$desc` is the block above, read from this file between the two `---` lines.
+3. **Watch the pipeline.** `fdroid build --test com.balancecalories` runs on their buildserver. If it fails
+   on `compileSdk 36` (Android 16) because their SDK image is older, the fix is on their side — reply in the
+   merge request rather than lowering the SDK here.
+
+The SSH key already in the agent authenticates as `@Ne_Che_Guevara`
+(`ssh -T git@gitlab.com` → `Welcome to GitLab, @Ne_Che_Guevara!`), so the push needs no new credential and
+no token.
 
 ## Before pressing submit
 
-- [x] Repository is public: <https://github.com/shogun-kub/balance-calories>.
-- [x] Tag `v1.0.1` exists and points at the commit whose release APK was exercised on both phones.
+- [x] Repository is public: <https://github.com/shogun-kub/balance-calories> (`private: false`, Apache-2.0).
+- [x] Tag `v1.0.1` exists and points at `a2201e0`, the commit whose release APK was exercised on both phones;
+      the GitHub API lists it, which is what the buildserver clones.
 - [x] `LICENSE` is Apache-2.0, the canonical text.
 - [x] Metadata passes `fdroid rewritemeta` (schema) and the category `Sports & Health` is checked against
       fdroiddata's own `config/categories.yml`.
@@ -74,3 +96,4 @@ The merge request itself needs the GitLab account, so these are the steps:
       `versionCode 3`, and five screenshots per language.
 - [ ] Author name and website in the metadata are `shogun-kub` / the repository — change them if they should
       read differently.
+- [ ] Fork of `fdroiddata` exists (step 1 above).
