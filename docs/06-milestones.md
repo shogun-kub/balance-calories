@@ -747,4 +747,30 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     `commit` field is the full hash of a tag rather than a tag name, which the template requires anyway. And
     **the first request was not wasted**: its red-then-green pipeline is what proved that the F-Droid
     buildserver builds this app (item 53), and that proof does not expire with the request.
+55. **A repository of our own** - 2026-11-13. Since the main index is closed until February, the phones get
+    their updates from a repository the household serves itself: the `gh-pages` branch of this repository, with
+    the index signed by one key and the APKs by another. What it took:
+
+    | Step | Result |
+    | --- | --- |
+    | app signing key | RSA 4096, alias `balancecalories`, certificate `2B:3B:02:71…2A:CF:F7`, valid until 2056, kept in `E:\Projects\BalanceCalories-secrets\` and referenced by a git-ignored `keystore.properties` |
+    | repository key | RSA 4096, alias `balancecalories-repo`, certificate `395E3435…C438BC`, signs **only** the index, lives in the fdroid data directory |
+    | 1.0.2 / versionCode 4 | 1.0.1's code signed with the app key — the first build where `assembleRelease` writes `app-release.apk` instead of `app-release-unsigned.apk` |
+    | index | `fdroid update --clean --pretty`: 12 192 154 bytes, sha256 `21e705f1…`, `signer 2b3b0271…`, `minSdk 28`, `targetSdk 36`, both locales from fastlane with five screenshots each |
+    | published | `gh-pages` holds `repo/` plus a landing page with the address and the fingerprint; the APK in it needs the owner's push (**P-45**) |
+
+    Four things went wrong, and all four are written down rather than worked around twice: `fdroidserver` splits
+    walked paths on `'/'` and decodes its own index with the console code page (**P-46**, fixed for the first by
+    `tools/patch_fdroidserver.py` and for the second by `PYTHONUTF8=1`); `find_apksigner()` looks for a file
+    without an extension and would have fallen back to `jarsigner`, which cannot verify a v2-only APK;
+    `repo_url` has to end in `/repo`; and **the upload ceiling** (**P-45**) that stops anything above about a
+    megabyte, which makes the final `git push` the owner's command and not the agent's.
+
+    The 1.0.2 changelog says what happened - the same app, a different signature - because dressing a signing
+    change up as a feature would be exactly the kind of quiet lie this project exists to avoid.
+
+    Deliberately not done: the uninstall-and-reinstall on the two phones. It removes the debug-signed builds and
+    with them the logged data unless it is exported first, so it happens with the owner present (hard rule 10);
+    the four steps are in [`docs/fdroid/self-hosted.md`](../fdroid/self-hosted.md).
+
 

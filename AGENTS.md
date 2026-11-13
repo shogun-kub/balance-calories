@@ -16,7 +16,8 @@ Two outputs, everything else supports them:
 
 ## Current state
 
-**M1–M5 and M7 complete; M6 nearly done.** `versionName 1.0.1` / `versionCode 3`, R8 on, Apache-2.0, prepared for **F-Droid** (not Google Play). `:core` (176 JVM tests) and `:data` (schema **v7**, 11 DAOs,
+**M1–M5 and M7 complete; M6 nearly done.** `versionName 1.0.2` / `versionCode 4`, R8 on, Apache-2.0, shipping
+through the household's own F-Droid repository. `:core` (176 JVM tests) and `:data` (schema **v7**, 11 DAOs,
 13 repositories) build green, and `:app` has the whole loop: Today with the macro gauge, one card per meal (the set is the person's), burned and balance;
 the food side (two tabs: products and recipes, search that falls back to Open Food Facts by itself, scanning, logging, recipes); History with the adaptive TDEE, the recap,
 the intake/burn chart, a weight trend and a projection; a weight tab with entry and chart; settings with
@@ -34,11 +35,13 @@ Submitted once: fdroiddata merge request [!57200](https://gitlab.com/fdroid/fdro
 built green on the F-Droid buildserver (`fdroid build` 356 s, `check apk` clean) and was then **closed on a
 policy ground** — Quality point 6 wants three months of active development, and the first commit is
 2026-11-07. Re-submission is **2027-02-07**, with the fill-in-the-template description and checklist in
-[`docs/fdroid/README.md`](docs/fdroid/README.md); question J in `docs/05-open-questions.md` covers what ships
-on the phones until then. The device matrix (Honor X7c, Android 14; Redmi Note 8 Pro, Android 11) and the
-TalkBack pass are done, diary items 50 and 51, and the submission is items 53 and 54. The repository is
-published (Apache-2.0, tag `v1.0.1`) at <https://github.com/shogun-kub/balance-calories>; pushes go through
-the Windows ssh-agent (P-42), and the GitLab side works the same way (P-44).
+[`docs/fdroid/README.md`](docs/fdroid/README.md). Until then updates arrive from **the household's own F-Droid
+repository** (`gh-pages` of this project, `versionName 1.0.2` / `versionCode 4`, signed with the household key,
+`docs/fdroid/self-hosted.md`), whose last `git push` is the owner's because uploads above about a megabyte do
+not leave this machine (**P-45**). The device matrix (Honor X7c, Android 14; Redmi Note 8 Pro, Android 11) and
+the TalkBack pass are done, diary items 50 and 51; the submission is items 53 and 54, the repository 55. The
+source is published (Apache-2.0, tag `v1.0.2`) at <https://github.com/shogun-kub/balance-calories>; pushes go
+through the Windows ssh-agent (P-42), and the GitLab side works the same way (P-44).
 
 ## Where everything lives
 
@@ -76,6 +79,8 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | **P-42** | git has its own ssh and cannot see the Windows agent: put the absolute `C:/Windows/System32/OpenSSH/ssh.exe` in `core.sshCommand` |
 | **P-43** | TalkBack reads a switch's state before its label: name first, and put the description on the node that carries the action |
 | **P-44** | fdroiddata fails a metadata file that has comments in it (`rewritemeta` strips them, the job diffs the file) and git refuses a newline in a push option, so the MR description cannot be set from the CLI |
+| **P-45** | uploads above about 1 MB never leave this machine: the owner runs the `git push` that carries an APK, and the error blames GitHub wrongly |
+| **P-46** | fdroidserver is a Linux tool: it splits walked paths on `/` (run `tools/patch_fdroidserver.py`) and decodes UTF-8 JSON as cp1251 (set `PYTHONUTF8=1`) |
 
 ## Naming and the visible language
 
@@ -100,6 +105,8 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | `build/`, `.gradle/`, `local.properties`, `*.keystore`, `*.apk`, `*.aab` | Build output and secrets | Never tracked. |
 | `tmp/` | Scratch: screenshots, previews, pulled databases | Git-ignored. Nothing here is evidence, and nothing here is safe to commit. |
 | `E:\Projects\BalanceCalories-acl-recovery\` | ACL rollback record | Outside the repo. Leave in place: it documents the permission repair that made this workspace writable. |
+| `E:\Projects\BalanceCalories-fdroid\` | fdroiddata-style data directory for **our own** F-Droid repository: `config.yml`, `metadata/`, `repo/`, the repository signing key, and `pages/` (git checkout of the `gh-pages` branch) | Outside the repo, and it holds a private key. Never copy any of it into the tree; `docs/fdroid/self-hosted.md` is the manual. |
+| `E:\Projects\BalanceCalories-secrets\` | the app signing keystore and a copy of `keystore.properties` | Outside the repo, ACL-restricted. Losing it means every phone has to be reinstalled. |
 
 ## Testing on a phone that holds real data
 

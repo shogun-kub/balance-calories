@@ -409,3 +409,29 @@ the merge-request description and in `docs/fdroid/README.md`. Check locally by r
 and diffing the *content*: on Windows it rewrites the file with CRLF, so a byte comparison reports a
 difference of exactly one byte per line while `Compare-Object` finds no changed line. [2026-11-13]
 
+
+**P-45 — an upload larger than about a megabyte never leaves this machine, and the error blames GitHub.**
+Symptom: `git push` of a branch carrying a 12 MB APK prints
+`send-pack: unexpected disconnect while reading sideband packet`, `Connection to github.com closed by remote
+host`, `fatal: sha1 file '<stdout>' write error: Broken pipe`, and gives up in four seconds. The same branch
+without the APK pushes in six. Measured down to the size: 974 KB of index, icons and screenshots went through;
+1.5 MB, 3 MB and 12 MB of incompressible data did not. It is not GitHub and not the transport - HTTPS to
+`github.com` never connects at all (300 s timeout, while `api.github.com` answers instantly), `sendpack.sideband
+= false` fails identically, and a 3 MB `POST` to `https://httpbin.org/post` dies in two seconds with "error while
+copying content to a stream". Fix: **the owner runs the push that carries an APK**, from his own terminal; the
+agent prepares the commit and stops there. Do not try to split the transfer - a single git object cannot be
+pushed in pieces - and do not read the message as a GitHub fault. [2026-11-13]
+
+**P-46 — fdroidserver on Windows splits paths on `/` and decodes UTF-8 JSON as cp1251.**
+Symptom, in this order: `fdroid update` first dies with `IndexError: list index out of range` at
+`packageName = segments[1]`, after that is patched it dies with
+`UnicodeDecodeError: 'charmap' codec can't decode byte 0x98` inside `signindex.sign_index`. Cause: fdroidserver
+is a Linux tool. `insert_localized_app_metadata()` does `segments = root.split('/')` - and `segments = f.split('/')`
+- on paths that `os.walk` produced with backslashes, so the list has one element; and `signindex` opens the
+index JSON with `open()` and no encoding, which on Windows means the console code page, which cannot hold the
+Cyrillic descriptions. Version 2.4.5, the current release, has both. Fix: `PYTHONUTF8=1` in the environment for
+the decode, and `tools/patch_fdroidserver.py` for the split - a two-line change to the *installed* copy
+(`site-packages/fdroidserver/update.py`), re-applied after every `pip install --upgrade fdroidserver`, and never
+touching anything in this repository. Related, same hour: `find_apksigner()` looks for a file literally named
+`apksigner` and misses `apksigner.bat`, so `config.yml` must name the `.bat` or verification silently falls back
+to `jarsigner`, which cannot verify a v2-only APK. [2026-11-13]

@@ -214,3 +214,11 @@ look spends goodwill that the February submission will want.
 **Recommendation, to be decided rather than assumed:** option 1 until a release is actually worth distributing
 that way, then option 3 - with an export taken before the first switch, because a key that signs nothing is
 cheaper to plan than a migration done in a hurry. Nothing is generated until the owner picks.
+
+**Decided 2026-11-13: option 3.** The repository exists — `gh-pages` of this project, index signed by a
+repository key, APKs signed by the household's own app key, client address and fingerprint on the landing page —
+and `docs/fdroid/self-hosted.md` is the record, including the fact that the last `git push` (the one carrying an
+APK) is the owner's, because uploads above about a megabyte do not leave the agent (**P-45**). What stays open
+is only the phone migration: the two installations are debug-signed, so switching costs one export, one
+uninstall and one restore per phone, with the owner present (hard rule 10). The main index remains a February
+task, unchanged.

@@ -305,3 +305,41 @@ advance (`android-sdk-license` = `24333f8a63b6825ea9c5514f83c2829b004d1fee`). `c
 downloaded during the build, not missing.
 
 
+
+### Publishing our own repository from Windows
+
+`fdroidserver` is a Linux tool and this machine is not, which cost four separate failures:
+
+- **`fdroid update` crashes on walked paths.** `insert_localized_app_metadata()` does
+  `segments = root.split('/')` on a path that `os.walk` handed back with backslashes, then reads
+  `segments[1]` - `IndexError`. Also `segments = f.split('/')` in the same file. fdroidserver 2.4.5, the
+  current release, still has both, so there is nothing to upgrade to: `tools/patch_fdroidserver.py` fixes the
+  installed copy and must be re-run after any upgrade (**P-46**).
+- **It decodes its own index with the console code page.** `signindex` opens `index-v2.json` without an
+  encoding, Windows defaults to cp1251, and the Cyrillic descriptions kill it with `UnicodeDecodeError`.
+  `PYTHONUTF8=1` in the environment is the fix and needs no patch.
+- **`apksigner` is `apksigner.bat`.** `common.find_apksigner()` looks for a *file named* `apksigner` in
+  `build-tools`, finds none on Windows, and falls back to `jarsigner`, which cannot verify an APK signed with
+  v2 only. Set `apksigner:` to the `.bat` in `config.yml`: Python's `subprocess` does run a `.bat` through
+  `cmd.exe` here - verified by `apksigner.bat version` returning 0.9 from the bundled interpreter.
+- **`repo_url` must end with `/repo`**, and `repo_icon` is a bare filename (`icon.png`) expected at the data
+  directory root, copied into `repo/icons/` - not a path relative to the repository.
+
+Two more, smaller: a `Summary:` containing a colon breaks the YAML ("mapping values are not allowed here"), so
+the line is quoted; and `fdroid update` warns about "unsafe permissions on config.yml" on Windows no matter
+what the ACL says, because it reads `stat().st_mode`.
+
+### The upload ceiling
+
+**Uploads larger than about a megabyte do not leave this machine.** Measured on 2026-11-13 while publishing the
+self-hosted repository: a push of 974 KB of text, PNGs and an index took 6 s and succeeded; the same branch
+with a **1.5 MB** random blob, with a **3 MB** blob and with the **12 MB** APK all died after 2-4 s with
+`send-pack: unexpected disconnect while reading sideband packet` / `Connection to github.com closed by remote
+host`. Switching the transport changed nothing: `-c sendpack.sideband=false` failed the same way, and HTTPS to
+`github.com` did not connect at all in 300 s even though `https://api.github.com` answers instantly. A plain
+3 MB `POST` to `https://httpbin.org/post` failed in 2 s with "error while copying content to a stream", so the
+ceiling is **the path, not GitHub**.
+
+The working rule (**P-45**): the agent prepares and commits everything, and the owner runs the one `git push`
+that carries an APK, from his own terminal. Do not spend another hour blaming GitHub, and do not try to split
+the blob - a git object cannot be pushed in pieces.

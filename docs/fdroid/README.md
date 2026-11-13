@@ -140,6 +140,11 @@ Nothing is open. The branch `com.balancecalories` on the fork
 and nothing else; its pipeline is green; the request itself is closed and is not reopened before the policy
 condition is met.
 
+Until February the phones are updated from **the household's own F-Droid repository** — the `gh-pages` branch
+of this project, `versionName 1.0.2` / `versionCode 4`, signed with a key the household owns. That is
+[`self-hosted.md`](self-hosted.md); it also changes what this recipe will say at re-submission, because
+`commit` must be the full hash of a release that contains the icon, and `v1.0.2` is the first such tag.
+
 Two mechanics are worth keeping for the next round:
 
 - **A push option cannot carry a description.** `git push` refuses a newline in a push option
