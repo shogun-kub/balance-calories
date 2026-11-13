@@ -162,3 +162,41 @@ override recreates the activity, which resets in-memory navigation to Today.
 | Is scanning fast enough? | Macrobenchmark and manual timing on the Redmi, not the Honor |
 | What does OpenFoodFacts return for this barcode? | `curl` against the staging host for experiments, a fixture for the test |
 | Is a dependency compatible? | `.\gradlew.bat :app:dependencies`, AGP/Kotlin compatibility table, not memory |
+
+## Pushing to GitHub from this machine
+
+The repository is published at <https://github.com/shogun-kub/balance-calories> and pushed over SSH with the
+key `E:\ssh-keys\KATANA-dev.ppk`.
+
+**The key is a PuTTY file and this `puttygen` cannot convert it.** The Windows build installed here has no
+command-line options for conversion (`-O` in particular is a Linux-only flag in that build), so the usual
+one-liner does not exist. What does work, without installing anything global:
+
+```powershell
+& $py -m pip install --quiet cryptography          # only needs doing once
+& $py tmp\key_conv.py                              # parses the PPK and writes an OpenSSH key
+```
+
+The script reads the PPK header (`PuTTY-User-Key-File-3: ecdsa-sha2-nistp384`, `Encryption: none`), takes
+the private scalar out of the base64 blob (an SSH `mpint`) and re-serialises it with
+`cryptography`'s `PrivateFormat.OpenSSH`. The result is `E:\ssh-keys\KATANA-dev.openssh` plus the
+`.pub`, and `ssh-keygen -lf` on it gives `SHA256:hrX9BjAZhGWPrikhgm8ZwzAJ6680FhpA7GQdlyU1Zm0` — the same
+key the `.ppk` holds.
+
+Two things that will otherwise cost an hour:
+
+1. **Windows ACLs.** `ssh` refuses the key with `UNPROTECTED PRIVATE KEY FILE` until the file belongs to
+   one user only: `icacls <key> /inheritance:r /grant:r "<USERDOMAIN>\<USERNAME>:R"`.
+2. **Host keys, without trusting blindly.** `ssh-keyscan` returned nothing from this network, so the
+   `known_hosts` file is written from GitHub's own published list
+   (`https://api.github.com/meta` → `.ssh_keys`). That is a stronger check than trusting whatever answers
+   the port first.
+
+The repository then carries the key path in its own config, not in `~/.ssh/config`:
+
+```powershell
+git config core.sshCommand "ssh -i E:/ssh-keys/KATANA-dev.openssh -o UserKnownHostsFile=E:/ssh-keys/known_hosts -o IdentitiesOnly=yes -o BatchMode=yes"
+```
+
+`git config` writes to `.git/config`, which is not tracked, so the path never enters the repository —
+`AGENTS.md` hard rule 2 is about keystores, but a private key is the same kind of thing.

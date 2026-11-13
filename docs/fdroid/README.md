@@ -20,8 +20,9 @@ left is publishing the repository and opening one merge request.
 
 1. ~~Publish the repository~~ — done 2026-11-13: <https://github.com/shogun-kub/balance-calories>.
 2. ~~Tag the release~~ — done: `v1.0.0` is pushed, and `UpdateCheckMode: Tags` needs nothing more.
-3. Check that a clean clone builds without `local.properties` — F-Droid sets `ANDROID_HOME` itself:
-   `git clone … && cd BalanceCalories && ./gradlew :app:assembleRelease`.
+3. ~~Check that a clean clone builds without `local.properties`~~ — done 2026-11-13: a fresh clone built
+   `app-release-unsigned.apk` (11.6 MB, `versionCode 2`, `versionName 1.0.0`) in 1 m 29 s with `ANDROID_HOME`
+   set and no `local.properties`, and `apksigner` confirmed it is unsigned. Diary item 48.
 4. Open the merge request against <https://gitlab.com/fdroid/fdroiddata> with
    [`metadata/com.balancecalories.yml`](metadata/com.balancecalories.yml) added, following
    <https://f-droid.org/docs/Submitting_to_F-Droid_Quick_Start_Guide/>.

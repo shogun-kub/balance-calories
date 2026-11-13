@@ -602,3 +602,18 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     `logcat`. The temporary `keystore.properties` was then deleted and the tree rebuilt: `app-release-unsigned.apk`,
     11.6 MB, `apksigner verify` reporting "DOES NOT VERIFY" - which is the correct answer for a build that a store
     is supposed to sign.
+48. **Published: the repository is on GitHub, the clone builds, and the key was a PuTTY file** - 2026-11-13.
+    <https://github.com/shogun-kub/balance-calories>, `main` at `da4b05f`, tag **`v1.0.0`** on the same commit,
+    public.
+    The obstacle was small and typical: the SSH key is a **PuTTY** file (`PuTTY-User-Key-File-3`, ECDSA P-384, no
+    passphrase) and the `puttygen` installed on this machine has no conversion flags, so the documented one-liner
+    does not exist here. The key was re-serialised instead: the PPK header and the base64 blobs were parsed
+    directly, the private scalar rebuilt into an OpenSSH key with `cryptography`, and `ssh-keygen -lf` confirms the
+    fingerprint matches the `.ppk` (`SHA256:hrX9BjAZ…`). Two Windows details are in `docs/08-environment.md`: the
+    file needs `icacls` ownership narrowed before `ssh` will read it, and GitHub's host keys were taken from its
+    published list rather than from whatever answered the port first.
+    **The push was verified by pulling it back**: a fresh `git clone` has 233 files and the tag, and
+    `./gradlew :app:assembleRelease` builds **from that clone with no `local.properties`** (SDK picked up from
+    `ANDROID_HOME`) in 1 m 29 s, producing `app-release-unsigned.apk`, 11.6 MB, `versionCode 2` / `versionName
+    1.0.0`, label `Balance Calories`, which `apksigner` correctly refuses to verify. That is the F-Droid build
+    scenario rehearsed end to end, on the machine, before a merge request exists.
