@@ -26,6 +26,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -65,12 +66,13 @@ fun RecipeEditorScreen(
     onCancel: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val languageTag = LocalConfiguration.current.locales[0]?.toLanguageTag()
 
     var products by remember { mutableStateOf<Map<Long, Product>>(emptyMap()) }
     var found by remember { mutableStateOf<List<Product>>(emptyList()) }
     var remote by remember { mutableStateOf<RemoteState>(RemoteState.Idle) }
-    var error by remember { mutableStateOf<Int?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
 
     // The draft keeps ids, so the names and the numbers come from the database. Keyed on the ids, not on the list:
@@ -336,12 +338,12 @@ fun RecipeEditorScreen(
             Text(text = stringResource(R.string.recipe_basis_raw), style = MaterialTheme.typography.bodySmall)
         }
 
-        error?.let { Text(text = stringResource(it), color = MaterialTheme.colorScheme.error) }
+        error?.let { Text(text = it, color = MaterialTheme.colorScheme.error) }
 
         Button(
             onClick = {
                 if (draft.name.isBlank() || parsedItems.isEmpty()) {
-                    error = R.string.recipe_incomplete
+                    error = context.getString(R.string.recipe_incomplete)
                     return@Button
                 }
                 saving = true
@@ -360,9 +362,10 @@ fun RecipeEditorScreen(
                             ),
                         )
                     }.onSuccess { onSaved(it) }.onFailure {
-                        error = null
+                        // A database refusal is a message, not a crash: the draft is still here and the person
+                        // can try again or copy the numbers out.
+                        error = context.getString(R.string.recipe_save_failed, it.message.orEmpty())
                         saving = false
-                        throw it
                     }
                 }
             },

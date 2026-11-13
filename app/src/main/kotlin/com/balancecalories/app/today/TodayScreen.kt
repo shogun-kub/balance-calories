@@ -92,6 +92,7 @@ fun TodayScreen(
     profile: Profile,
     container: AppContainer,
     onAddFood: (String?) -> Unit,
+    onAddWeight: () -> Unit,
 ) {
     val today = remember { LocalDate.now() }
     val scope = rememberCoroutineScope()
@@ -165,8 +166,13 @@ fun TodayScreen(
 
 
         if (weightKg == null) {
+            // A profile can exist without a weight (an archived one restored, an import, a form left early), and
+            // the old text pointed at onboarding that had already happened: from here there was nowhere to go.
             Text(text = stringResource(R.string.no_weight_title), style = MaterialTheme.typography.titleMedium)
             Text(text = stringResource(R.string.no_weight_note), style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(onClick = onAddWeight, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.no_weight_action))
+            }
             return@Column
         }
 

@@ -4,6 +4,7 @@
 
     <string name="no_weight_title">No weight yet</string>
     <string name="no_weight_note">The target needs a weight reading, so onboarding will ask for one.</string>
+    <string name="no_weight_action">Add a weight</string>
 
     <string name="onboarding_title">Create your profile</string>
     <string name="onboarding_note">Body data and a goal, then the app can compute your daily target. Nothing leaves the phone.</string>
@@ -58,6 +59,8 @@
     <string name="error_weight">Weight must be 30–300 kg</string>
     <string name="error_weight_imperial">Weight must be 66–661 lb</string>
     <string name="error_save">Could not save the profile: %1$s</string>
+    <string name="food_log_failed">Could not log it: %1$s</string>
+    <string name="recipe_save_failed">Could not save the recipe: %1$s</string>
 
     <string name="profiles_title">Profiles</string>
     <string name="profiles_note">One profile per person. Only one of them can read the band on this phone.</string>

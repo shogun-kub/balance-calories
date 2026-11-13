@@ -4,6 +4,7 @@
 
     <string name="no_weight_title">Веса пока нет</string>
     <string name="no_weight_note">Для расчёта цели нужен вес, поэтому онбординг его спросит.</string>
+    <string name="no_weight_action">Добавить вес</string>
 
     <string name="onboarding_title">Создайте профиль</string>
     <string name="onboarding_note">Данные тела и цель — и приложение посчитает дневную норму. Ничего не покидает телефон.</string>
@@ -58,6 +59,8 @@
     <string name="error_weight">Вес должен быть 30–300 кг</string>
     <string name="error_weight_imperial">Вес должен быть 66–661 фунт</string>
     <string name="error_save">Не удалось сохранить профиль: %1$s</string>
+    <string name="food_log_failed">Не удалось записать: %1$s</string>
+    <string name="recipe_save_failed">Не удалось сохранить рецепт: %1$s</string>
 
     <string name="profiles_title">Профили</string>
     <string name="profiles_note">Один профиль на человека. Читать браслет на этом телефоне может только один из них.</string>

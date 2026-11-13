@@ -354,3 +354,19 @@ adb start-server            # now on 5037, and the phone appears
 Switching back is the same dance with `$env:ANDROID_ADB_SERVER_PORT = '5039'` set again. Cost: two runs that
 looked like device problems and were port problems, 2026-11-12.
 
+**P-41 — a database pushed through host-side redirection arrives corrupt, and the app shows onboarding.**
+Symptom: after copying a modified `balancecalories.db` back with
+`cmd /c "adb shell "run-as com.balancecalories sh -c 'cat > databases/balancecalories.db'"" < tmp\test.db`,
+the file on the device was **44 631 bytes** — not a multiple of 4 096 — and the next launch showed
+«Создайте профиль», because Room could not open the database and started empty. Both profiles, 42 food entries,
+100 products, 3 recipes, 65 activity days and his weigh-in were gone from the phone, and the `-wal` had been
+deleted before the copy, so nothing on the device could be rolled back. Cause: the host-side `<` redirection
+combined with a nested quoted command line does not deliver the bytes it looks like it delivers; the transfer
+silently ends early. Fix: **push the file and copy it on the device**, never pipe it:
+`adb push tmp\x.db /data/local/tmp/x.db` then
+`run-as com.balancecalories sh -c 'cat /data/local/tmp/x.db > databases/balancecalories.db'`, and verify the
+result with `run-as ls -l databases/` **before** starting the app — a size that is not a multiple of 4 096, or
+a size smaller than the source, is a failed copy. Recovery here worked only because the pulled copy was still
+in `tmp/`; the lesson is the order of operations: **stop the app, pull db and `-wal`, keep that copy untouched,
+work on a second copy, and only replace the device file when the new copy verifies.** [2026-11-13]
+

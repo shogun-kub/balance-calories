@@ -27,7 +27,7 @@ navigates by **four tabs** (`Сегодня` · `Еда` · `История` · 
 prints each logged portion's protein, fat and carbs with the macro it is proportionally richest in marked
 in that macro's colour, and a product can carry a **barcode** that a scan resolves without the network.
 The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie
-on one side and a steel-blue dumbbell on the other. Strings are **383/383** (371 `<string>` + 12
+on one side and a steel-blue dumbbell on the other. Strings are **386/386** (374 `<string>` + 12
 `<plurals>` per language) and lint is down to five reviewed warnings.
 
 Next: the rest of **M6** — device matrix on both phones, TalkBack, release signing, README — then the
@@ -65,6 +65,7 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | **P-23** | `fillMaxWidth()` inside `horizontalScroll` collapses to zero, and `rememberScrollState(initial = …)` cannot open at the end |
 | **P-29** | a chart needs a seeded history; seed a **copy** of the database and leave no pulled file in the tree |
 | **P-40** | `connectedDebugAndroidTest` ignores `ANDROID_ADB_SERVER_PORT`: move adb to 5037 for an instrumentation run (P-08 is the opposite for plain adb) |
+| **P-41** | never pipe a database into `adb shell`: push it and copy it on the device, then check the size |
 
 ## Naming and the visible language
 

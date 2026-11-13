@@ -27,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -66,6 +67,7 @@ fun RecipeScreen(
     onDeleted: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val totals = RecipeMath.totals(recipe.items)
     val basis = RecipeMath.weightBasis(totals, recipe.cookedWeightG)
     val per100 = RecipeMath.per100g(totals, basis)
@@ -193,7 +195,7 @@ fun RecipeScreen(
                     }
                         .onSuccess { onLogged() }
                         .onFailure {
-                            error = it.message
+                            error = context.getString(R.string.food_log_failed, it.message.orEmpty())
                             saving = false
                         }
                 }

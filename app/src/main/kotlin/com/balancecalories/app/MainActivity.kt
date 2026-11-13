@@ -428,6 +428,7 @@ private fun Root() {
                         pendingMealKey = key
                         tab = Tab.FOOD
                     },
+                    onAddWeight = { tab = Tab.WEIGHT },
                 )
 
                 // "Еда" holds two lists, and they are tabs rather than two buttons in a header: the owner read the

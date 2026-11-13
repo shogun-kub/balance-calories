@@ -521,3 +521,27 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
        Verified on the Honor X7c: a gram value edited to 70 survived the trip to the scanner as a separate screen and
        back, survived a rotation to landscape (name, servings and 70 all present), «Отмена» then left an empty editor
        for «Новый рецепт», and the recipe detail itself stayed open through a rotation.
+44. **A states pass that found three defects in the paths nobody walks** - M6's "empty/error/offline states
+    everywhere; no dead ends", started 2026-11-13.
+    1. *A profile without a weigh-in was a dead end.* Today said «Веса пока нет» and «онбординг его спросит», and
+       then stopped - but onboarding had already happened, and the profile form **requires** a weight, so the state
+       is reached only through an import that carries no weigh-ins. The screen now offers «Добавить вес», which
+       switches to the Вес tab. Verified on the Honor X7c by removing the Test profile's weigh-in (the only way to
+       reach the state) and then by restoring one through the weight screen: «Сохранено: 75 кг», and Today went back
+       to a target.
+    2. *A failed save crashed the app.* `RecipeEditorScreen` re-threw the exception from `onFailure` inside the
+       coroutine, which is an uncaught exception on the main thread: any database refusal while saving a recipe would
+       have closed the app mid-edit. It now sets a message and keeps the draft. The two logging screens printed
+       `it.message` - a system sentence in whatever language the platform felt like - so `food_log_failed` and
+       `recipe_save_failed` name the failure in the app's own words and append the cause.
+    3. *Everything else already had a state.* The empty catalogue, the empty day (with «Скопировать вчера»), the
+       recipe list, the chart with no days, the adaptive-TDEE refusal (which names which of six reasons applies),
+       the backup refusals, the scanner's denied-camera path and the offline barcode queue were all in place; the
+       audit's value was finding the three places where a screen stopped instead of offering the next step.
+    **One incident, recorded because it nearly cost the data.** Replacing the database to remove that weigh-in, I
+    pushed it through host-side redirection into `adb shell`: the file arrived as 44 631 bytes, Room could not open
+    it, and the app showed onboarding - both profiles and the whole history unreadable on the phone, with the
+    `-wal` already deleted. The pulled copy in `tmp/` was intact (208 896 bytes, verified by opening it), and pushing
+    it to `/data/local/tmp` and copying **on the device** restored everything; the counts afterwards were 2 profiles,
+    42 entries, 100 products, 3 recipes, 13 items, 65 activity days. The pitfall is **P-41**, and its rule is the
+    one that saved the day: keep the original pull untouched, and verify the destination size before starting the app.

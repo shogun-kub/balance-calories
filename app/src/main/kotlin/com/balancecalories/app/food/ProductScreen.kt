@@ -27,6 +27,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -63,6 +64,7 @@ fun ProductScreen(
     initialMealKey: String? = null,
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val languageTag = LocalConfiguration.current.locales[0]?.toLanguageTag()
     var portion by remember(product.id) { mutableStateOf("100") }
     var slots by remember(profileId) { mutableStateOf<List<MealSlot>>(emptyList()) }
@@ -155,7 +157,7 @@ fun ProductScreen(
                     }.onSuccess {
                         onLogged()
                     }.onFailure {
-                        error = it.message
+                        error = context.getString(R.string.food_log_failed, it.message.orEmpty())
                         saving = false
                     }
                 }
