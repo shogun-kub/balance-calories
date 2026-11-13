@@ -1,0 +1,7 @@
+Version 1.0.0 - first public release.
+
+- Today: eaten against the target in one gauge, the band's burn (or a formula estimate, labelled as one), and a balance for the day.
+- Food: about a hundred starter products, barcode scanning that works offline, text search that falls back to Open Food Facts by itself, and recipes measured against the cooked weight.
+- History: intake and burn per day, a weight trend, and an adaptive TDEE that names the reason when it refuses.
+- Weight, settings (units, day start, language, macro norms, meal times) and a versioned JSON/CSV backup.
+- Two languages, light and dark themes, no account and no network beyond the food searches you type.

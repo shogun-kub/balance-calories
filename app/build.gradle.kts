@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     // AGP 9 has Kotlin support built in: applying org.jetbrains.kotlin.android is an error, but the
     // Compose compiler plugin is still required once buildFeatures.compose is on.
@@ -13,8 +15,10 @@ android {
         applicationId = "com.balancecalories"
         minSdk = 28
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        // A release version is a reviewable diff, not a side effect of a build (AGENTS.md, hard rule 3).
+        // 2 / 1.0.0 is the first version meant for someone other than the two of us.
+        versionCode = 2
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -27,9 +31,35 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    // A keystore is the owner's, never the repository's (hard rule 2). When it is absent the release build is
+    // simply unsigned, which is exactly what F-Droid wants: it signs with its own key, and a repository that
+    // could not build without a private keystore could never be packaged there.
+    val keystorePropertiesFile = rootProject.file("keystore.properties")
+    val keystoreProperties = Properties().apply {
+        if (keystorePropertiesFile.exists()) keystorePropertiesFile.inputStream().use { load(it) }
+    }
+    val hasKeystore = keystorePropertiesFile.exists() && keystoreProperties.getProperty("storeFile") != null
+
+    signingConfigs {
+        if (hasKeystore) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // On since 1.0.0: a shipped build is minified and its resources are shrunk, as every other
+            // Android app on the planet does. The keep rules are in proguard-rules.pro and each one has a
+            // reason next to it.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (hasKeystore) signingConfig = signingConfigs.getByName("release")
         }
     }
 }

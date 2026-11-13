@@ -574,3 +574,31 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     works": the semantics are present and compile, the labels exist in both languages, and the layout was checked on
     the device after the change - the food list still scrolls, the rows are a little taller, and nothing overlaps.
     Two follow-ups if a blind user ever appears: a real TalkBack pass, and `AccessibilityScanner`.
+47. **F-Droid instead of Google Play: the licence, the unsigned release and the metadata** - 2026-11-13.
+    The owner's decision changed the shape of the release, not just its venue: F-Droid builds from source and signs
+    with its own key, so **the repository must build without a private keystore**, and everything the store shows has
+    to live in the repository too.
+    1. *Licence.* Apache-2.0, taken as the canonical text from apache.org rather than retyped (11 358 bytes, 202
+       lines) - a licence with one typo is not that licence.
+    2. *Version.* `versionCode 2`, `versionName "1.0.0"`: the first version meant for someone other than the two of
+       us, and a reviewable diff rather than a side effect of a build.
+    3. *Release build.* R8 and resource shrinking are on. The keep rules are four short blocks, each with the reason
+       next to it: `zxingcpp.**` is called by name from C++ through JNI, Room instantiates its generated `_Impl` by
+       name, Health Connect reflects over its record types, WorkManager builds our worker by name - and the line
+       numbers stay, because a stack trace from a phone is the only evidence there will ever be.
+    4. *Signing.* `keystore.properties` is read **only when it exists**. Without it the release build is simply
+       unsigned, which is what the F-Droid buildserver wants; with it (owner's own keystore, outside the repository)
+       the same command produces a signed APK for a sideload.
+    5. *Metadata.* `fastlane/metadata/android/{en-US,ru-RU}/` with title, short description, a long description that
+       says what the app does not do as plainly as what it does, a changelog for `versionCode 2`, and five phone
+       screenshots per language, taken from the fixture profile - no real person's day is in a published screenshot.
+    6. *The recipe.* [`docs/fdroid/`](../fdroid/) holds the draft `metadata/com.balancecalories.yml`, the list of what
+       must happen before the merge request, and reviewer notes about Health Connect, the two Open Food Facts
+       endpoints and signing.
+    **Verified on the Honor X7c**, release build signed with the *debug* key for the test so that `install -r` could
+    replace the debug build **without uninstalling and without touching the data**: cold start **366 ms** against
+    1 370 ms for the debug build, the scanner opening with no `UnsatisfiedLinkError`, History drawing its chart and
+    the adaptive-TDEE refusal, the food catalogue and the recently-eaten list reading from Room, and no `FATAL` in
+    `logcat`. The temporary `keystore.properties` was then deleted and the tree rebuilt: `app-release-unsigned.apk`,
+    11.6 MB, `apksigner verify` reporting "DOES NOT VERIFY" - which is the correct answer for a build that a store
+    is supposed to sign.

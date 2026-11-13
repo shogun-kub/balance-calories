@@ -1,0 +1,33 @@
+One honest number: energy in minus energy out.
+
+Balance Calories reads your activity from Health Connect (which Gadgetbridge fills from a Huawei band) and your food from its own catalogue, and shows the day as a balance instead of a pile of separate counters. It was built for two people who wanted to see the whole day at once.
+
+WHAT IT DOES
+
+Today: a half-doughnut of eaten against the target, one card per meal, and the day's balance. Burn comes from the band when it is there and from a formula when it is not - and the screen says which of the two it is using, because a measurement and an estimate are not the same claim.
+
+Food: a searchable catalogue that starts with about a hundred common products, a barcode scanner that works offline, and a text search that falls back to Open Food Facts by itself when the phone has nothing to offer. Recipes are ingredients plus the weight the dish has after cooking, so a portion is measured against what is actually on the plate rather than a guess.
+
+History: intake and burn per day, a weight trend, and an adaptive TDEE that learns from what actually happened - and refuses by name when it does not have enough days to be honest.
+
+Weight: manual entry and a chart, in kilograms or pounds.
+
+Settings: units, the hour your day starts, language, macro norms (four presets or your own grams), and the meals themselves - names, times, order.
+
+Backup: a versioned JSON export and a CSV of the food log, both written where you choose.
+
+WHAT IT DOES NOT DO
+
+No account, no sign-up, no analytics, no crash upload, no advertising. There is no server: nothing about your body or your food leaves the phone. The only network traffic is the product search you type into Open Food Facts and the barcode lookup for a code your phone has never seen.
+
+The database is local and the app works without a network: logging food, viewing today and reading history all work in a lift.
+
+PERMISSIONS
+
+Activity and body data are read from Health Connect, and only after you grant them; the app asks on the Today screen the first time it needs them. The camera is used only for barcode scanning, and only while the scanner is open.
+
+REQUIREMENTS
+
+Android 9 or newer. Health Connect needs Android 14, or the Health Connect app on older versions. Band data arrives through Gadgetbridge, which speaks to Huawei bands; without a band the app still works and estimates the burn.
+
+The source code is published, and the whole design record - every decision, with the alternatives it rejected - is in the repository.
