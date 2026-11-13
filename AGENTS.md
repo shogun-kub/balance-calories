@@ -36,9 +36,10 @@ built green on the F-Droid buildserver (`fdroid build` 356 s, `check apk` clean)
 policy ground** — Quality point 6 wants three months of active development, and the first commit is
 2026-11-07. Re-submission is **2027-02-07**, with the fill-in-the-template description and checklist in
 [`docs/fdroid/README.md`](docs/fdroid/README.md). Until then updates arrive from **the household's own F-Droid
-repository** (`gh-pages` of this project, `versionName 1.0.2` / `versionCode 4`, signed with the household key,
-`docs/fdroid/self-hosted.md`), whose last `git push` is the owner's because uploads above about a megabyte do
-not leave this machine (**P-45**). The device matrix (Honor X7c, Android 14; Redmi Note 8 Pro, Android 11) and
+repository on the home LAN** — `http://KATANA:8080/repo`, served by `tools/serve_lan_repo.ps1`, `versionName
+1.0.2` / `versionCode 4` signed with the household key, [`docs/fdroid/self-hosted.md`](docs/fdroid/self-hosted.md)
+— because uploads above about a megabyte do not leave this machine (**P-45**), which is what killed the GitHub
+Pages attempt. The device matrix (Honor X7c, Android 14; Redmi Note 8 Pro, Android 11) and
 the TalkBack pass are done, diary items 50 and 51; the submission is items 53 and 54, the repository 55. The
 source is published (Apache-2.0, tag `v1.0.2`) at <https://github.com/shogun-kub/balance-calories>; pushes go
 through the Windows ssh-agent (P-42), and the GitLab side works the same way (P-44).
@@ -79,7 +80,7 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | **P-42** | git has its own ssh and cannot see the Windows agent: put the absolute `C:/Windows/System32/OpenSSH/ssh.exe` in `core.sshCommand` |
 | **P-43** | TalkBack reads a switch's state before its label: name first, and put the description on the node that carries the action |
 | **P-44** | fdroiddata fails a metadata file that has comments in it (`rewritemeta` strips them, the job diffs the file) and git refuses a newline in a push option, so the MR description cannot be set from the CLI |
-| **P-45** | uploads above about 1 MB never leave this machine: the owner runs the `git push` that carries an APK, and the error blames GitHub wrongly |
+| **P-45** | uploads above about 1 MB never leave this machine, throttling only lifts the limit to ~5 MB, and a git object cannot be split: the repository is served on the home LAN instead (`tools/serve_lan_repo.ps1`) |
 | **P-46** | fdroidserver is a Linux tool: it splits walked paths on `/` (run `tools/patch_fdroidserver.py`) and decodes UTF-8 JSON as cp1251 (set `PYTHONUTF8=1`) |
 
 ## Naming and the visible language
@@ -105,7 +106,7 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | `build/`, `.gradle/`, `local.properties`, `*.keystore`, `*.apk`, `*.aab` | Build output and secrets | Never tracked. |
 | `tmp/` | Scratch: screenshots, previews, pulled databases | Git-ignored. Nothing here is evidence, and nothing here is safe to commit. |
 | `E:\Projects\BalanceCalories-acl-recovery\` | ACL rollback record | Outside the repo. Leave in place: it documents the permission repair that made this workspace writable. |
-| `E:\Projects\BalanceCalories-fdroid\` | fdroiddata-style data directory for **our own** F-Droid repository: `config.yml`, `metadata/`, `repo/`, the repository signing key, and `pages/` (git checkout of the `gh-pages` branch) | Outside the repo, and it holds a private key. Never copy any of it into the tree; `docs/fdroid/self-hosted.md` is the manual. |
+| `E:\Projects\BalanceCalories-fdroid\` | fdroiddata-style data directory for **our own** F-Droid repository: `config.yml`, `metadata/`, `repo/` (served on the LAN), and the repository signing key | Outside the repo, and it holds a private key. Never copy any of it into the tree; `docs/fdroid/self-hosted.md` is the manual. |
 | `E:\Projects\BalanceCalories-secrets\` | the app signing keystore and a copy of `keystore.properties` | Outside the repo, ACL-restricted. Losing it means every phone has to be reinstalled. |
 
 ## Testing on a phone that holds real data

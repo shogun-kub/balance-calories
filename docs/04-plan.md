@@ -257,8 +257,9 @@ at 21:00 and a day where the band stayed home.
       [!57200](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/57200): its pipeline is green, including
       `fdroid build` on the F-Droid buildserver (356 s). Diary item 53. Closed on policy ground the same day —
       three months of development, so re-submission is 2027-02-07 (item 54). From 2026-11-13 the phones update
-      from **our own F-Droid repository** (`gh-pages`, `1.0.2` / `versionCode 4`, signed with the household
-      key), [`docs/fdroid/self-hosted.md`](fdroid/self-hosted.md), diary item 55.
+      from **our own F-Droid repository on the home LAN** (`http://KATANA:8080/repo`, `1.0.2` / `versionCode 4`,
+      signed with the household key), [`docs/fdroid/self-hosted.md`](fdroid/self-hosted.md), diary items 55
+      and 56.
 - [ ] README for the household: how to install GB, pair, enable HC, pair the second phone
 
 ## M7 — Interface (6.5 d)

@@ -773,4 +773,29 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     with them the logged data unless it is exported first, so it happens with the owner present (hard rule 10);
     the four steps are in [`docs/fdroid/self-hosted.md`](../fdroid/self-hosted.md).
 
+56. **The repository moves to the home LAN** - 2026-11-13. GitHub was abandoned, not for a policy reason but for
+    a measured one: **nothing above about a megabyte leaves this network**, and the browser was cut exactly like
+    `git push` (P-45). The chain of evidence, in order, because each step ruled one suspect out:
 
+    | Test | Result |
+    | --- | --- |
+    | `git push` of the branch with the APK | dies in 4 s, `Connection to github.com closed by remote host` |
+    | the same branch without the APK, 974 KB | pushed in 6 s |
+    | 1.5 MB and 3 MB random blobs | die the same way; `-c sendpack.sideband=false` identical |
+    | HTTPS to `github.com` | never connects in 300 s, while `api.github.com` answers instantly |
+    | 3 MB `POST` to an unrelated host (httpbingo) | fails in seconds |
+    | GitHub web upload, 97 KB / 1.9 MB | 97 KB fine, 1.9 MB `Something went really wrong` |
+    | the same web upload **throttled to 900 kB/s** | 1.9 MB and 4.7 MB now pass - the rate mattered |
+    | 12.2 MB APK, throttled, and the same bytes renamed `.zip` | still fail - so a size limit sits above 5 MB |
+
+    With that, the answer stopped being a workaround: **serve the repository from the machine in the same
+    house**. `tools/serve_lan_repo.ps1` runs Python's file server on `0.0.0.0:8080` over
+    `E:\Projects\BalanceCalories-fdroid`, `repo_url` in `config.yml` became `http://KATANA:8080/repo`, and the
+    index was rebuilt and re-signed. Verified from the Honor with the phone's own `curl`: the index `200`, and the
+    whole **12 192 154-byte APK** `200` in one request. `KATANA` resolves from the phone and `katana.local` does
+    not, which is why the repository address uses the machine name rather than an IP that DHCP can move.
+
+    A side effect worth keeping: with no branch to publish, there is no copy of the APK in git at all, so the
+    repository history stays small and the 12 MB file lives in exactly one place.
+
+    What is still the owner's: the uninstall and reinstall on both phones, still with an export taken first.

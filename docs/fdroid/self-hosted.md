@@ -3,7 +3,12 @@
 F-Droid's main index is closed to this app until **2027-02-07**: the inclusion policy's Quality point 6 wants
 three months of active development, and the first commit is 2026-11-07 (diary item 54). The phones still need
 updates, and an F-Droid client can read **any** repository that serves a signed index — so the household
-serves its own, and the main index is a February problem.
+serves its own, **on the home LAN**, and the main index is a February problem.
+
+The LAN is not the first idea. The first was GitHub Pages, and it died on our own uplink: nothing above about a
+megabyte leaves this network (**P-45**). Throttling let a 5 MB file through but not the 12 MB APK, and since a
+git object cannot be pushed in pieces, a file server at home became the honest answer. It has no upload ceiling
+at all — the phone pulled the whole 12 192 154-byte APK from it in one request (verified 2026-11-13).
 
 This file is the record of that repository: where it lives, how it is rebuilt, and what has to be done by hand.
 
@@ -15,8 +20,8 @@ This file is the record of that repository: where it lives, how it is rebuilt, a
 | repository key | `repo-signing-key.jks`, alias `balancecalories-repo` | signs **the index** only; certificate SHA-256 `395E3435…C438BC` |
 | app key | `E:\Projects\BalanceCalories-secrets\balancecalories-release.jks`, alias `balancecalories` | signs **the APK**; certificate SHA-256 `2B:3B:02:71…2A:CF:F7`, RSA 4096, valid until 2056 |
 | Gradle's view of it | `keystore.properties` at the repository root | git-ignored; an absolute path, so any checkout works |
-| published branch | `gh-pages` of <https://github.com/shogun-kub/balance-calories> | the repository itself is the `repo/` directory there |
-| client address | `https://shogun-kub.github.io/balance-calories/repo?fingerprint=395E3435199912D5FB024A914BD21D92CDF2BA499687A2E27254CDD048C438BC` | |
+| published branch | none: the repository is served straight from `repo/` by `tools/serve_lan_repo.ps1` | `gh-pages` on GitHub exists from the abandoned attempt and is stale |
+| client address | `http://KATANA:8080/repo?fingerprint=395E3435199912D5FB024A914BD21D92CDF2BA499687A2E27254CDD048C438BC` | `KATANA` is this machine's name; the router resolves it from the phone (verified 2026-11-13), and it survives a DHCP lease change, which the IP would not |
 | first release | `com.balancecalories` **1.0.2** / versionCode 4 | 12 192 154 bytes, sha256 `21e705f1227bacaa8f31cc7b9e53c5b94226687a2c56d39d4ee4bcc2b65877a1` |
 
 **Two keys, on purpose.** The repository key signs the index, the app key signs the APK. A leaked index key
@@ -54,24 +59,26 @@ verify an APK signed with v2 only.
 placeholder: on Windows `stat().st_mode` is fiction, and the icon is picked up from `icon.png` at the data
 directory root.
 
-## Publishing
+## Serving it
 
-The published content is the data directory's `repo/` directory, mirrored into the `pages` checkout, plus a
-landing page that states the address and the fingerprint:
+Nothing is published anywhere: the data directory **is** the repository, and one small script serves it.
 
 ```powershell
-robocopy E:\Projects\BalanceCalories-fdroid\repo E:\Projects\BalanceCalories-fdroid\pages\repo /MIR /NFL /NDL /NJH /NJS /NP
-git -C E:\Projects\BalanceCalories-fdroid\pages add -A
-git -C E:\Projects\BalanceCalories-fdroid\pages commit -m "BalanceCalories <versionName> (versionCode <n>)"
-git -C E:\Projects\BalanceCalories-fdroid\pages push
+.\tools\serve_lan_repo.ps1          # Python's http.server on 0.0.0.0:8080, serving the data directory
 ```
 
-**The push has to be run by the owner, from his own terminal** (P-45): the agent's network path cuts any
-upload larger than about a megabyte, so the 12 MB APK cannot leave this session. Everything up to the push —
-the index, the assets, the commit — is prepared here; the last command is his.
+While that window is open, the phones see `http://KATANA:8080/repo`. When it is closed, the F-Droid client
+simply says the repository is unreachable and the app on the phone is unaffected — this is a file server, not a
+service, and it deliberately has no autostart.
 
-GitHub Pages then serves the branch. Enabling it is also his: **Settings → Pages → Source: branch `gh-pages`,
-folder `/ (root)`**, after which <https://shogun-kub.github.io/balance-calories/> answers.
+Three things were checked before believing it (2026-11-13): the index and the whole 12 192 154-byte APK came
+back `200` from the Honor using the phone's own `curl`; `http://KATANA:8080/repo` resolves from the phone
+while `katana.local` does not; and Windows Firewall already allows Python on the private profile, so no rule had
+to be added. A fetch from the host itself needs `-NoProxy`, because the agent's proxy answers `501` for a LAN
+address — that is the proxy, not the server.
+
+If the machine name ever stops resolving, use its IP instead (`Get-NetIPAddress`), but then update `repo_url` in
+`config.yml` and rebuild the index, because the address is part of what the index says about itself.
 
 ## The first install on each phone
 
@@ -81,8 +88,11 @@ point of the exercise. One uninstall per phone, and the data has to leave and co
 1. In the app: **Settings → Резервная копия → Экспорт** (both profiles, `Test` and the real one), and copy the
    file off the phone.
 2. `adb uninstall com.balancecalories` — only after the export has been verified on the host.
-3. Install 1.0.2, then restore the export from step 1.
-4. Add the repository in the F-Droid client and let it install or confirm the build once Pages is live.
+3. Install 1.0.2: `adb install -r app\build\outputs\apk\release\app-release.apk`, or the copy already pushed to
+   `/sdcard/Download/` and tapped on the phone.
+4. Restore the export from step 1.
+5. Install the F-Droid client, add `http://KATANA:8080/repo?fingerprint=…` while the server runs, and from then
+   on updates arrive by button — at home, with the server window open.
 
 This is the one step in the whole self-hosted plan that touches real data, so it is done with the owner
 present and never as a side effect of something else (hard rule 10).
@@ -96,11 +106,14 @@ verifies before it installs anything.
 
 ## Limits worth knowing
 
-- **Every release adds its APK to the branch**, roughly 12 MB each. The branch grows; old APKs are never
-  rewritten, which is correct for a repository but means a shallow clone is the sane way to look at it.
-- **GitHub Pages is availability, not a promise.** If it stops serving, the repository is still versioned in
-  git and can be re-published elsewhere; the client address would change and the repository would have to be
-  added again.
+- **Updates need the house.** The repository exists only while `tools/serve_lan_repo.ps1` runs on this machine
+  and the phone is on the home Wi-Fi. That is the price of not having an upload channel, and it is a small one
+  for two phones that live here.
+- **HTTP, not HTTPS.** The client warns that the connection is unencrypted; on the LAN that is acceptable
+  because the index is signed and every APK is checked against the hash and the signer in that index — a
+  tampered file is rejected, not installed.
+- **`gh-pages` on GitHub is a leftover.** It holds the index from the abandoned attempt, without the APK and
+  pointing at a URL that no longer exists. It can be deleted; nothing reads it.
 - **This repository is not a review.** It carries exactly what the household built, signed by the household;
   the F-Droid build in February is the one that carries F-Droid's signature, and the two can never update
   each other in place.

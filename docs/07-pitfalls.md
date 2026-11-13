@@ -422,6 +422,16 @@ copying content to a stream". Fix: **the owner runs the push that carries an APK
 agent prepares the commit and stops there. Do not try to split the transfer - a single git object cannot be
 pushed in pieces - and do not read the message as a GitHub fault. [2026-11-13]
 
+**P-45 (continued, same day) - the ceiling is speed *and* size, and the second one is fatal.** Chrome DevTools
+throttling to 900 kB/s changed what the browser could upload: a 1.9 MB and a 4.7 MB PNG went through the
+GitHub "Upload files" form that had refused them at full speed, and the error changed from nothing to nothing -
+they simply worked. But the 12 192 154-byte APK still failed, and so did the same bytes renamed `.zip`, so the
+limit is not the extension and not the rate alone: something between 5 MB and 12 MB is refused regardless of
+how slowly it arrives. A git object cannot be pushed in pieces, so no clever push helps either. The answer was
+to stop uploading: **the repository is served on the home LAN** (`docs/fdroid/self-hosted.md`), where the phone
+pulled all 12 192 154 bytes in one request. Measure the ceiling before choosing a transport, and prefer the one
+with no ceiling at all when the sites are in the same house. [2026-11-13]
+
 **P-46 — fdroidserver on Windows splits paths on `/` and decodes UTF-8 JSON as cp1251.**
 Symptom, in this order: `fdroid update` first dies with `IndexError: list index out of range` at
 `packageName = segments[1]`, after that is patched it dies with
