@@ -30,8 +30,9 @@ The launcher icon is a **vector adaptive icon** — a balance beam with a slice 
 on one side and a steel-blue dumbbell on the other. Strings are **388/388** (376 `<string>` + 12
 `<plurals>` per language) and lint is down to five reviewed warnings.
 
-Next: the rest of **M6** — the device matrix on both phones and a real TalkBack pass — then publish the
-repository and submit [`docs/fdroid/`](docs/fdroid/) to F-Droid.
+Next: the rest of **M6** — the device matrix on both phones and a real TalkBack pass — then submit
+[`docs/fdroid/`](docs/fdroid/) to F-Droid. The repository is published (Apache-2.0, tag `v1.0.0`) at
+<https://github.com/shogun-kub/balance-calories>; pushes go through the Windows ssh-agent (P-42).
 
 ## Where everything lives
 
@@ -65,8 +66,8 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | **P-23** | `fillMaxWidth()` inside `horizontalScroll` collapses to zero, and `rememberScrollState(initial = …)` cannot open at the end |
 | **P-29** | a chart needs a seeded history; seed a **copy** of the database and leave no pulled file in the tree |
 | **P-40** | `connectedDebugAndroidTest` ignores `ANDROID_ADB_SERVER_PORT`: move adb to 5037 for an instrumentation run (P-08 is the opposite for plain adb) |
-| **P-42** | git has its own ssh and cannot see the Windows agent: put the absolute `C:/Windows/System32/OpenSSH/ssh.exe` in `core.sshCommand` |
 | **P-41** | never pipe a database into `adb shell`: push it and copy it on the device, then check the size |
+| **P-42** | git has its own ssh and cannot see the Windows agent: put the absolute `C:/Windows/System32/OpenSSH/ssh.exe` in `core.sshCommand` |
 
 ## Naming and the visible language
 
