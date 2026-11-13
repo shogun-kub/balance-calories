@@ -480,3 +480,30 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
        existing name returns it to the default. Verified on the Honor X7c: "Завтрак" prefilled and saved unchanged
        leaving `name = ''`; Обед renamed to "LunchX" and stored; cleared back to empty and listed as "Обед" again;
        29 entries and the active profile untouched.
+43. **Search that behaves like one feature, and a Food tab that says where you are** - four notes from the owner
+    after living with the app for several days.
+    1. *The Open Food Facts fallback is automatic.* The remote search used to be a button that had to be pressed even
+       when the phone had answered nothing, which is a step nobody wants when the list is visibly empty. The local
+       catalogue is still asked first - it is free and instant - and only when it returns nothing does the network
+       get called, after a 450 ms pause so a five-letter word is not five requests to a free service. The button
+       survives for the two cases the rule cannot cover: the phone answered something but not the right thing, and a
+       network failure that deserves a retry.
+    2. *The recipe editor catches up.* Ingredient search had no remote half at all. It now shares the same
+       `RemoteState`/`searchOpenFoodFacts` helper and the same constants, so "find a food" behaves the same in both
+       places, and the editor gained a **scan** button. The scanner is drawn **inside** the editor's Box rather than
+       as an overlay: an overlay leaves composition and would throw away the recipe being written, which is exactly
+       what a person scanning the fourth ingredient cannot afford. Found code -> the product is added as 100 g;
+       unknown code -> the code is reported on screen instead of navigating away. One defect found on the device:
+       with no overlay branch around it, the scanner had no background of its own and the recipe showed through the
+       camera preview - fixed with an opaque `Surface`.
+    3. *A search that found nothing names the manual product.* The empty remote result now offers
+       "Добавить «<запрос>» вручную", and the product form opens with the name prefilled; `initialName` is the same
+       mechanism the scanned barcode already used for `initialBarcode`.
+    4. *"Еда" and "Рецепты" are tabs.* They were a header link, which read as either a tab bar or a filter with no
+       "everything" option (the owner's own observation). They are a `TabRow` inside the Food tab now: the recipes
+       list lost its back button and its duplicated title, the recipe detail's back button says «Рецепты» instead of
+       «Назад», and the two lists state where you are instead of offering a jump.
+    Verified on the Honor X7c (Android 14): both tabs and the recipe back label; a search for `qzxqzx` reaching Open
+    Food Facts by itself and offering the named manual form (name prefilled); the editor's scanner opening over the
+    recipe without losing it, and the camera returning to the same draft. The recipes in the database were unchanged
+    after the run (3 recipes, 13 ingredients, 266 g in the edited one), and nothing was logged by accident.

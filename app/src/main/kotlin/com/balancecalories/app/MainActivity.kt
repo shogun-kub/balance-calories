@@ -14,6 +14,9 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -63,7 +66,10 @@ import kotlinx.coroutines.launch
 private enum class Tab { TODAY, FOOD, HISTORY, WEIGHT }
 
 /** Screens pushed over a tab. One is enough: nothing in this app is three levels deep. */
-private enum class Overlay { PROFILES, PROFILE_FORM, SETTINGS, BACKUP, DEBUG, MEALS, MEAL_EDIT, PRODUCT, PRODUCT_FORM, SCAN, RECIPES, RECIPE, RECIPE_FORM }
+private enum class Overlay { PROFILES, PROFILE_FORM, SETTINGS, BACKUP, DEBUG, MEALS, MEAL_EDIT, PRODUCT, PRODUCT_FORM, SCAN, RECIPE, RECIPE_FORM }
+
+/** The two lists behind the "Еда" tab: ingredients and the dishes cooked from them. */
+private enum class FoodTab { PRODUCTS, RECIPES }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,6 +119,7 @@ private fun Root() {
 
     // Saveable, so a phone that kills the app overnight does not send the person somewhere else.
     var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
+    var foodTab by rememberSaveable { mutableStateOf(FoodTab.PRODUCTS) }
     var overlay by rememberSaveable { mutableStateOf<Overlay?>(null) }
     var editing by remember { mutableStateOf<Profile?>(null) }
     var openedProduct by remember { mutableStateOf<Product?>(null) }
@@ -127,6 +134,8 @@ private fun Root() {
     var openedRecipe by remember { mutableStateOf<Recipe?>(null) }
     var recipeEditing by remember { mutableStateOf<Recipe?>(null) }
     var scannedBarcode by remember { mutableStateOf<String?>(null) }
+    // The words a search ended with, carried into a manual product so the name is not retyped.
+    var formNameSeed by remember { mutableStateOf<String?>(null) }
 
     // Back pops one overlay, then returns to Today from another tab, then leaves the app. Tab switches do not
     // stack: a person who taps Еда, История, Еда and then back expects Today, not a tour of their taps.
@@ -141,7 +150,7 @@ private fun Root() {
                     tab = Tab.FOOD
                     null
                 }
-                Overlay.RECIPE, Overlay.RECIPE_FORM -> Overlay.RECIPES
+                Overlay.RECIPE, Overlay.RECIPE_FORM -> null
                 Overlay.BACKUP, Overlay.DEBUG -> Overlay.SETTINGS
                 else -> {
                     editing = null
@@ -275,25 +284,11 @@ private fun Root() {
             onBack = { overlay = Overlay.SETTINGS },
         )
 
-        overlay == Overlay.RECIPES -> RecipesScreen(
-            container = container,
-            profileId = active.id,
-            onBack = { overlay = null },
-            onOpen = { recipe ->
-                openedRecipe = recipe
-                overlay = Overlay.RECIPE
-            },
-            onNew = {
-                recipeEditing = null
-                overlay = Overlay.RECIPE_FORM
-            },
-        )
-
         overlay == Overlay.RECIPE && openedRecipe != null -> RecipeScreen(
             container = container,
             profileId = active.id,
             recipe = openedRecipe!!,
-            onBack = { overlay = Overlay.RECIPES },
+            onBack = { overlay = null },
             onEdit = {
                 recipeEditing = openedRecipe
                 overlay = Overlay.RECIPE_FORM
@@ -305,7 +300,7 @@ private fun Root() {
             },
             onDeleted = {
                 openedRecipe = null
-                overlay = Overlay.RECIPES
+                overlay = null
             },
         )
 
@@ -320,7 +315,7 @@ private fun Root() {
                 // Straight to the dish that was just saved: its numbers are the point of the exercise.
                 overlay = if (wasEditing) Overlay.RECIPE else Overlay.RECIPE
             },
-            onCancel = { overlay = if (recipeEditing != null) Overlay.RECIPE else Overlay.RECIPES },
+            onCancel = { overlay = if (recipeEditing != null) Overlay.RECIPE else null },
         )
 
         overlay == Overlay.SCAN -> ScannerScreen(
@@ -364,6 +359,7 @@ private fun Root() {
             container = container,
             existing = formEditing,
             initialBarcode = scannedBarcode,
+            initialName = formNameSeed,
             onSaved = { saved ->
                 if (formEditing != null) {
                     // Correcting a product is not logging it: show the corrected numbers, then let the user
@@ -382,6 +378,7 @@ private fun Root() {
                 }
             },
             onCancel = {
+                formNameSeed = null
                 overlay = if (formEditing != null) Overlay.PRODUCT else null
             },
         )
@@ -403,22 +400,53 @@ private fun Root() {
                     },
                 )
 
-                Tab.FOOD -> ProductsScreen(
-                    container = container,
-                    profileId = active.id,
-                    onPick = { product ->
-                        openedProduct = product
-                        overlay = Overlay.PRODUCT
-                    },
-                    onAddManual = {
-                        openedProduct = null
-                        formEditing = null
-                        scannedBarcode = null
-                        overlay = Overlay.PRODUCT_FORM
-                    },
-                    onScan = { overlay = Overlay.SCAN },
-                    onOpenRecipes = { overlay = Overlay.RECIPES },
-                )
+                // "Еда" holds two lists, and they are tabs rather than two buttons in a header: the owner read the
+                // old header link as ambiguous (2026-11-13). A tab states where you are, which a TextButton cannot.
+                Tab.FOOD -> Column(modifier = Modifier.fillMaxSize()) {
+                    TabRow(selectedTabIndex = foodTab.ordinal) {
+                        Tab(
+                            selected = foodTab == FoodTab.PRODUCTS,
+                            onClick = { foodTab = FoodTab.PRODUCTS },
+                            text = { Text(stringResource(R.string.food_title)) },
+                        )
+                        Tab(
+                            selected = foodTab == FoodTab.RECIPES,
+                            onClick = { foodTab = FoodTab.RECIPES },
+                            text = { Text(stringResource(R.string.recipes_title)) },
+                        )
+                    }
+                    when (foodTab) {
+                        FoodTab.PRODUCTS -> ProductsScreen(
+                            container = container,
+                            profileId = active.id,
+                            onPick = { product ->
+                                openedProduct = product
+                                overlay = Overlay.PRODUCT
+                            },
+                            onAddManual = { seed ->
+                                openedProduct = null
+                                formEditing = null
+                                scannedBarcode = null
+                                formNameSeed = seed
+                                overlay = Overlay.PRODUCT_FORM
+                            },
+                            onScan = { overlay = Overlay.SCAN },
+                        )
+
+                        FoodTab.RECIPES -> RecipesScreen(
+                            container = container,
+                            profileId = active.id,
+                            onOpen = { recipe ->
+                                openedRecipe = recipe
+                                overlay = Overlay.RECIPE
+                            },
+                            onNew = {
+                                recipeEditing = null
+                                overlay = Overlay.RECIPE_FORM
+                            },
+                        )
+                    }
+                }
 
                 Tab.HISTORY -> HistoryScreen(
                     profile = active,

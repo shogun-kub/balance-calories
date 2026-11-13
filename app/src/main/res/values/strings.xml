@@ -136,6 +136,8 @@
     <string name="food_title">Food</string>
     <string name="food_search_hint">Search by name or brand</string>
     <string name="food_add_manual">Add a product manually</string>
+    <string name="food_add_manual_named">Add "%1$s" by hand</string>
+    <string name="recipe_scan_not_found">Barcode %1$s is not on this phone</string>
     <string name="food_empty">Nothing found</string>
     <string name="food_empty_note">Search the starter list, or add a product with your own numbers.</string>
     <string name="food_source_starter">starter pack</string>

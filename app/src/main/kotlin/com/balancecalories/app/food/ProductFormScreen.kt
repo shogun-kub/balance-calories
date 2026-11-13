@@ -50,11 +50,15 @@ fun ProductFormScreen(
     container: AppContainer,
     existing: Product?,
     initialBarcode: String? = null,
+    /** A name to start from when creating: what the person typed into a search that then found nothing. */
+    initialName: String? = null,
     onSaved: (Product) -> Unit,
     onCancel: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    var name by rememberSaveable { mutableStateOf(existing?.name.orEmpty()) }
+    // A search that found nothing is an answer about the catalogue, not about the food: carrying the words
+    // into this field saves retyping what is already on screen, which is the whole of the owner's ask.
+    var name by rememberSaveable { mutableStateOf(existing?.name ?: initialName.orEmpty()) }
     var nameRu by rememberSaveable { mutableStateOf(existing?.nameRu.orEmpty()) }
     var kcal by rememberSaveable { mutableStateOf(existing?.kcal100g?.let { trimNumber(it) }.orEmpty()) }
     var protein by rememberSaveable { mutableStateOf(existing?.protein100g?.let { trimNumber(it) }.orEmpty()) }

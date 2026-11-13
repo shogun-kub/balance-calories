@@ -136,6 +136,8 @@
     <string name="food_title">Еда</string>
     <string name="food_search_hint">Поиск по названию или бренду</string>
     <string name="food_add_manual">Добавить продукт вручную</string>
+    <string name="food_add_manual_named">Добавить «%1$s» вручную</string>
+    <string name="recipe_scan_not_found">Штрихкод %1$s на телефоне не найден</string>
     <string name="food_empty">Ничего не найдено</string>
     <string name="food_empty_note">Ищите в стартовом списке или добавьте продукт со своими цифрами.</string>
     <string name="food_source_starter">стартовый набор</string>

@@ -2,6 +2,7 @@ package com.balancecalories.app.recipes
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,16 +34,20 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
-import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
+import com.balancecalories.app.food.MIN_REMOTE_QUERY
+import com.balancecalories.app.food.REMOTE_DEBOUNCE_MS
+import com.balancecalories.app.food.RemoteState
+import com.balancecalories.app.food.searchOpenFoodFacts
+import com.balancecalories.app.scanner.ScannerScreen
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.food.trimNumber
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.Recipe
 import com.balancecalories.core.food.RecipeItem
 import com.balancecalories.core.food.RecipeMath
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** One ingredient while it is being edited: the product, and its grams as typed text. */
@@ -71,6 +77,11 @@ fun RecipeEditorScreen(
     var cookedWeight by rememberSaveable { mutableStateOf(existing?.cookedWeightG?.let { trimNumber(it) }.orEmpty()) }
     var query by rememberSaveable { mutableStateOf("") }
     var found by remember { mutableStateOf<List<Product>>(emptyList()) }
+    var remote by remember { mutableStateOf<RemoteState>(RemoteState.Idle) }
+    // The scanner is drawn *inside* this screen rather than as an overlay, so a scan does not take the recipe being
+    // written out of composition and throw it away.
+    var scanning by remember { mutableStateOf(false) }
+    var scanMiss by remember { mutableStateOf<String?>(null) }
     var error by rememberSaveable { mutableStateOf<Int?>(null) }
     var saving by rememberSaveable { mutableStateOf(false) }
 
@@ -81,10 +92,21 @@ fun RecipeEditorScreen(
     }
 
     LaunchedEffect(query) {
-        found = if (query.trim().length < 2) {
+        val asked = query.trim()
+        found = if (asked.length < 2) {
             emptyList()
         } else {
-            runCatching { container.products.search(query, limit = 6) }.getOrDefault(emptyList())
+            runCatching { container.products.search(asked, limit = 6) }.getOrDefault(emptyList())
+        }
+        remote = RemoteState.Idle
+        // The same automatic fallback as the products list (owner's note, 2026-11-13): an ingredient the phone does
+        // not know is looked up in Open Food Facts without a second tap, after the typing settles.
+        if (asked.length >= MIN_REMOTE_QUERY && found.isEmpty()) {
+            delay(REMOTE_DEBOUNCE_MS)
+            if (query.trim() == asked) {
+                remote = RemoteState.Searching
+                remote = searchOpenFoodFacts(container, asked)
+            }
         }
     }
 
@@ -100,6 +122,7 @@ fun RecipeEditorScreen(
     val servingsValue = servings.replace(',', '.').toDoubleOrNull() ?: 0.0
     val perServing = RecipeMath.perServing(totals, basis, servingsValue)
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
             .imePadding().padding(16.dp),
@@ -178,8 +201,38 @@ fun RecipeEditorScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        if (query.trim().length >= 2 && found.isEmpty()) {
+        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { scanning = true }) { Text(stringResource(R.string.action_scan)) }
+            if (query.trim().length >= MIN_REMOTE_QUERY && (found.isNotEmpty() || remote is RemoteState.Failed)) {
+                TextButton(
+                    enabled = remote !is RemoteState.Searching,
+                    onClick = {
+                        val asked = query.trim()
+                        remote = RemoteState.Searching
+                        scope.launch { remote = searchOpenFoodFacts(container, asked) }
+                    },
+                ) {
+                    Text(
+                        text = if (remote is RemoteState.Searching) {
+                            stringResource(R.string.food_search_off_busy)
+                        } else {
+                            stringResource(R.string.food_search_off)
+                        },
+                    )
+                }
+            }
+        }
+
+        if (query.trim().length >= 2 && found.isEmpty() && remote !is RemoteState.Found) {
             Text(text = stringResource(R.string.recipe_no_products), style = MaterialTheme.typography.bodySmall)
+        }
+
+        scanMiss?.let { code ->
+            Text(
+                text = stringResource(R.string.recipe_scan_not_found, code),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
         }
 
         for (product in found) {
@@ -202,6 +255,56 @@ fun RecipeEditorScreen(
                     text = stringResource(R.string.recipe_add_ingredient),
                     style = MaterialTheme.typography.bodySmall,
                 )
+            }
+        }
+
+        when (val state = remote) {
+            RemoteState.Idle, RemoteState.Searching -> Unit
+
+            is RemoteState.Failed -> Text(
+                text = stringResource(R.string.food_search_off_failed, state.reason),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+
+            is RemoteState.Found -> {
+                val hits = state.search.products
+                if (hits.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.food_search_off_nothing),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.food_search_off_count, state.search.totalCount),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    for (hit in hits) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clickable {
+                                scope.launch {
+                                    val stored = runCatching { container.products.importSearchHit(hit) }.getOrNull()
+                                    if (stored != null) {
+                                        rows.add(EditableItem(stored, "100"))
+                                        query = ""
+                                        remote = RemoteState.Idle
+                                    }
+                                }
+                            }.padding(vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text = hit.name ?: hit.code,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text(
+                                text = stringResource(R.string.recipe_add_ingredient),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -277,5 +380,32 @@ fun RecipeEditorScreen(
         ) {
             Text(stringResource(R.string.action_save))
         }
+    }
+
+    if (scanning) {
+        // Opaque, because the scanner shares a Box with the editor now instead of owning the screen: without a
+        // surface behind it the recipe shows through the camera preview.
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background,
+        ) {
+            ScannerScreen(
+                container = container,
+                onBack = { scanning = false },
+                onProduct = { product ->
+                    scanning = false
+                    scanMiss = null
+                    rows.add(EditableItem(product, "100"))
+                    query = ""
+                },
+                onAddManually = { code ->
+                    // The code stays on screen instead of opening the product form: that form is a different
+                    // destination, and leaving this one would throw away the recipe being written.
+                    scanning = false
+                    scanMiss = code
+                },
+            )
+        }
+    }
     }
 }

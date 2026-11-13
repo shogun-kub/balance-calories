@@ -99,7 +99,8 @@ fun RecipeScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
+            // Back goes to the list this recipe came from, and the button says so instead of "Назад".
+        TextButton(onClick = onBack) { Text(stringResource(R.string.recipes_title)) }
             TextButton(onClick = onEdit) { Text(stringResource(R.string.action_edit)) }
         }
 

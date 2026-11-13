@@ -41,7 +41,6 @@ import com.balancecalories.core.food.RecipeMath
 fun RecipesScreen(
     container: AppContainer,
     profileId: Long,
-    onBack: () -> Unit,
     onOpen: (Recipe) -> Unit,
     onNew: () -> Unit,
 ) {
@@ -52,11 +51,8 @@ fun RecipesScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
-            Text(text = stringResource(R.string.recipes_title), style = MaterialTheme.typography.titleLarge)
-        }
-
+        // Recipes are the second tab of "Еда", so this screen has no back button and no title of its own: the tab
+        // names it, and a second copy of the word above the list made the header read like a heading inside a tab.
         TextButton(onClick = onNew) { Text(stringResource(R.string.recipe_new)) }
 
         if (recipes.isEmpty()) {

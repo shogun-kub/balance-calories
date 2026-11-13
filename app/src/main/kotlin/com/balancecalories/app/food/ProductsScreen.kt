@@ -39,6 +39,7 @@ import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.data.off.OffProduct
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.data.off.OffSearch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -59,9 +60,8 @@ fun ProductsScreen(
     container: AppContainer,
     profileId: Long,
     onPick: (Product) -> Unit,
-    onAddManual: () -> Unit,
+    onAddManual: (String?) -> Unit,
     onScan: () -> Unit,
-    onOpenRecipes: () -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<Product>>(emptyList()) }
@@ -71,27 +71,35 @@ fun ProductsScreen(
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(query) {
-        results = if (query.isBlank()) {
+        val asked = query.trim()
+        results = if (asked.isEmpty()) {
             container.products.browse()
         } else {
-            container.products.search(query)
+            container.products.search(asked)
         }
         // Only meaningful on an empty query: once the user types, their words outrank their habits.
-        if (query.isBlank()) {
+        if (asked.isEmpty()) {
             recents = runCatching { container.food.recentlyEaten(profileId) }.getOrDefault(emptyList())
         }
         // A new query makes the old answer look like an answer to the new question.
         remote = RemoteState.Idle
+
+        // The fallback is automatic (owner's note, 2026-11-13): "if there are no local findings, search Open Food
+        // Facts right away, don't wait for user action". The phone is asked first because it is free and instant,
+        // and the network is asked only when it had nothing - after the typing settles, and only if the question
+        // has not changed in the meantime.
+        if (asked.length >= MIN_REMOTE_QUERY && results.isEmpty()) {
+            delay(REMOTE_DEBOUNCE_MS)
+            if (query.trim() == asked) {
+                remote = RemoteState.Searching
+                remote = searchOpenFoodFacts(container, asked)
+            }
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Header: the title on the left, recipes on the right. Recipes are food that has been cooked
-        // rather than ingredients, and they belong to this tab; a stranded link under the search box
-        // read as a truncated list item.
-        WrappingRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(text = stringResource(R.string.food_title), style = MaterialTheme.typography.headlineMedium)
-            TextButton(onClick = onOpenRecipes) { Text(stringResource(R.string.recipes_title)) }
-        }
+        // The title is the tab label above this screen now, so the header is only the search field's context.
+
 
         OutlinedTextField(
             value = query,
@@ -106,21 +114,18 @@ fun ProductsScreen(
             Text(text = stringResource(R.string.food_empty_note), style = MaterialTheme.typography.bodySmall)
         }
 
-        if (query.trim().length >= MIN_REMOTE_QUERY) {
+        // The button survives the automatic fallback for the two cases the automatic rule cannot cover: the phone
+        // did find something but not the right thing, and the network was unreachable and deserves a retry.
+        val offersManualRemote = query.trim().length >= MIN_REMOTE_QUERY &&
+            (results.isNotEmpty() || remote is RemoteState.Failed)
+        if (offersManualRemote) {
             TextButton(
                 enabled = remote !is RemoteState.Searching,
                 onClick = {
                     val asked = query.trim()
                     remote = RemoteState.Searching
                     scope.launch {
-                        val answer = runCatching { container.offClient.search(asked) }.getOrElse {
-                            OffSearch.Unavailable(it.message ?: it::class.java.simpleName)
-                        }
-                        remote = when (answer) {
-                            is OffSearch.Found -> RemoteState.Found(answer)
-                            is OffSearch.Invalid -> RemoteState.Idle
-                            is OffSearch.Unavailable -> RemoteState.Failed(answer.reason)
-                        }
+                        remote = searchOpenFoodFacts(container, asked)
                     }
                 },
             ) {
@@ -163,6 +168,11 @@ fun ProductsScreen(
                 is RemoteState.Found -> {
                     val found = state.search
                     if (found.isEmpty) {
+                        item("remote-none-named") {
+                            TextButton(onClick = { onAddManual(query.trim()) }) {
+                                Text(stringResource(R.string.food_add_manual_named, query.trim()))
+                            }
+                        }
                         item("remote-none") {
                             Text(
                                 text = stringResource(R.string.food_search_off_nothing),
@@ -199,20 +209,9 @@ fun ProductsScreen(
         }
 
         TextButton(onClick = onScan) { Text(stringResource(R.string.action_scan)) }
-        TextButton(onClick = onAddManual) { Text(stringResource(R.string.food_add_manual)) }
+        TextButton(onClick = { onAddManual(null) }) { Text(stringResource(R.string.food_add_manual)) }
     }
 }
-
-/** What the remote search is doing, so the list can say it instead of staying silent. */
-private sealed interface RemoteState {
-    data object Idle : RemoteState
-    data object Searching : RemoteState
-    data class Found(val search: OffSearch.Found) : RemoteState
-    data class Failed(val reason: String) : RemoteState
-}
-
-/** Below this the query is not a search: OFF's own index returns half the database for one letter. */
-private const val MIN_REMOTE_QUERY = 2
 
 @Composable
 private fun ProductRow(product: Product, languageTag: String?, onClick: () -> Unit) {
