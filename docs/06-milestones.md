@@ -799,3 +799,19 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     repository history stays small and the 12 MB file lives in exactly one place.
 
     What is still the owner's: the uninstall and reinstall on both phones, still with an export taken first.
+
+57. **The phones moved to the household key** - 2026-11-13. The owner did the migration himself — export,
+    uninstall, install 1.0.2, restore — which is exactly the step that was never going to be an agent's side
+    effect: it deletes the app and its data first (hard rule 10). What that buys: the debug key is off the
+    phones, so from now on a new build installs **over** the current one with `adb install -r`, with no uninstall
+    and no export, because the signature no longer changes.
+
+    What did not happen: **no F-Droid client was installed, so no repository was added**, and the LAN repository
+    of item 56 is prepared and unused. The update channel until February is therefore a manual install, which is
+    what it was before — the repository is a button that exists for when the button is wanted, not a dependency
+    of the plan. Worth recording as a fact rather than a gap: the self-hosted repository was never needed to make
+    the phones run our own signature, only to make updating take one tap.
+
+    Not verified from here: both phones were disconnected by the time this was written, so `versionCode 4` and
+    the certificate on each device are the owner's report. Next time either is plugged in,
+    `adb shell dumpsys package com.balancecalories` settles it in a line.

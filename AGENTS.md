@@ -39,7 +39,9 @@ policy ground** — Quality point 6 wants three months of active development, an
 repository on the home LAN** — `http://KATANA:8080/repo`, served by `tools/serve_lan_repo.ps1`, `versionName
 1.0.2` / `versionCode 4` signed with the household key, [`docs/fdroid/self-hosted.md`](docs/fdroid/self-hosted.md)
 — because uploads above about a megabyte do not leave this machine (**P-45**), which is what killed the GitHub
-Pages attempt. The device matrix (Honor X7c, Android 14; Redmi Note 8 Pro, Android 11) and
+Pages attempt. **The phones are on that key since 2026-11-13, so a new build installs over the current one**; no
+F-Droid client is installed, so for now a release is `adb install -r`, and the LAN repository is ready but
+unread. The device matrix (Honor X7c, Android 14; Redmi Note 8 Pro, Android 11) and
 the TalkBack pass are done, diary items 50 and 51; the submission is items 53 and 54, the repository 55. The
 source is published (Apache-2.0, tag `v1.0.2`) at <https://github.com/shogun-kub/balance-calories>; pushes go
 through the Windows ssh-agent (P-42), and the GitLab side works the same way (P-44).

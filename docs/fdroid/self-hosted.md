@@ -82,8 +82,9 @@ If the machine name ever stops resolving, use its IP instead (`Get-NetIPAddress`
 
 ## The first install on each phone
 
-The phones hold builds signed with the **debug** key, so 1.0.2 cannot replace them — the signature check is the
-point of the exercise. One uninstall per phone, and the data has to leave and come back:
+**Done on 2026-11-13 by the owner**: both builds were signed with the debug key, so 1.0.2 could not replace
+them — the signature check is the point of the exercise. The record of what that cost, kept because the next
+signing change will cost the same:
 
 1. In the app: **Settings → Резервная копия → Экспорт** (both profiles, `Test` and the real one), and copy the
    file off the phone.
@@ -91,11 +92,16 @@ point of the exercise. One uninstall per phone, and the data has to leave and co
 3. Install 1.0.2: `adb install -r app\build\outputs\apk\release\app-release.apk`, or the copy already pushed to
    `/sdcard/Download/` and tapped on the phone.
 4. Restore the export from step 1.
-5. Install the F-Droid client, add `http://KATANA:8080/repo?fingerprint=…` while the server runs, and from then
-   on updates arrive by button — at home, with the server window open.
+5. *(Optional, not done.)* Install the F-Droid client, add `http://KATANA:8080/repo?fingerprint=…` while the
+   server runs, and from then on updates arrive by button — at home, with the server window open.
 
-This is the one step in the whole self-hosted plan that touches real data, so it is done with the owner
-present and never as a side effect of something else (hard rule 10).
+The uninstall was the one step in the whole plan that touched real data, so it was done with the owner present
+and never as a side effect of something else (hard rule 10).
+
+**Where that leaves the update channel:** no client is installed, so the repository is served but unread, and a
+new build is installed by hand (`adb install -r app\build\outputs\apk\release\app-release.apk`, which now works
+in place because the signature is ours). The repository exists for the day one tap is preferable; adding it
+later costs nothing and changes no data.
 
 ## What the client shows
 

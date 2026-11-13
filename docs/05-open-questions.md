@@ -215,10 +215,10 @@ look spends goodwill that the February submission will want.
 that way, then option 3 - with an export taken before the first switch, because a key that signs nothing is
 cheaper to plan than a migration done in a hurry. Nothing is generated until the owner picks.
 
-**Decided 2026-11-13: option 3.** The repository exists — `gh-pages` of this project, index signed by a
-repository key, APKs signed by the household's own app key, client address and fingerprint on the landing page —
-and `docs/fdroid/self-hosted.md` is the record, including the fact that the last `git push` (the one carrying an
-APK) is the owner's, because uploads above about a megabyte do not leave the agent (**P-45**). What stays open
-is only the phone migration: the two installations are debug-signed, so switching costs one export, one
-uninstall and one restore per phone, with the owner present (hard rule 10). The main index remains a February
-task, unchanged.
+**Decided 2026-11-13: option 3, then trimmed to what is actually used.** The repository exists on the home LAN
+(`http://KATANA:8080/repo`, served by `tools/serve_lan_repo.ps1`, index signed by a repository key, APKs signed
+by the household's own app key) after GitHub proved unable to take the APK (**P-45**); `docs/fdroid/self-hosted.md`
+is the record. The phone migration is done: the owner exported, uninstalled and reinstalled both phones on the
+household key (diary item 57), so later builds install over the current one. What is *not* done, and was
+deliberately left as a choice rather than a task: **no F-Droid client is installed, so no repository is added**
+and updates stay manual until somebody wants the button. The main index remains a February task, unchanged.
