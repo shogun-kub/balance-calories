@@ -185,3 +185,32 @@ against "Вес" is a guess from a glyph.
 Options: keep as is (labels return at 100 %); show labels always and let them wrap to two lines at 200 % (needs
 checking that «История» does not break inside a word); show labels always and accept a slightly smaller label style
 at large scales. Owner's call - it is a product question, not a technical one.
+
+### J. F-Droid's three-month rule, and what ships on the phones until then — open since 2026-11-13
+
+The maintainer closed the first merge request with "app is not ready, see Policy Quality point 6": three
+months of active development, unless the app has proven users, the author already maintains other apps on
+F-Droid, or it was written for an event. The first commit here is **2026-11-07**, so the main index is closed
+to this app until **2027-02-07**. The other three points of the review are fixed, and the next submission has
+a green buildserver build behind it.
+
+What happens in between is a decision:
+
+1. **Nothing changes.** Both phones keep the APK installed by hand (`adb install -r`) on each release, and the
+   submission waits for February. Cheapest, and it is what the household already does.
+2. **A self-hosted F-Droid repository.** `fdroid server update` produces a signed index that can live on
+   GitHub Pages; the client adds it as a repository and updates arrive with an "Update" button on both
+   phones. This is exactly what F-Droid's policy suggests for apps outside the main repo. It has one
+   prerequisite that is a decision rather than a task: **a signing key the household owns**, generated here,
+   kept out of the repository forever (hard rule 2), and never thrown away casually - an app signed by a new
+   key cannot be installed over the old one. That is also why switching costs one uninstall on each phone, and
+   the current builds are signed with the debug key: the food log and the weight history would have to be
+   exported and restored first.
+3. **Both** - the self-hosted index for updates now, the main index in February.
+
+Not recommended: reopening the request before February. The maintainer was explicit, and a premature second
+look spends goodwill that the February submission will want.
+
+**Recommendation, to be decided rather than assumed:** option 1 until a release is actually worth distributing
+that way, then option 3 - with an export taken before the first switch, because a key that signs nothing is
+cheaper to plan than a migration done in a hurry. Nothing is generated until the owner picks.

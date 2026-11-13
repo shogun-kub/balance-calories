@@ -230,6 +230,22 @@ def render_preview(size_px):
     return img.resize((size_px, size_px), Image.LANCZOS)
 
 
+def render_listing_icon(path=os.path.join("fastlane", "metadata", "android", "en-US", "images", "icon.png"),
+                        size_px=512):
+    """
+    The store icon: 512 px, drawn from the same geometry as the launcher icon.
+
+    The adaptive-icon layer is a 108-unit canvas whose visible part is the middle 72 units, so rendering the whole
+    canvas reproduces what a phone actually shows - a cream square with the artwork inside it - and it keeps the
+    artwork clear of any mask a launcher or a store puts over the edges. F-Droid takes this file from
+    `fastlane/metadata/android/en-US/images/icon.png` at the commit it builds, so it has to be in the release tag,
+    not only in the working tree.
+    """
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    render_preview(size_px).save(path, optimize=True)
+    print("wrote", path)
+
+
 def path_data(points):
     """Android VectorDrawable path data: M, L…, Z. Points are already in icon units."""
     body = "M{:.2f},{:.2f}".format(*points[0])
@@ -261,6 +277,7 @@ def main():
         x += size_px * 2 + 60
     sheet.save(os.path.join(out_dir, "final_sheet.png"))
     print("wrote", os.path.join(out_dir, "final_sheet.png"))
+    render_listing_icon()
     emit_vector()
 
 

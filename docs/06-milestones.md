@@ -726,3 +726,25 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     platform. All three were read from `fdroidserver/buildserver` before submitting, and all three held.
 
     What is still not ours: the merge, the signing and the appearance in the index.
+54. **The first review: three points we could fix and one we cannot** - 2026-11-13, merge request !57200 closed
+    by `licaon-kter` about an hour after it was opened, with four lines. Each one, and what it turned out to
+    mean:
+
+    | He wrote | What it meant | What changed |
+    | --- | --- | --- |
+    | "template not used" | the description must follow `.gitlab/merge_request_templates/Default.md` — an abstract, then a checklist of policy, docs, MR setup, metadata and pipeline items | `docs/fdroid/README.md` is now that template, filled in |
+    | ".yml should not have comments" | exactly **P-44**; the job rewrites the file and diffs it | the recipe is `rewritemeta`'s output, with the reasoning moved into the request text |
+    | "you need an icon.png in …/en-US/images" | F-Droid reads the **store icon** from the app's own fastlane directory, and only has it if a release tag contains it | `tools/icon_design.py` now renders `fastlane/metadata/android/en-US/images/icon.png`, 512 × 512 from the same geometry as the launcher icon |
+    | "app is not ready, see Policy Quality point 6" | the inclusion policy's Quality point 6: the app must have been **actively developed for at least three months**, unless it has users, the author maintains other apps on F-Droid, or it was written for an event | none of the exceptions applies, so the main index is closed until **2027-02-07** — the first commit is 2026-11-07 |
+
+    The one that mattered is the last one, and it is the one no amount of work can move: the repository is six
+    days old at the time of the review, and the policy asks for three months. `docs/05-open-questions.md`
+    question J holds the options for the interval, including a self-hosted F-Droid repository, which needs a
+    signing key the household keeps — a decision, not a task.
+
+    Two second-order lessons. **Fastlane metadata is read at the built commit**, so the icon and every
+    description change have to be inside the release tag, not merely on `main`; that is why the recipe's
+    `commit` field is the full hash of a tag rather than a tag name, which the template requires anyway. And
+    **the first request was not wasted**: its red-then-green pipeline is what proved that the F-Droid
+    buildserver builds this app (item 53), and that proof does not expire with the request.
+

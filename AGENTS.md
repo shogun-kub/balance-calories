@@ -30,12 +30,15 @@ The launcher icon is a **vector adaptive icon** — a balance beam with a slice 
 on one side and a steel-blue dumbbell on the other. Strings are **394/394** (382 `<string>` + 12
 `<plurals>` per language) and lint is down to five reviewed warnings.
 
-Submitted: fdroiddata merge request [!57200](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/57200),
-whose pipeline is green including `fdroid build` on the F-Droid buildserver (356 s); what is left is their
-review, their signature and the entry in the index. The device matrix (Honor X7c, Android 14; Redmi Note 8
-Pro, Android 11) and the TalkBack pass are done, diary items 50 and 51, and the submission is item 53. The
-repository is published (Apache-2.0, tag `v1.0.1`) at <https://github.com/shogun-kub/balance-calories>;
-pushes go through the Windows ssh-agent (P-42), and the GitLab side works the same way (P-44).
+Submitted once: fdroiddata merge request [!57200](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/57200)
+built green on the F-Droid buildserver (`fdroid build` 356 s, `check apk` clean) and was then **closed on a
+policy ground** — Quality point 6 wants three months of active development, and the first commit is
+2026-11-07. Re-submission is **2027-02-07**, with the fill-in-the-template description and checklist in
+[`docs/fdroid/README.md`](docs/fdroid/README.md); question J in `docs/05-open-questions.md` covers what ships
+on the phones until then. The device matrix (Honor X7c, Android 14; Redmi Note 8 Pro, Android 11) and the
+TalkBack pass are done, diary items 50 and 51, and the submission is items 53 and 54. The repository is
+published (Apache-2.0, tag `v1.0.1`) at <https://github.com/shogun-kub/balance-calories>; pushes go through
+the Windows ssh-agent (P-42), and the GitLab side works the same way (P-44).
 
 ## Where everything lives
 
