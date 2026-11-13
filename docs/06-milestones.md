@@ -545,3 +545,18 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     it to `/data/local/tmp` and copying **on the device** restored everything; the counts afterwards were 2 profiles,
     42 entries, 100 products, 3 recipes, 13 items, 65 activity days. The pitfall is **P-41**, and its rule is the
     one that saved the day: keep the original pull untouched, and verify the destination size before starting the app.
+45. **The numbers, measured rather than hoped for** - M6's performance item, 2026-11-13, Honor X7c (ALT-LX1,
+    Android 14 / SDK 34), **debug** build, `versionName 0.1.0`, commit `44ed9c9`.
+    | What | Target | Measured |
+    | --- | --- | --- |
+    | Cold start, `am start -W -S`, five runs | < 1 500 ms | **median 1 370 ms** (1 356 - 1 457) |
+    | Frame time while scrolling and switching tabs, 381 frames | day render < 100 ms | p50 **9 ms**, p90 **14 ms**, p95 **16 ms**, p99 **93 ms**, janky **2.62 %** |
+    | Database, 2 profiles / 42 entries / 100 products / 65 activity days | < 50 MB after a year | **204 KiB** now; a year of the model below is **3.34 MiB** |
+    The year is a model, not a measurement, and it says so: measured bytes per row from `dbstat` (food entry
+    292 B, activity day 189 B, product 204 B, weigh-in 2 048 B, recipe ingredient 315 B) times a heavy diet of
+    15 entries a day, one weigh-in a day for two people, 300 new products and 50 recipes - **3.34 MiB**, with
+    the weigh-ins alone accounting for 1.43 MiB because the unique index gives each row its own page. The gap to
+    the 50 MB ceiling is two orders of magnitude, so there is no reason to build a retention policy now and every
+    reason to note the two tables that would grow if a band ever wrote per-minute data.
+    Two caveats worth keeping: the numbers are from a **debug** build without R8, so the release APK should be
+    faster, and `am start -W` measures until the first frame, not until the first meal card has its numbers.

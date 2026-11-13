@@ -240,7 +240,8 @@ at 21:00 and a day where the band stayed home.
 - [x] Empty/error/offline states everywhere; no dead ends - **2026-11-13**: the audit found three, all in
       failure paths (a profile with no weigh-in offered nothing, a failed recipe save crashed, and two screens
       printed a raw exception where the app's own sentence belonged). Diary item 44.
-- [ ] Performance: cold start < 1.5 s, day render < 100 ms, DB size after 1 year < 50 MB
+- [x] Performance: cold start < 1.5 s, day render < 100 ms, DB size after 1 year < 50 MB - **2026-11-13**:
+      1 370 ms cold start (debug), p90 14 ms, 204 KiB now and 3.34 MiB modelled for a year. Diary item 45.
 - [ ] ProGuard rules and release signing (no flavours: ADR-017 dropped the split)
 - [ ] README for the household: how to install GB, pair, enable HC, pair the second phone
 
