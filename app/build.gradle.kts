@@ -16,10 +16,12 @@ android {
         minSdk = 28
         targetSdk = 36
         // A release version is a reviewable diff, not a side effect of a build (AGENTS.md, hard rule 3).
-        // 3 / 1.0.1 is the first version submitted to F-Droid: 1.0.0 was tagged before the TalkBack fixes and the
-        // torch fix landed, and a released tag is not moved - a new version says what is in it.
-        versionCode = 3
-        versionName = "1.0.1"
+        // 3 / 1.0.1 is the version the first F-Droid submission pointed at: 1.0.0 was tagged before the TalkBack
+        // fixes and the torch fix landed, and a released tag is not moved - a new version says what is in it.
+        // 4 / 1.0.2 exists for the self-hosted repository: the first build signed by the household's own key, so
+        // that updates can arrive through an F-Droid client instead of `adb install -r`. The code is 1.0.1's.
+        versionCode = 4
+        versionName = "1.0.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
