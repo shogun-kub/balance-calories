@@ -630,3 +630,27 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     config and makes git try to spawn the empty string.
     Verified: `ssh-add -l` shows `SHA256:hrX9BjAZ…`, `ssh -T` and `git fetch` both succeed, and the commit that
     carries this note was pushed through the agent - the first push that needed the passphrase.
+50. **The first TalkBack session, done by the owner with the phone in his hands** - 2026-11-13.
+    TalkBack is installed on the Honor, its accessibility shortcut was already bound to it, and the service was
+    enabled and disabled over adb (the shortcut stayed his escape hatch). What the pass found, in his words:
+    1. *Today is right.* The gauge reads the whole sentence - "съедено 895 из 2283 ккал, белки 73 г, жиры 20 г,
+       углеводы 101 г" - and he judged it "full information, but not that long". Untouched.
+    2. *The list count is TalkBack's, not ours.* "В списке 110 элементов" before "Коснитесь дважды, чтобы открыть"
+       comes from Compose's `LazyColumn` collection info. Kept: it answers "how much is there" for somebody who
+       cannot see the scrollbar.
+    3. *The meal chips were backwards.* "Не выбрано — Завтрак" puts the state first, and a Bluetooth headset that
+       wakes up slowly eats the "не", so "выбрано" and "не выбрано" became the same sound. They now say
+       "Завтрак, не выбрано" - name, then state - and the reasoning is **P-43**.
+    4. *"Записать" did not say what it would do.* The two decisions of that screen are the weight and the meal, and
+       both were unspoken. The button now announces "Записать 100 г в «Обед»".
+    5. *The scanner was half mute.* The camera preview had no description at all, the torch read "Фонарик выключен"
+       (a statement, state first), and the field was "Или введите штрихкод" - the "или" made it sound like an aside.
+       Now: "Камера. Наведите на штрихкод, он распознаётся сам", "Фонарик, выключен / включён", "Введите штрихкод".
+    6. ***A real bug: the torch stayed lit after leaving the scanner.*** The camera was bound to the activity's
+       lifecycle, so leaving the screen never unbound it, and `onDispose` only closed the decoder and the executor.
+       Fixed by putting the torch out and unbinding the provider in `onDispose`. Verified with
+       `dumpsys media.camera`: `[TORCH ]` present with the torch on, absent after «Назад» - the LED is off.
+    What this session deliberately does not claim: I cannot hear TalkBack, so every statement above about speech is
+    either the owner's report or the accessibility tree read with `uiautomator`. The tree is a good proxy - it shows
+    exactly the text, description and clickability an accessibility service receives - and it is what caught the
+    non-activatable description node of item 4.

@@ -17,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -141,6 +143,13 @@ fun ProductScreen(
             style = MaterialTheme.typography.bodyMedium,
         )
 
+        // Resolved here, in composition: `stringResource` cannot be called from inside the semantics lambda.
+        val mealTitle = slots.firstOrNull { it.key == mealKey }?.title()
+        val logSaid = if ((grams ?: 0.0) > 0.0 && mealTitle != null) {
+            stringResource(R.string.a11y_log_action, trimNumber(grams!!), mealTitle)
+        } else {
+            stringResource(R.string.action_log)
+        }
         Text(text = stringResource(R.string.product_meal), style = MaterialTheme.typography.titleSmall)
         MealChips(slots = slots, selectedKey = mealKey, onSelect = { mealKey = it })
 
@@ -165,7 +174,15 @@ fun ProductScreen(
             enabled = !saving && product.hasEnergy && (grams ?: 0.0) > 0.0,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(stringResource(R.string.action_log))
+            // "Записать" alone leaves the two decisions of this screen - how much, and where - unannounced, and
+            // they are the ones a person cannot see. The description goes on the content, not on the Button's own
+            // modifier: there it landed on a sibling node that a screen reader cannot activate.
+            Text(
+                text = stringResource(R.string.action_log),
+                // `clearAndSetSemantics`, not `semantics`: otherwise the node keeps the visible "Записать" as
+                // well, and a screen reader reads the sentence twice.
+                modifier = Modifier.clearAndSetSemantics { contentDescription = logSaid },
+            )
         }
     }
 }

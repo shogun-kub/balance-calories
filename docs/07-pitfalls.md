@@ -383,3 +383,17 @@ the **absolute** Windows path, `"C:/Windows/System32/OpenSSH/ssh.exe" -i <key> -
 identities"; and an **empty** `GIT_SSH_COMMAND` environment variable overrides the config with
 `error: cannot spawn : No such file or directory` - unset it, do not blank it. [2026-11-13]
 
+**P-43 — TalkBack reads the state of a switch before its label, and the first syllable is the one a headset
+eats.** Found by the owner on his first TalkBack session (2026-11-13): the meal chips announced
+"не выбрано — Обед", and with Bluetooth headphones that wake up slowly the "не" was simply not heard, so
+"not selected" and "selected" sounded the same. Two lessons. (1) *Order matters for speech in a way it does
+not for sight*: the name comes first, the state second - "Обед, выбрано" - which needs
+`Modifier.clearAndSetSemantics` on the chip plus an explicit `onClick { …; true }` in the semantics block,
+because clearing the semantics also clears the action a screen reader activates; the pattern is in
+`app/.../food/MealChips.kt`. (2) *A description must be put on the node that carries the action*: adding
+`contentDescription` to a `Button`'s own modifier produced a sibling node that `uiautomator` reported as
+`clickable=false`, so the sentence was readable but not activatable - moving it onto the button's content
+(and using `clearAndSetSemantics` there, so the visible text is not read twice) fixed it. Verify with
+`uiautomator dump`: the node with your `content-desc` must have an ancestor, or itself, with
+`clickable="true"`. [2026-11-13]
+

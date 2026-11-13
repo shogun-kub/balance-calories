@@ -47,6 +47,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -281,11 +283,15 @@ fun ScannerScreen(
                 }
             }
             WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // "Фонарик выключен" reads as a statement about a thing rather than as a button with a state,
+                // and the state is the first word a Bluetooth headset eats (owner, 2026-11-13).
+                val torchSaid = stringResource(if (torch) R.string.a11y_torch_on else R.string.a11y_torch_off)
                 TextButton(
                     onClick = {
                         torch = !torch
                         camera?.cameraControl?.enableTorch(torch)
                     },
+                    modifier = Modifier.semantics { contentDescription = torchSaid },
                 ) {
                     Text(stringResource(if (torch) R.string.scan_torch_on else R.string.scan_torch_off))
                 }
@@ -360,17 +366,26 @@ private fun CameraPreview(
     // The touch listener is created inside the AndroidView factory, which cannot read composable state, so
     // the camera handle lives in a holder both sides can reach, and `frozen` is read through a state object.
     val cameraHolder = remember { mutableStateOf<Camera?>(null) }
+    val providerHolder = remember { mutableStateOf<ProcessCameraProvider?>(null) }
     val frozenNow = rememberUpdatedState(frozen)
 
     DisposableEffect(Unit) {
         onDispose {
+            // Measured by the owner on 2026-11-13: torch on -> back, and the LED stayed lit until the scanner was
+            // opened again. The camera was bound to the activity's lifecycle, so leaving the screen never unbound
+            // it; the torch has to be put out and the binding released here.
+            runCatching { cameraHolder.value?.cameraControl?.enableTorch(false) }
+            runCatching { providerHolder.value?.unbindAll() }
             scanner.close()
             executor.shutdown()
         }
     }
 
+    // The preview was silent: a screen reader reached the torch button and the field without ever learning that
+    // there is a camera in between, which is the only thing on this screen that does the work by itself.
+    val cameraSaid = stringResource(R.string.a11y_camera)
     AndroidView(
-        modifier = modifier,
+        modifier = modifier.semantics { contentDescription = cameraSaid },
         factory = { ctx ->
             // A plain TextureView, not PreviewView: PreviewView's internal SurfaceView laid itself out at
             // 720x1280 inside a 656x240 parent and painted over the title and the buttons (measured with
@@ -406,6 +421,7 @@ private fun CameraPreview(
             val providerFuture = ProcessCameraProvider.getInstance(ctx)
             providerFuture.addListener({
                 val provider = providerFuture.get()
+                providerHolder.value = provider
                 val preview = Preview.Builder().build().also { preview ->
                     preview.setSurfaceProvider(ContextCompat.getMainExecutor(ctx)) { request ->
                         val texture = textureView.surfaceTexture

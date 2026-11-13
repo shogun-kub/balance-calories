@@ -161,6 +161,8 @@
     <string name="meal_lunch">Lunch</string>
     <string name="meal_dinner">Dinner</string>
     <string name="meal_snack">Snack</string>
+    <string name="a11y_meal_unselected">%1$s, not selected</string>
+    <string name="a11y_meal_selected">%1$s, selected</string>
     <string name="meal_times_title">Meal times</string>
     <string name="meal_times_note">The time only labels the cards on Today: eating earlier or later is not an error.</string>
     <string name="meal_times_saved">Times saved</string>
@@ -175,6 +177,7 @@
     <string name="meal_card_add_short" translatable="false">+</string>
 
     <string name="action_log">Log</string>
+    <string name="a11y_log_action">Log %1$s g into %2$s</string>
 
     <string name="form_product_title">New product</string>
     <string name="form_product_edit_title">Edit product</string>
@@ -207,9 +210,12 @@
     <string name="scan_title">Scan a barcode</string>
     <string name="scan_found">Found %1$s</string>
     <string name="scan_hint">Point the camera at the barcode on the package</string>
+    <string name="a11y_camera">Camera. Point it at a barcode; it is read automatically</string>
     <string name="scan_torch_on">Torch on</string>
+    <string name="a11y_torch_on">Torch, on</string>
     <string name="scan_torch_off">Torch off</string>
-    <string name="scan_manual_label">Or type the barcode</string>
+    <string name="a11y_torch_off">Torch, off</string>
+    <string name="scan_manual_label">Type the barcode</string>
     <string name="scan_looking">Looking up %1$s…</string>
     <string name="scan_not_found">%1$s is not in OpenFoodFacts</string>
     <string name="scan_not_found_note">Add it by hand once, and it stays on this phone.</string>

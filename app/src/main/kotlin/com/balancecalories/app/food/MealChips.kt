@@ -3,6 +3,12 @@ package com.balancecalories.app.food
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -44,10 +50,28 @@ internal fun MealChips(
 ) {
     WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         for (slot in slots) {
+            val selected = slot.key == selectedKey
+            val title = slot.title()
+            val chipSaid = stringResource(
+                if (selected) R.string.a11y_meal_selected else R.string.a11y_meal_unselected,
+                title,
+            )
+            // TalkBack reads the state of a toggleable *before* its label - "не выбрано, Завтрак" - and the first
+            // syllable is exactly what a Bluetooth headset swallows when it wakes up (owner's report, 2026-11-13).
+            // So the chip states its own sentence in the order a person expects, and keeps a click action of its
+            // own because the default one is cleared with the rest of the semantics.
             FilterChip(
-                selected = slot.key == selectedKey,
+                selected = selected,
                 onClick = { onSelect(slot.key) },
-                label = { Text(slot.title()) },
+                label = { Text(title) },
+                modifier = Modifier.clearAndSetSemantics {
+                    contentDescription = chipSaid
+                    role = Role.RadioButton
+                    onClick {
+                        onSelect(slot.key)
+                        true
+                    }
+                },
             )
         }
     }

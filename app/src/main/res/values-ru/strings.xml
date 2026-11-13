@@ -161,6 +161,8 @@
     <string name="meal_lunch">Обед</string>
     <string name="meal_dinner">Ужин</string>
     <string name="meal_snack">Перекус</string>
+    <string name="a11y_meal_unselected">%1$s, не выбрано</string>
+    <string name="a11y_meal_selected">%1$s, выбрано</string>
     <string name="meal_times_title">Время приёмов пищи</string>
     <string name="meal_times_note">Время только подписывает карточки на «Сегодня»: поел раньше или позже — это не ошибка.</string>
     <string name="meal_times_saved">Время сохранено</string>
@@ -175,6 +177,7 @@
     <string name="meal_card_add_short" translatable="false">+</string>
 
     <string name="action_log">Записать</string>
+    <string name="a11y_log_action">Записать %1$s г в «%2$s»</string>
 
     <string name="form_product_title">Новый продукт</string>
     <string name="form_product_edit_title">Изменить продукт</string>
@@ -207,9 +210,12 @@
     <string name="scan_title">Сканировать штрихкод</string>
     <string name="scan_found">Найдено %1$s</string>
     <string name="scan_hint">Наведите камеру на штрихкод на упаковке</string>
+    <string name="a11y_camera">Камера. Наведите на штрихкод, он распознаётся сам</string>
     <string name="scan_torch_on">Фонарик включён</string>
+    <string name="a11y_torch_on">Фонарик, включён</string>
     <string name="scan_torch_off">Фонарик выключен</string>
-    <string name="scan_manual_label">Или введите штрихкод</string>
+    <string name="a11y_torch_off">Фонарик, выключен</string>
+    <string name="scan_manual_label">Введите штрихкод</string>
     <string name="scan_looking">Ищем %1$s…</string>
     <string name="scan_not_found">%1$s нет в OpenFoodFacts</string>
     <string name="scan_not_found_note">Добавьте его вручную один раз — он останется на телефоне.</string>

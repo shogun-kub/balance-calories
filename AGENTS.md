@@ -27,10 +27,11 @@ navigates by **four tabs** (`Сегодня` · `Еда` · `История` · 
 prints each logged portion's protein, fat and carbs with the macro it is proportionally richest in marked
 in that macro's colour, and a product can carry a **barcode** that a scan resolves without the network.
 The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie
-on one side and a steel-blue dumbbell on the other. Strings are **388/388** (376 `<string>` + 12
+on one side and a steel-blue dumbbell on the other. Strings are **394/394** (382 `<string>` + 12
 `<plurals>` per language) and lint is down to five reviewed warnings.
 
-Next: the rest of **M6** — the device matrix on both phones and a real TalkBack pass — then submit
+Next: the last of **M6** — the device matrix on both phones (the TalkBack pass happened 2026-11-13, diary
+item 50) — then submit
 [`docs/fdroid/`](docs/fdroid/) to F-Droid. The repository is published (Apache-2.0, tag `v1.0.0`) at
 <https://github.com/shogun-kub/balance-calories>; pushes go through the Windows ssh-agent (P-42).
 
@@ -68,6 +69,7 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | **P-40** | `connectedDebugAndroidTest` ignores `ANDROID_ADB_SERVER_PORT`: move adb to 5037 for an instrumentation run (P-08 is the opposite for plain adb) |
 | **P-41** | never pipe a database into `adb shell`: push it and copy it on the device, then check the size |
 | **P-42** | git has its own ssh and cannot see the Windows agent: put the absolute `C:/Windows/System32/OpenSSH/ssh.exe` in `core.sshCommand` |
+| **P-43** | TalkBack reads a switch's state before its label: name first, and put the description on the node that carries the action |
 
 ## Naming and the visible language
 
