@@ -42,6 +42,8 @@ import com.balancecalories.app.food.ProductsScreen
 import com.balancecalories.app.history.HistoryScreen
 import com.balancecalories.app.profile.ProfileFormScreen
 import com.balancecalories.app.profiles.ProfilesScreen
+import com.balancecalories.app.recipes.DraftIngredient
+import com.balancecalories.app.recipes.RecipeDraft
 import com.balancecalories.app.recipes.RecipeEditorScreen
 import com.balancecalories.app.recipes.RecipeScreen
 import com.balancecalories.app.recipes.RecipesScreen
@@ -66,7 +68,7 @@ import kotlinx.coroutines.launch
 private enum class Tab { TODAY, FOOD, HISTORY, WEIGHT }
 
 /** Screens pushed over a tab. One is enough: nothing in this app is three levels deep. */
-private enum class Overlay { PROFILES, PROFILE_FORM, SETTINGS, BACKUP, DEBUG, MEALS, MEAL_EDIT, PRODUCT, PRODUCT_FORM, SCAN, RECIPE, RECIPE_FORM }
+private enum class Overlay { PROFILES, PROFILE_FORM, SETTINGS, BACKUP, DEBUG, MEALS, MEAL_EDIT, PRODUCT, PRODUCT_FORM, SCAN, RECIPE, RECIPE_FORM, RECIPE_SCAN }
 
 /** The two lists behind the "Еда" tab: ingredients and the dishes cooked from them. */
 private enum class FoodTab { PRODUCTS, RECIPES }
@@ -131,11 +133,19 @@ private fun Root() {
     var mealEditingKey by remember { mutableStateOf<String?>(null) }
     var mealCreating by remember { mutableStateOf(false) }
     var formEditing by remember { mutableStateOf<Product?>(null) }
+    // Which recipe is open is an id, not an object: rotation must not lose it, and a saved `Recipe` is a bigger
+    // thing to keep in a bundle than the number it is filed under.
+    var openedRecipeId by rememberSaveable { mutableStateOf<Long?>(null) }
     var openedRecipe by remember { mutableStateOf<Recipe?>(null) }
-    var recipeEditing by remember { mutableStateOf<Recipe?>(null) }
+    LaunchedEffect(openedRecipeId) {
+        openedRecipe = openedRecipeId?.let { id -> runCatching { container.recipes.byId(id) }.getOrNull() }
+    }
     var scannedBarcode by remember { mutableStateOf<String?>(null) }
     // The words a search ended with, carried into a manual product so the name is not retyped.
     var formNameSeed by remember { mutableStateOf<String?>(null) }
+    // The recipe being written. Saved, because the editor is deliberately left for the scanner and a
+    // rotation disposes it; cleared only on an explicit cancel or a successful save (owner, 2026-11-13).
+    val recipeDraft = rememberSaveable(saver = RecipeDraft.Saver) { RecipeDraft() }
 
     // Back pops one overlay, then returns to Today from another tab, then leaves the app. Tab switches do not
     // stack: a person who taps Еда, История, Еда and then back expects Today, not a tour of their taps.
@@ -151,6 +161,7 @@ private fun Root() {
                     null
                 }
                 Overlay.RECIPE, Overlay.RECIPE_FORM -> null
+            Overlay.RECIPE_SCAN -> Overlay.RECIPE_FORM
                 Overlay.BACKUP, Overlay.DEBUG -> Overlay.SETTINGS
                 else -> {
                     editing = null
@@ -284,13 +295,13 @@ private fun Root() {
             onBack = { overlay = Overlay.SETTINGS },
         )
 
-        overlay == Overlay.RECIPE && openedRecipe != null -> RecipeScreen(
+        overlay == Overlay.RECIPE && openedRecipeId != null -> RecipeScreen(
             container = container,
             profileId = active.id,
-            recipe = openedRecipe!!,
+            recipe = openedRecipe ?: return@Root,
             onBack = { overlay = null },
             onEdit = {
-                recipeEditing = openedRecipe
+                recipeDraft.seedFrom(openedRecipe!!)
                 overlay = Overlay.RECIPE_FORM
             },
             onLogged = {
@@ -299,6 +310,7 @@ private fun Root() {
                 tab = Tab.TODAY
             },
             onDeleted = {
+                openedRecipeId = null
                 openedRecipe = null
                 overlay = null
             },
@@ -307,15 +319,33 @@ private fun Root() {
         overlay == Overlay.RECIPE_FORM -> RecipeEditorScreen(
             container = container,
             profileId = active.id,
-            existing = recipeEditing,
+            draft = recipeDraft,
+            onScan = { overlay = Overlay.RECIPE_SCAN },
             onSaved = { saved ->
+                openedRecipeId = saved.id
                 openedRecipe = saved
-                val wasEditing = recipeEditing != null
-                recipeEditing = null
-                // Straight to the dish that was just saved: its numbers are the point of the exercise.
-                overlay = if (wasEditing) Overlay.RECIPE else Overlay.RECIPE
+                recipeDraft.clear()
+                overlay = Overlay.RECIPE
             },
-            onCancel = { overlay = if (recipeEditing != null) Overlay.RECIPE else null },
+            onCancel = {
+                // The only place a draft is thrown away without being saved.
+                recipeDraft.clear()
+                overlay = if (openedRecipeId != null) Overlay.RECIPE else null
+            },
+        )
+
+        overlay == Overlay.RECIPE_SCAN -> ScannerScreen(
+            container = container,
+            onBack = { overlay = Overlay.RECIPE_FORM },
+            onProduct = { product ->
+                recipeDraft.scanMiss = null
+                recipeDraft.items.add(DraftIngredient(product.id, "100"))
+                overlay = Overlay.RECIPE_FORM
+            },
+            onAddManually = { code ->
+                recipeDraft.scanMiss = code
+                overlay = Overlay.RECIPE_FORM
+            },
         )
 
         overlay == Overlay.SCAN -> ScannerScreen(
@@ -437,11 +467,12 @@ private fun Root() {
                             container = container,
                             profileId = active.id,
                             onOpen = { recipe ->
+                                openedRecipeId = recipe.id
                                 openedRecipe = recipe
                                 overlay = Overlay.RECIPE
                             },
                             onNew = {
-                                recipeEditing = null
+                                recipeDraft.clear()
                                 overlay = Overlay.RECIPE_FORM
                             },
                         )

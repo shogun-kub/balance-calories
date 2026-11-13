@@ -246,6 +246,7 @@
     <string name="recipe_delete_confirm">Удалить рецепт? Записи, сделанные по нему, останутся в истории.</string>
     <string name="recipe_incomplete">Добавьте хотя бы один ингредиент перед сохранением.</string>
     <string name="recipe_ingredient_grams">Граммы</string>
+    <string name="recipe_loading_ingredient">загрузка…</string>
     <string name="recipe_portion_kcal">%1$.0f ккал на порцию</string>
     <string name="recipe_per_100g_kcal">%1$.0f ккал на 100 г блюда</string>
     <string name="recipe_protein">Белки, г</string>

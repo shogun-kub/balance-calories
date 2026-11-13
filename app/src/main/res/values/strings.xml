@@ -246,6 +246,7 @@
     <string name="recipe_delete_confirm">Delete this recipe? Meals already logged from it stay in your history.</string>
     <string name="recipe_incomplete">Add at least one ingredient before saving.</string>
     <string name="recipe_ingredient_grams">Grams</string>
+    <string name="recipe_loading_ingredient">loading…</string>
     <string name="recipe_portion_kcal">%1$.0f kcal per portion</string>
     <string name="recipe_per_100g_kcal">%1$.0f kcal per 100 g of the dish</string>
     <string name="recipe_protein">Protein, g</string>

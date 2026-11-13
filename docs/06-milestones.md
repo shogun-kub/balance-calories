@@ -507,3 +507,17 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     Food Facts by itself and offering the named manual form (name prefilled); the editor's scanner opening over the
     recipe without losing it, and the camera returning to the same draft. The recipes in the database were unchanged
     after the run (3 recipes, 13 ingredients, 266 g in the edited one), and nothing was logged by accident.
+    5. *The draft belongs to the screen above.* The owner then asked for the scanner back as a **separate screen**,
+       and for the draft to be saved across rotation and cleared **only** on an explicit cancel. Those three asks are
+       one problem: state that must outlive a screen cannot live in it. The scanner is a destination again
+       (`Overlay.RECIPE_SCAN`), and the recipe being written moved into `RecipeDraft`, held by MainActivity and
+       `rememberSaveable` through a small string-list saver. Ingredients are stored as **product id + grams as typed**,
+       never as a copy of the product: the editor re-reads the products by id, so a label corrected today is already
+       corrected in a draft from yesterday. Rotation is the same mechanism, which is also why nothing is lost by
+       turning the phone mid-recipe. The draft is cleared in exactly two places - a successful save and «Отмена» -
+       and nowhere else. One neighbouring defect fell out of the testing: `openedRecipe` was a plain `remember`, so a
+       rotation in the recipe detail dropped back to the list; it is now an id in `rememberSaveable`, resolved with
+       `recipes.byId`.
+       Verified on the Honor X7c: a gram value edited to 70 survived the trip to the scanner as a separate screen and
+       back, survived a rotation to landscape (name, servings and 70 all present), «Отмена» then left an empty editor
+       for «Новый рецепт», and the recipe detail itself stayed open through a rotation.
