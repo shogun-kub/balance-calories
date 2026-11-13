@@ -16,7 +16,7 @@ Two outputs, everything else supports them:
 
 ## Current state
 
-**M1–M5 and M7 complete; M6 nearly done.** `versionName 1.0.0` / `versionCode 2`, R8 on, Apache-2.0, prepared for **F-Droid** (not Google Play). `:core` (176 JVM tests) and `:data` (schema **v7**, 11 DAOs,
+**M1–M5 and M7 complete; M6 nearly done.** `versionName 1.0.1` / `versionCode 3`, R8 on, Apache-2.0, prepared for **F-Droid** (not Google Play). `:core` (176 JVM tests) and `:data` (schema **v7**, 11 DAOs,
 13 repositories) build green, and `:app` has the whole loop: Today with the macro gauge, one card per meal (the set is the person's), burned and balance;
 the food side (two tabs: products and recipes, search that falls back to Open Food Facts by itself, scanning, logging, recipes); History with the adaptive TDEE, the recap,
 the intake/burn chart, a weight trend and a projection; a weight tab with entry and chart; settings with
@@ -30,10 +30,11 @@ The launcher icon is a **vector adaptive icon** — a balance beam with a slice 
 on one side and a steel-blue dumbbell on the other. Strings are **394/394** (382 `<string>` + 12
 `<plurals>` per language) and lint is down to five reviewed warnings.
 
-Next: the last of **M6** — the device matrix on both phones (the TalkBack pass happened 2026-11-13, diary
-item 50) — then submit
-[`docs/fdroid/`](docs/fdroid/) to F-Droid. The repository is published (Apache-2.0, tag `v1.0.0`) at
-<https://github.com/shogun-kub/balance-calories>; pushes go through the Windows ssh-agent (P-42).
+Next: submit [`docs/fdroid/`](docs/fdroid/) to F-Droid - the recipe, the screenshots and the merge-request
+description are ready, and the only step left needs the owner's GitLab account. The device matrix (Honor
+X7c, Android 14; Redmi Note 8 Pro, Android 11) and the TalkBack pass are done, diary items 50 and 51. The
+repository is published (Apache-2.0, tag `v1.0.1`) at <https://github.com/shogun-kub/balance-calories>;
+pushes go through the Windows ssh-agent (P-42).
 
 ## Where everything lives
 

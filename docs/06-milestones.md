@@ -678,3 +678,20 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     2. **What cannot be tested here is named.** Gadgetbridge is not installed on this phone, so the band path - and
        with it MIUI's habit of killing background work - is untested; the WorkManager job is present, which is as far
        as this device can go without the band.
+52. **1.0.1, and the recipe that was wrong** - 2026-11-13, preparation for the fdroiddata merge request.
+    Two decisions came out of reading the submission rules properly rather than trusting the draft:
+    1. **The tag could not be reused.** `v1.0.0` pointed at the commit from before the TalkBack session and the torch
+       fix. A released tag is not moved (the repository is public and the tag is already fetched), so the submission
+       is a new version: `versionCode 3`, `versionName 1.0.1`, tag `v1.0.1`, with a changelog that names what
+       changed. "What is in the release" is answered by the number, not by a rewritten history.
+    2. **The draft recipe was wrong twice.** It said `subdir: app`, which would have pointed the buildserver at a
+       directory with no Gradle wrapper - the project root is the repository root, because `settings.gradle.kts`
+       includes `:app`, `:core` and `:data`. And it carried a `prebuild: sed -i '/keystore.properties/d' ...`, a
+       workaround for a problem that does not exist: the build reads that file only when it is there. A `sed` over a
+       Kotlin DSL file would have been a way to break the build while looking careful. Both are gone, and the reasons
+       are written next to the absences in [`docs/fdroid/metadata/com.balancecalories.yml`](../fdroid/metadata/com.balancecalories.yml).
+    **Validated before writing the request:** `fdroid rewritemeta` parses the recipe (exit 0), and the category
+    `Sports & Health` was checked against fdroiddata's own `config/categories.yml` rather than against a local
+    default list that calls it invalid. The APK of the tagged commit is the one installed and exercised on both
+    phones. What remains outside this repository is the merge request itself: it is opened from the owner's GitLab
+    account, and [`docs/fdroid/README.md`](../fdroid/README.md) holds the description to paste and the checklist.

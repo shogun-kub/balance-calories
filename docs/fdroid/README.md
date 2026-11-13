@@ -1,58 +1,76 @@
-# Submitting BalanceCalories to F-Droid
+# BalanceCalories — merge request to fdroiddata
 
-The app is prepared for F-Droid rather than Google Play (owner's decision, 2026-11-13): no proprietary
-dependencies, an Apache-2.0 licence, and a release build that does not need a private keystore. What is
-left is publishing the repository and opening one merge request.
+Paste the block below into the merge request description. It is written for a reviewer who has never seen
+this repository, and every claim in it can be checked from the metadata or the repository.
 
-## What the repository already has
+---
 
-| Requirement | Where |
-| --- | --- |
-| A licence | [`LICENSE`](../../LICENSE) — Apache-2.0, the full canonical text |
-| Version, monotonic | `versionCode = 2`, `versionName = "1.0.0"` in `app/build.gradle.kts` |
-| Build from source, no signing secret | `app/build.gradle.kts`: `keystore.properties` is consulted **only** when it exists; without it the release build is unsigned |
-| Minified release | R8 and resource shrinking on, keep rules with a reason each in [`app/proguard-rules.pro`](../../app/proguard-rules.pro) |
-| Metadata, two languages | [`fastlane/metadata/android/`](../../fastlane/metadata/android) — title, short and full description, changelog for versionCode 2, five phone screenshots each in `en-US` and `ru-RU` |
-| No tracking, no anti-features | see the note at the bottom of the recipe draft |
-| Readable design record | [`docs/`](../) — the reviewer can read why every dependency is there |
+## New app: BalanceCalories (`com.balancecalories`)
 
-## What must happen before the merge request
+A local-first calorie balance app: activity from Health Connect (filled by Gadgetbridge) and food from its
+own catalogue, shown as one number per day. No account, no backend, no analytics, no advertising.
 
-1. ~~Publish the repository~~ — done 2026-11-13: <https://github.com/shogun-kub/balance-calories>.
-2. ~~Tag the release~~ — done: `v1.0.0` is pushed, and `UpdateCheckMode: Tags` needs nothing more.
-3. ~~Check that a clean clone builds without `local.properties`~~ — done 2026-11-13: a fresh clone built
-   `app-release-unsigned.apk` (11.6 MB, `versionCode 2`, `versionName 1.0.0`) in 1 m 29 s with `ANDROID_HOME`
-   set and no `local.properties`, and `apksigner` confirmed it is unsigned. Diary item 48.
-4. Open the merge request against <https://gitlab.com/fdroid/fdroiddata> with
-   [`metadata/com.balancecalories.yml`](metadata/com.balancecalories.yml) added, following
-   <https://f-droid.org/docs/Submitting_to_F-Droid_Quick_Start_Guide/>.
+**Why it is a good fit for F-Droid:** the whole point of the app is that a person's health data never leaves
+the phone. There is nothing to upload it to. The only network calls are the product searches the user types
+into Open Food Facts and a barcode lookup for a code the phone has never seen; both are HTTPS to
+`world.openfoodfacts.org` and `search.openfoodfacts.org`, both are optional, and the app works offline.
 
-## Notes for the reviewer (paste into the MR description)
+### Points worth a reviewer's attention
 
-> **Health Connect.** `androidx.health.connect:connect-client` is Apache-2.0 and builds without Play
-> Services. On Android 14 Health Connect is a system module; on Android 9–13 it is an app the user
-> installs, and the app says so on the Today screen instead of failing silently. It is read-only: the app
-> never writes health records.
->
-> **Network.** Only `world.openfoodfacts.org` (barcode) and `search.openfoodfacts.org` (text search),
-> over HTTPS, with a User-Agent that names the app and the version. Product data is cached locally and a
-> scanned code is never re-fetched (15 requests/min/IP limit). Offline logging, Today and History work
-> with no network at all.
->
-> **Signing.** `app/build.gradle.kts` reads `keystore.properties` only when the file exists; it is not in
-> the repository and is git-ignored. `./gradlew :app:assembleRelease` therefore produces an unsigned APK,
-> which is what the buildserver signs.
->
-> **Screenshots** were taken on a Honor X7c (Android 14) from a **fixture** profile that holds no real
-> person's data.
->
-> **Reproducibility.** The build takes no environment variables other than the SDK location, writes no
-> generated source into the tree, and `gradle/libs.versions.toml` is the only place a version is stated
-> (no `+`, no snapshots). R8 is enabled and the keep rules are justified line by line.
+1. **No `subdir` and no `prebuild`.** The Gradle project root is the repository root: `settings.gradle.kts`
+   includes `:app`, `:core` and `:data`. The release build is **unsigned unless `keystore.properties`
+   exists**, which it does not in the repository, so nothing needs patching before the build.
+2. **`versionCode 3` / `versionName 1.0.1`**, tag `v1.0.1`. `UpdateCheckMode: Tags` follows later tags.
+3. **Health Connect.** `androidx.health.connect:connect-client` is Apache-2.0 and builds without Play
+   Services. On Android 14 Health Connect is a system module; on Android 9–13 it is an app the user
+   installs, and the app says so on its Today screen instead of failing silently. It is read-only: the app
+   never writes health records.
+4. **Native code.** `io.github.zxing-cpp:android` (Apache-2.0) brings a prebuilt `.so` through Maven; the
+   app's own code is Kotlin only.
+5. **Release build:** R8 on, resource shrinking on, keep rules justified line by line in
+   `app/proguard-rules.pro` (JNI entry points, Room's generated classes, Health Connect's reflective
+   records, WorkManager's worker).
+6. **Screenshots** in `fastlane/metadata/android/{en-US,ru-RU}/images/phoneScreenshots/` were taken from a
+   fixture profile that holds no real person's data.
 
-## What this does not do
+### What was verified before submitting
 
-It does not publish anything and it does not touch the owner's keystore: F-Droid signs the APK with its
-own key, and a build signed by the owner would be a different app that cannot update over the F-Droid
-one. The two are mutually exclusive for a given `applicationId`, which is why the release build here is
-unsigned by default.
+- `./gradlew :app:assembleRelease` from a **fresh clone with no `local.properties`** (SDK from
+  `ANDROID_HOME`), producing `app/build/outputs/apk/release/app-release-unsigned.apk`;
+  `apksigner` confirms it is unsigned.
+- Installed and exercised on two phones: Honor X7c (Android 14) and Redmi Note 8 Pro (Android 11, MIUI).
+  Health Connect read, barcode scanner and torch, 200 % font scale, food logging, backup export.
+- Cold start 308 ms on the Android 11 device, 1 370 ms for a debug build on Android 14; database 204 KiB
+  now, ~3.4 MiB modelled for a year.
+- Two hundred and fifty-five JVM tests and 126 device tests.
+
+### Anti-features
+
+None claimed. No ads, no tracking, no non-free network service, no non-free dependency, no non-free assets
+(the launcher icon is a vector drawn in the repository by `tools/icon_design.py`).
+
+---
+
+## What to do (for the owner)
+
+The merge request itself needs the GitLab account, so these are the steps:
+
+1. Fork <https://gitlab.com/fdroid/fdroiddata>.
+2. In the fork, add [`metadata/com.balancecalories.yml`](metadata/com.balancecalories.yml) — exactly the file
+   in this directory, nothing else.
+3. Open a merge request against `fdroiddata` `master` with the description above.
+4. Watch the pipeline: `fdroid build --test com.balancecalories` runs on their buildserver. If it fails on
+   `compileSdk 36` (Android 16) because their SDK image is older, the fix is on their side — reply in the MR
+   rather than lowering the SDK here.
+
+## Before pressing submit
+
+- [x] Repository is public: <https://github.com/shogun-kub/balance-calories>.
+- [x] Tag `v1.0.1` exists and points at the commit whose release APK was exercised on both phones.
+- [x] `LICENSE` is Apache-2.0, the canonical text.
+- [x] Metadata passes `fdroid rewritemeta` (schema) and the category `Sports & Health` is checked against
+      fdroiddata's own `config/categories.yml`.
+- [x] `fastlane/metadata/android/{en-US,ru-RU}/` holds title, short and full description, a changelog for
+      `versionCode 3`, and five screenshots per language.
+- [ ] Author name and website in the metadata are `shogun-kub` / the repository — change them if they should
+      read differently.

@@ -1,0 +1,7 @@
+Version 1.0.1.
+
+- The scanner puts the torch out when you leave it, and its buttons and the camera now explain themselves to a screen reader.
+- The meal chips on a logging screen say «Обед, выбрано» instead of «Не выбрано — Обед»: a name first, a state second, and an action label on the product and recipe rows.
+- The log button announces what it will do: «Записать 100 г в «Обед»».
+- Fewer dead ends: a profile without a weigh-in offers a way to add one, and a failed save is a message rather than a crash.
+- Verified on Android 14 and on Android 11 (MIUI): Health Connect read, camera, torch, 200 % font scale, logging.

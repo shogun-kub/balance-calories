@@ -16,9 +16,10 @@ android {
         minSdk = 28
         targetSdk = 36
         // A release version is a reviewable diff, not a side effect of a build (AGENTS.md, hard rule 3).
-        // 2 / 1.0.0 is the first version meant for someone other than the two of us.
-        versionCode = 2
-        versionName = "1.0.0"
+        // 3 / 1.0.1 is the first version submitted to F-Droid: 1.0.0 was tagged before the TalkBack fixes and the
+        // torch fix landed, and a released tag is not moved - a new version says what is in it.
+        versionCode = 3
+        versionName = "1.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

@@ -235,3 +235,19 @@ blanking it.
 
 `git config` writes to `.git/config`, which is not tracked, so the path never enters the repository —
 `AGENTS.md` hard rule 2 is about keystores, but a private key is the same kind of thing.
+
+## F-Droid tooling
+
+`fdroidserver` is installed into the bundled Python
+(`& $py -m pip install fdroidserver`), which gives `...\python\Scripts\fdroid.exe`. It is used to
+**validate the recipe** before a merge request, not to build anything here:
+
+```powershell
+cd tmp\fdroid        # a scratch dir with metadata/com.balancecalories.yml
+& $fdroid rewritemeta com.balancecalories   # parses and rewrites; exit 0 means the schema is happy
+```
+
+Two cautions. `fdroid lint` needs fdroiddata's own `config/categories.yml` next to it, otherwise it calls a
+valid category such as `Sports & Health` invalid - and with that file in place it crashed on this Python
+build, so `rewritemeta` is the check that counts here. And `fdroid build` is not run locally at all: the
+real build happens on the F-Droid buildserver, which is the point of the exercise.

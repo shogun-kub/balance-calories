@@ -3,12 +3,17 @@
 # This file is the merge-request payload for https://gitlab.com/fdroid/fdroiddata, not something the build
 # reads. It is kept here so the recipe can be reviewed together with the commit it builds.
 #
-# The commit submitted must carry the `v1.0.0` tag; `UpdateCheckMode: Tags` follows later tags.
+# Notes on the two deliberate absences:
+#   * no `subdir` - the Gradle project root is the repository root (`settings.gradle.kts` includes :app,
+#     :core and :data); `subdir: app` would point the buildserver at a directory with no wrapper.
+#   * no `prebuild` - `app/build.gradle.kts` reads `keystore.properties` only when the file exists, so the
+#     release build is unsigned without any patching. A `sed` over a Kotlin DSL file would be a way to break
+#     the build while looking careful.
 
 Categories:
   - Sports & Health
 License: Apache-2.0
-AuthorName: Michael (BalanceCalories)
+AuthorName: shogun-kub
 WebSite: https://github.com/shogun-kub/balance-calories
 SourceCode: https://github.com/shogun-kub/balance-calories
 IssueTracker: https://github.com/shogun-kub/balance-calories/issues
@@ -20,25 +25,23 @@ RepoType: git
 Repo: https://github.com/shogun-kub/balance-calories.git
 
 Builds:
-  - versionName: 1.0.0
-    versionCode: 2
-    commit: v1.0.0
-    subdir: app
+  - versionName: 1.0.1
+    versionCode: 3
+    commit: v1.0.1
     gradle:
       - yes
-    # The release build is unsigned unless keystore.properties exists, which is exactly what F-Droid wants:
-    # it signs with its own key. Nothing in the build reaches the network for a signing key.
-    prebuild: sed -i '/keystore.properties/d' build.gradle.kts || true
+    output: app/build/outputs/apk/release/app-release-unsigned.apk
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
-CurrentVersion: 1.0.0
-CurrentVersionCode: 2
+CurrentVersion: 1.0.1
+CurrentVersionCode: 3
 
 # No AntiFeatures:
-#   - NoAds, no tracking, no NonFreeNet: the only network endpoint is Open Food Facts, a free service whose
-#     data is ODbL. See docs/03-architecture.md, ADR-006 and ADR-033.
-#   - No NonFreeDep: Health Connect is AndroidX (Apache-2.0) at build time and a system module on Android
-#     14; on Android 9-13 it is an app installed by the user, and the app says so instead of pretending.
-#     Gadgetbridge is FOSS and already in F-Droid.
-#   - No NonFreeAssets: the launcher icon is a vector drawn in the repository (tools/icon_design.py).
+#   - NoAds, no tracking: there is no advertising and no analytics SDK in the build.
+#   - No NonFreeNet: the only network endpoints are Open Food Facts (`world.` and `search.` hosts), a free
+#     service whose data is ODbL. See docs/03-architecture.md, ADR-006 and ADR-033.
+#   - No NonFreeDep: `androidx.health.connect:connect-client` is Apache-2.0 and builds without Play Services.
+#     On Android 14 Health Connect is a system module; on Android 9-13 it is an app the user installs, and the
+#     app says so on the Today screen instead of failing silently. Gadgetbridge is FOSS and already in F-Droid.
+#   - No NonFreeAssets: the launcher icon is a vector drawn in this repository (tools/icon_design.py).
