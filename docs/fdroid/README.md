@@ -94,6 +94,6 @@ no token.
       fdroiddata's own `config/categories.yml`.
 - [x] `fastlane/metadata/android/{en-US,ru-RU}/` holds title, short and full description, a changelog for
       `versionCode 3`, and five screenshots per language.
-- [ ] Author name and website in the metadata are `shogun-kub` / the repository — change them if they should
-      read differently.
+- [x] Author name and website in the metadata: `AuthorName: Ne_Che_Guevara`, `WebSite` the repository — the
+      owner's decision.
 - [ ] Fork of `fdroiddata` exists (step 1 above).
