@@ -65,6 +65,7 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | **P-23** | `fillMaxWidth()` inside `horizontalScroll` collapses to zero, and `rememberScrollState(initial = …)` cannot open at the end |
 | **P-29** | a chart needs a seeded history; seed a **copy** of the database and leave no pulled file in the tree |
 | **P-40** | `connectedDebugAndroidTest` ignores `ANDROID_ADB_SERVER_PORT`: move adb to 5037 for an instrumentation run (P-08 is the opposite for plain adb) |
+| **P-42** | git has its own ssh and cannot see the Windows agent: put the absolute `C:/Windows/System32/OpenSSH/ssh.exe` in `core.sshCommand` |
 | **P-41** | never pipe a database into `adb shell`: push it and copy it on the device, then check the size |
 
 ## Naming and the visible language

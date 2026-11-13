@@ -370,3 +370,16 @@ a size smaller than the source, is a failed copy. Recovery here worked only beca
 in `tmp/`; the lesson is the order of operations: **stop the app, pull db and `-wal`, keep that copy untouched,
 work on a second copy, and only replace the device file when the new copy verifies.** [2026-11-13]
 
+**P-42 — git cannot use the Windows ssh-agent, because git has its own ssh.** Symptom: with a
+passphrase-protected key loaded into the Windows OpenSSH agent, `ssh -T git@github.com` answers
+"Hi shogun-kub!" while `git fetch` and `git push` answer `Permission denied (publickey)` in the same
+window. Cause: git resolves `ssh` from its own installation (`C:\Program Files\Git\usr\bin\ssh.exe`),
+which is a different OpenSSH build that knows nothing about the Windows agent's named pipe; it worked
+before the passphrase existed only because it could read the key file directly. Fix: give `core.sshCommand`
+the **absolute** Windows path, `"C:/Windows/System32/OpenSSH/ssh.exe" -i <key> -o UserKnownHostsFile=<file>
+-o IdentitiesOnly=yes -o BatchMode=yes`. Two related traps from the same hour: the agent service is
+`Disabled` by default and only an elevated shell can enable it, and it stores keys **per user**, so an
+`ssh-add` from an elevated window of another account leaves the owner's shells with "The agent has no
+identities"; and an **empty** `GIT_SSH_COMMAND` environment variable overrides the config with
+`error: cannot spawn : No such file or directory` - unset it, do not blank it. [2026-11-13]
+

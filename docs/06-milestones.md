@@ -617,3 +617,16 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     `ANDROID_HOME`) in 1 m 29 s, producing `app-release-unsigned.apk`, 11.6 MB, `versionCode 2` / `versionName
     1.0.0`, label `Balance Calories`, which `apksigner` correctly refuses to verify. That is the F-Droid build
     scenario rehearsed end to end, on the machine, before a merge request exists.
+49. **The key gets a passphrase, and git loses its ssh** - 2026-11-13.
+    The published key had no passphrase and its only protection was the file's ACL. It now carries one
+    (`aes256-ctr` + `bcrypt`, confirmed by parsing the OpenSSH header, not by trusting the command's silence), and
+    it lives in the Windows OpenSSH agent so that pushes stay unattended. Three things had to be learned for that
+    to work, all of them recorded as **P-42**: the agent service is `Disabled` by default and only an elevated shell
+    can enable it; the service keeps keys **per user**, so an `ssh-add` from an elevated window of another account
+    loads the key where the owner's shells cannot see it; and - the expensive one - **git has its own ssh**
+    (`C:\Program Files\Git\usr\bin\ssh.exe`) that cannot reach the Windows agent at all, so `ssh -T git@github.com`
+    said "Hi shogun-kub!" while `git fetch` said `Permission denied (publickey)` in the same window. The fix is an
+    absolute path in `core.sshCommand`. A fourth, smaller trap: an empty `GIT_SSH_COMMAND` variable overrides that
+    config and makes git try to spawn the empty string.
+    Verified: `ssh-add -l` shows `SHA256:hrX9BjAZ…`, `ssh -T` and `git fetch` both succeed, and the commit that
+    carries this note was pushed through the agent - the first push that needed the passphrase.

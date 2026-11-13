@@ -192,11 +192,46 @@ Two things that will otherwise cost an hour:
    (`https://api.github.com/meta` → `.ssh_keys`). That is a stronger check than trusting whatever answers
    the port first.
 
-The repository then carries the key path in its own config, not in `~/.ssh/config`:
+### The passphrase and the agent (since 2026-11-13)
+
+The key carries a passphrase now (`aes256-ctr` + `bcrypt`, set with `ssh-keygen -p -f <key>`; the old one
+was empty, so the first prompt takes a bare Enter). A passphrase-protected key cannot be used by an
+unattended push, so the key lives in the **Windows OpenSSH agent**:
 
 ```powershell
-git config core.sshCommand "ssh -i E:/ssh-keys/KATANA-dev.openssh -o UserKnownHostsFile=E:/ssh-keys/known_hosts -o IdentitiesOnly=yes -o BatchMode=yes"
+# once, in an ELEVATED shell - the service is Disabled by default and the user cannot change it
+Set-Service ssh-agent -StartupType Automatic
+Start-Service ssh-agent
+
+# after every reboot, in a normal shell of the owner's own account
+ssh-add E:\ssh-keys\KATANA-dev.openssh
+ssh-add -l     # 384 SHA256:hrX9BjAZhGWPrikhgm8ZwzAJ6680FhpA7GQdlyU1Zm0 ... (ECDSA)
 ```
+
+The agent keeps keys **per user**: `ssh-add` run in an elevated window of a *different* account loads the
+key where the owner's shells cannot see it, and `ssh-add -l` then says `The agent has no identities` while
+the service is happily `Running`.
+
+`ssh-keygen -p` rewrites the file and leaves exactly one ACL entry, `KATANA\shogu:(M)` - enough for `ssh`,
+and no inheritance.
+
+### Which ssh git must use
+
+The repository is configured with an **absolute path to the Windows client**:
+
+```powershell
+git config core.sshCommand '"C:/Windows/System32/OpenSSH/ssh.exe" -i E:/ssh-keys/KATANA-dev.openssh -o UserKnownHostsFile=E:/ssh-keys/known_hosts -o IdentitiesOnly=yes -o BatchMode=yes'
+```
+
+Without the path, git finds its own bundled client first (`C:\Program Files\Git\usr\bin\ssh.exe`),
+which cannot reach the Windows agent at all: `ssh -T git@github.com` succeeds while `git fetch` answers
+`Permission denied (publickey)`. The bundled client worked while the key had no passphrase, because it read
+the file directly - the passphrase is what moved the key into the agent and made the two clients diverge.
+**P-42** in `docs/07-pitfalls.md`.
+
+One more trap from the same hour: an **empty** `GIT_SSH_COMMAND` environment variable overrides
+`core.sshCommand` and produces `error: cannot spawn : No such file or directory`. Unset it rather than
+blanking it.
 
 `git config` writes to `.git/config`, which is not tracked, so the path never enters the repository —
 `AGENTS.md` hard rule 2 is about keystores, but a private key is the same kind of thing.
