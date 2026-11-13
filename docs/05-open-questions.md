@@ -173,3 +173,15 @@ Three ways to do it, with the consequence of each:
 something the household actually wants, and option 2 never - an embedded credential in a published APK is a
 leak waiting to be found, and the licence consequence (a public, editable record) deserves a deliberate
 decision rather than a convenient one. Nothing is implemented until the owner picks.
+
+### I. Do the bottom tabs keep their names at a 200 % font scale?
+
+`MainActivity` hides the labels below the icons when `fontScale >= 1.5` (`showLabels`), because four labels under
+four icons at twice the size are the first thing to break inside words (P-19, ADR-026). The side effect, seen on the
+Redmi on 2026-11-13: **at 200 % the navigation is four pictograms with no words** - and 200 % is precisely the
+setting somebody uses because small text is hard to read. The icons are a house, a plate, bars and scales; "История"
+against "Вес" is a guess from a glyph.
+
+Options: keep as is (labels return at 100 %); show labels always and let them wrap to two lines at 200 % (needs
+checking that «История» does not break inside a word); show labels always and accept a slightly smaller label style
+at large scales. Owner's call - it is a product question, not a technical one.

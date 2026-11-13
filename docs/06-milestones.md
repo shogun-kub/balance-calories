@@ -654,3 +654,27 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     either the owner's report or the accessibility tree read with `uiautomator`. The tree is a good proxy - it shows
     exactly the text, description and clickability an accessibility service receives - and it is what caught the
     non-activatable description node of item 4.
+51. **The device matrix, second phone: Redmi Note 8 Pro (Android 11, MIUI 12.5.3)** - 2026-11-13, release build
+    `1.0.0` / `versionCode 2`, R8, signed with the debug key so it could replace the installed `0.1.0` **without
+    uninstalling** (certificate `SHA-256:78c946db…` on both sides, data intact).
+    | Check | Result |
+    | --- | --- |
+    | Upgrade in place | installed over `0.1.0`, both profiles and the food log survived |
+    | Cold start | **308 ms** first launch, 505-660 ms after restarts (release build; the Honor's debug was 1 370) |
+    | Health Connect on Android 11 | the HC app is installed; Today read it and answered «Синхронизировано 30 дней» |
+    | Camera and torch | preview renders; torch on -> `dumpsys media.camera` gains two `TORCH` lines, «Назад» -> zero, LED out |
+    | 200 % font scale | all four tabs readable, no words broken; see the open question below about the tab labels |
+    | Logging food | apple 100 g -> «Записать 100 г в «Ужин»», Today 52 of 1 540 kcal |
+    | Background sync | the WorkManager job exists and is `RUNNABLE`; MIUI's battery whitelist has **no** entry for the app |
+    | Low storage | not exercised: 5.7 GB free of 51 GB (89 % full) |
+    | Crashes | no `FATAL EXCEPTION` in `logcat` for the whole pass |
+    Two things this pass taught, both about evidence:
+    1. **The black preview was a closed lens cover.** The camera logs showed `mtkcam-AppStreamMgr` queueing requests,
+       which proves the pipeline was running and says nothing about what reaches the screen - a covered lens and a
+       broken surface look identical from `logcat`. The owner looked at the phone and said the aperture was shut. The
+       code change that came out of it is not a bug fix: `texture.setDefaultBufferSize(request.resolution…)` makes the
+       producer's buffer the resolution CameraX asked for instead of whatever size the view happens to be, which is
+       what a hand-built `Surface` needs and what the comment now says. No false "measured defect" was left in the code.
+    2. **What cannot be tested here is named.** Gadgetbridge is not installed on this phone, so the band path - and
+       with it MIUI's habit of killing background work - is untested; the WorkManager job is present, which is as far
+       as this device can go without the band.

@@ -428,6 +428,13 @@ private fun CameraPreview(
                         if (texture == null) {
                             request.willNotProvideSurface()
                         } else {
+                            // The producer's buffer is the resolution CameraX asked for, not whatever size the view
+                            // happens to be: with a Surface of our own nothing else sets it, and the preview would be
+                            // scaled from the view's size instead of rendered at the camera's aspect.
+                            texture.setDefaultBufferSize(
+                                request.resolution.width,
+                                request.resolution.height,
+                            )
                             val surface = Surface(texture)
                             request.provideSurface(surface, ContextCompat.getMainExecutor(ctx)) {
                                 surface.release()

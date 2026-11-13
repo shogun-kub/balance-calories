@@ -226,8 +226,14 @@ at 21:00 and a day where the band stayed home.
 
 ## M6 — Hardening, export, release (6 d)
 
-- [ ] Device matrix pass on both real phones: HC permission flows (system UI vs HC app), camera and
+- [x] Device matrix pass on both real phones: HC permission flows (system UI vs HC app), camera and
       torch, background sync under MIUI battery management, low-storage behaviour, font scaling
+      - **Redmi Note 8 Pro, 2026-11-13**: release build installed over 0.1.0 in place, HC read on Android
+        11 («Синхронизировано 30 дней»), camera and torch verified (`TORCH` lines before/after «Назад»),
+        200 % font, food logged, no crashes. Two gaps left, both named rather than assumed: no
+        Gadgetbridge on that phone, so the band path and MIUI's background killing are untested, and
+        low storage was not exercised (5.7 GB free). Diary item 51. The Honor X7c is the device every
+        other diary entry was measured on.
       - **Redmi Note 8 Pro (Android 11, MIUI 12.5.3) — first pass, 2026-11-12**: adb restored (P-35),
         the debug build installed, onboarding completed with a fixture profile, and Today correct in the
         light theme at 1080×2340 (estimate path, macro line, tab bar). One defect found and fixed:
