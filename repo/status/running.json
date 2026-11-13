@@ -1,0 +1,31 @@
+{
+  "antiFeatures": {},
+  "apksigner": "C:\\Program Files\\Android\\Sdk\\build-tools\\36.0.0\\apksigner.bat",
+  "archivePolicy0": [],
+  "commandLine": [
+    "C:\\Users\\shogu\\.dsh\\dsh-runtimes\\dsh-primary-runtime\\dependencies\\python\\Scripts\\fdroid update",
+    "--clean",
+    "--pretty"
+  ],
+  "disabled": [],
+  "endTimestamp": 1794588664209,
+  "failedBuilds": {},
+  "jarsigner": "C:\\Program Files\\BellSoft\\LibericaJDK-21-Full\\bin\\jarsigner.exe",
+  "keytool": "C:\\Program Files\\BellSoft\\LibericaJDK-21-Full\\bin\\keytool.exe",
+  "needsUpdate": [],
+  "noPackages": [
+    "com.balancecalories"
+  ],
+  "noUpdateCheck": [],
+  "stages": {
+    "delete_disabled_builds": 1794588660756,
+    "index.make repo": 1794588661309,
+    "prepare_apps repo": 1794588661303,
+    "process_apks": 1794588660756,
+    "read_added_date_from_all_apks": 1794588661302,
+    "remove_apks": 1794588661302,
+    "scan_repo_files": 1794588661301
+  },
+  "startTimestamp": 1794577860000,
+  "subcommand": "update"
+}

@@ -1,0 +1,136 @@
+{
+  "repo": {
+    "timestamp": 1794588661000,
+    "version": 20002,
+    "name": "BalanceCalories",
+    "icon": "icon.png",
+    "address": "https://shogun-kub.github.io/balance-calories/repo",
+    "description": "The household's own builds of BalanceCalories, signed here."
+  },
+  "requests": {
+    "install": [],
+    "uninstall": []
+  },
+  "apps": [
+    {
+      "authorName": "Ne_Che_Guevara",
+      "categories": [
+        "Sports & Health"
+      ],
+      "changelog": "https://github.com/shogun-kub/balance-calories/releases",
+      "suggestedVersionName": "1.0.2",
+      "suggestedVersionCode": "4",
+      "issueTracker": "https://github.com/shogun-kub/balance-calories/issues",
+      "license": "Apache-2.0",
+      "sourceCode": "https://github.com/shogun-kub/balance-calories",
+      "summary": "Local-first calorie balance: activity from Health Connect, food you log, one number a day.",
+      "webSite": "https://github.com/shogun-kub/balance-calories",
+      "added": 1794588651000,
+      "packageName": "com.balancecalories",
+      "lastUpdated": 1794588651000,
+      "localized": {
+        "en-US": {
+          "description": "One honest number: energy in minus energy out.\n\nBalance Calories reads your activity from Health Connect (which Gadgetbridge fills from a Huawei band) and your food from its own catalogue, and shows the day as a balance instead of a pile of separate counters. It was built for two people who wanted to see the whole day at once.\n\nWHAT IT DOES\n\nToday: a half-doughnut of eaten against the target, one card per meal, and the day's balance. Burn comes from the band when it is there and from a formula when it is not - and the screen says which of the two it is using, because a measurement and an estimate are not the same claim.\n\nFood: a searchable catalogue that starts with about a hundred common products, a barcode scanner that works offline, and a text search that falls back to Open Food Facts by itself when the phone has nothing to offer. Recipes are ingredients plus the weight the dish has after cooking, so a portion is measured against what is actually on the plate rather than a guess.\n\nHistory: intake and burn per day, a weight trend, and an adaptive TDEE that learns from what actually happened - and refuses by name when it does not have enough days to be honest.\n\nWeight: manual entry and a chart, in kilograms or pounds.\n\nSettings: units, the hour your day starts, language, macro norms (four presets or your own grams), and the meals themselves - names, times, order.\n\nBackup: a versioned JSON export and a CSV of the food log, both written where you choose.\n\nWHAT IT DOES NOT DO\n\nNo account, no sign-up, no analytics, no crash upload, no advertising. There is no server: nothing about your body or your food leaves the phone. The only network traffic is the product search you type into Open Food Facts and the barcode lookup for a code your phone has never seen.\n\nThe database is local and the app works without a network: logging food, viewing today and reading history all work in a lift.\n\nPERMISSIONS\n\nActivity and body data are read from Health Connect, and only after you grant them; the app asks on the Today screen the first time it needs them. The camera is used only for barcode scanning, and only while the scanner is open.\n\nREQUIREMENTS\n\nAndroid 9 or newer. Health Connect needs Android 14, or the Health Connect app on older versions. Band data arrives through Gadgetbridge, which speaks to Huawei bands; without a band the app still works and estimates the burn.\n\nThe source code is published, and the whole design record - every decision, with the alternatives it rejected - is in the repository.\n",
+          "icon": "icon_f1uCSBbhD2JUaaEluW164vAWlLW05qiHyqlwoEMDbTU=.png",
+          "name": "Balance Calories",
+          "phoneScreenshots": [
+            "01_today.png",
+            "02_food.png",
+            "03_recipes.png",
+            "04_history.png",
+            "05_weight.png"
+          ],
+          "summary": "Calorie balance from your band and your food log. No account, no cloud.",
+          "whatsNew": "Version 1.0.2.\n\n- The same app as 1.0.1: this build exists so that updates can arrive from the household's own F-Droid repository, signed with its own key instead of a debug one."
+        },
+        "ru-RU": {
+          "description": "\u041e\u0434\u043d\u043e \u0447\u0435\u0441\u0442\u043d\u043e\u0435 \u0447\u0438\u0441\u043b\u043e: \u0441\u043a\u043e\u043b\u044c\u043a\u043e \u0441\u044a\u0435\u0434\u0435\u043d\u043e \u043c\u0438\u043d\u0443\u0441 \u0441\u043a\u043e\u043b\u044c\u043a\u043e \u0441\u043e\u0436\u0436\u0435\u043d\u043e.\n\n\u00ab\u0411\u0430\u043b\u0430\u043d\u0441 \u041a\u0430\u043b\u043e\u0440\u0438\u0439\u00bb \u0447\u0438\u0442\u0430\u0435\u0442 \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u0441\u0442\u044c \u0438\u0437 Health Connect (\u043a\u0443\u0434\u0430 \u0435\u0451 \u0437\u0430\u043f\u0438\u0441\u044b\u0432\u0430\u0435\u0442 Gadgetbridge \u0441 \u0431\u0440\u0430\u0441\u043b\u0435\u0442\u0430 Huawei) \u0438 \u0435\u0434\u0443 \u0438\u0437 \u0441\u0432\u043e\u0435\u0433\u043e \u043a\u0430\u0442\u0430\u043b\u043e\u0433\u0430, \u0438 \u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 \u0434\u0435\u043d\u044c \u043a\u0430\u043a \u0431\u0430\u043b\u0430\u043d\u0441, \u0430 \u043d\u0435 \u043a\u0430\u043a \u043d\u0430\u0431\u043e\u0440 \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u044b\u0445 \u0441\u0447\u0451\u0442\u0447\u0438\u043a\u043e\u0432.\n\n\u0427\u0422\u041e \u041e\u041d \u0423\u041c\u0415\u0415\u0422\n\n\u0421\u0435\u0433\u043e\u0434\u043d\u044f: \u043f\u043e\u043b\u0443\u043a\u0440\u0443\u0433 \u0441\u044a\u0435\u0434\u0435\u043d\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u0442\u0438\u0432 \u0446\u0435\u043b\u0438, \u043a\u0430\u0440\u0442\u043e\u0447\u043a\u0430 \u043d\u0430 \u043a\u0430\u0436\u0434\u044b\u0439 \u043f\u0440\u0438\u0451\u043c \u043f\u0438\u0449\u0438 \u0438 \u0431\u0430\u043b\u0430\u043d\u0441 \u0434\u043d\u044f. \u0421\u043e\u0436\u0436\u0435\u043d\u043d\u043e\u0435 \u0431\u0435\u0440\u0451\u0442\u0441\u044f \u0438\u0437 \u0431\u0440\u0430\u0441\u043b\u0435\u0442\u0430, \u043a\u043e\u0433\u0434\u0430 \u043e\u043d \u0435\u0441\u0442\u044c, \u0438 \u0441\u0447\u0438\u0442\u0430\u0435\u0442\u0441\u044f \u043f\u043e \u0444\u043e\u0440\u043c\u0443\u043b\u0435, \u043a\u043e\u0433\u0434\u0430 \u0435\u0433\u043e \u043d\u0435\u0442, \u0438 \u044d\u043a\u0440\u0430\u043d \u0433\u043e\u0432\u043e\u0440\u0438\u0442, \u0447\u0442\u043e \u0438\u043c\u0435\u043d\u043d\u043e \u043e\u043d \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0435\u0442.\n\n\u0415\u0434\u0430: \u043a\u0430\u0442\u0430\u043b\u043e\u0433 \u0441 \u043f\u043e\u0438\u0441\u043a\u043e\u043c, \u043a\u043e\u0442\u043e\u0440\u044b\u0439 \u043d\u0430\u0447\u0438\u043d\u0430\u0435\u0442\u0441\u044f \u0441\u043e \u0441\u0442\u0430 \u043f\u0440\u0438\u0432\u044b\u0447\u043d\u044b\u0445 \u043f\u0440\u043e\u0434\u0443\u043a\u0442\u043e\u0432, \u0441\u043a\u0430\u043d\u0435\u0440 \u0448\u0442\u0440\u0438\u0445\u043a\u043e\u0434\u043e\u0432, \u0440\u0430\u0431\u043e\u0442\u0430\u044e\u0449\u0438\u0439 \u0431\u0435\u0437 \u0441\u0435\u0442\u0438, \u0438 \u043f\u043e\u0438\u0441\u043a \u043f\u043e \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044e, \u043a\u043e\u0442\u043e\u0440\u044b\u0439 \u0441\u0430\u043c \u043e\u0431\u0440\u0430\u0449\u0430\u0435\u0442\u0441\u044f \u043a Open Food Facts, \u0435\u0441\u043b\u0438 \u0432 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0435 \u043d\u0438\u0447\u0435\u0433\u043e \u043d\u0435\u0442. \u0420\u0435\u0446\u0435\u043f\u0442 - \u044d\u0442\u043e \u0438\u043d\u0433\u0440\u0435\u0434\u0438\u0435\u043d\u0442\u044b \u043f\u043b\u044e\u0441 \u0432\u0435\u0441 \u0433\u043e\u0442\u043e\u0432\u043e\u0433\u043e \u0431\u043b\u044e\u0434\u0430, \u043f\u043e\u044d\u0442\u043e\u043c\u0443 \u043f\u043e\u0440\u0446\u0438\u044f \u0441\u0447\u0438\u0442\u0430\u0435\u0442\u0441\u044f \u043f\u043e \u0442\u043e\u043c\u0443, \u0447\u0442\u043e \u0440\u0435\u0430\u043b\u044c\u043d\u043e \u043d\u0430 \u0442\u0430\u0440\u0435\u043b\u043a\u0435.\n\n\u0418\u0441\u0442\u043e\u0440\u0438\u044f: \u0441\u044a\u0435\u0434\u0435\u043d\u043d\u043e\u0435 \u0438 \u0441\u043e\u0436\u0436\u0451\u043d\u043d\u043e\u0435 \u043f\u043e \u0434\u043d\u044f\u043c, \u0442\u0440\u0435\u043d\u0434 \u0432\u0435\u0441\u0430 \u0438 \u0430\u0434\u0430\u043f\u0442\u0438\u0432\u043d\u044b\u0439 \u0440\u0430\u0441\u0445\u043e\u0434, \u043a\u043e\u0442\u043e\u0440\u044b\u0439 \u0443\u0447\u0438\u0442\u044b\u0432\u0430\u0435\u0442 \u0444\u0430\u043a\u0442\u0438\u0447\u0435\u0441\u043a\u0438\u0435 \u0434\u0430\u043d\u043d\u044b\u0435 \u0438 \u0447\u0435\u0441\u0442\u043d\u043e \u043e\u0442\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442\u0441\u044f, \u0435\u0441\u043b\u0438 \u0434\u043d\u0435\u0439 \u0435\u0449\u0451 \u043d\u0435 \u0445\u0432\u0430\u0442\u0430\u0435\u0442.\n\n\u0412\u0435\u0441: \u0440\u0443\u0447\u043d\u043e\u0439 \u0432\u0432\u043e\u0434 \u0438 \u0433\u0440\u0430\u0444\u0438\u043a, \u0432 \u043a\u0438\u043b\u043e\u0433\u0440\u0430\u043c\u043c\u0430\u0445 \u0438\u043b\u0438 \u0444\u0443\u043d\u0442\u0430\u0445.\n\n\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438: \u0435\u0434\u0438\u043d\u0438\u0446\u044b, \u0447\u0430\u0441 \u043d\u0430\u0447\u0430\u043b\u0430 \u0434\u043d\u044f, \u044f\u0437\u044b\u043a, \u043d\u043e\u0440\u043c\u044b \u0411\u0416\u0423 (\u0447\u0435\u0442\u044b\u0440\u0435 \u043f\u0440\u0435\u0441\u0435\u0442\u0430 \u0438\u043b\u0438 \u0441\u0432\u043e\u0438 \u0433\u0440\u0430\u043c\u043c\u044b) \u0438 \u0441\u0430\u043c\u0438 \u043f\u0440\u0438\u0451\u043c\u044b \u043f\u0438\u0449\u0438 - \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f, \u0432\u0440\u0435\u043c\u044f, \u043f\u043e\u0440\u044f\u0434\u043e\u043a.\n\n\u0420\u0435\u0437\u0435\u0440\u0432\u043d\u0430\u044f \u043a\u043e\u043f\u0438\u044f: \u0432\u0435\u0440\u0441\u0438\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 JSON \u0438 CSV \u0434\u043d\u0435\u0432\u043d\u0438\u043a\u0430, \u0442\u0443\u0434\u0430, \u043a\u0443\u0434\u0430 \u0432\u044b \u0443\u043a\u0430\u0436\u0435\u0442\u0435.\n\n\u0427\u0415\u0413\u041e \u041e\u041d \u041d\u0415 \u0414\u0415\u041b\u0410\u0415\u0422\n\n\u041d\u0438 \u0430\u043a\u043a\u0430\u0443\u043d\u0442\u0430, \u043d\u0438 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u0438, \u043d\u0438 \u0430\u043d\u0430\u043b\u0438\u0442\u0438\u043a\u0438, \u043d\u0438 \u043e\u0442\u043f\u0440\u0430\u0432\u043a\u0438 \u043e\u0442\u0447\u0451\u0442\u043e\u0432 \u043e\u0431 \u043e\u0448\u0438\u0431\u043a\u0430\u0445, \u043d\u0438 \u0440\u0435\u043a\u043b\u0430\u043c\u044b. \u0421\u0435\u0440\u0432\u0435\u0440\u0430 \u043d\u0435\u0442: \u043d\u0438\u0447\u0435\u0433\u043e \u043e \u0432\u0430\u0448\u0435\u043c \u0442\u0435\u043b\u0435 \u0438\u043b\u0438 \u0435\u0434\u0435 \u043d\u0435 \u043f\u043e\u043a\u0438\u0434\u0430\u0435\u0442 \u0442\u0435\u043b\u0435\u0444\u043e\u043d. \u0415\u0434\u0438\u043d\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0439 \u0442\u0440\u0430\u0444\u0438\u043a - \u043f\u043e\u0438\u0441\u043a \u043f\u0440\u043e\u0434\u0443\u043a\u0442\u0430, \u043a\u043e\u0442\u043e\u0440\u044b\u0439 \u0432\u044b \u0441\u0430\u043c\u0438 \u0432\u0432\u043e\u0434\u0438\u0442\u0435 \u0432 Open Food Facts, \u0438 \u0437\u0430\u043f\u0440\u043e\u0441 \u0448\u0442\u0440\u0438\u0445\u043a\u043e\u0434\u0430, \u043a\u043e\u0442\u043e\u0440\u043e\u0433\u043e \u0442\u0435\u043b\u0435\u0444\u043e\u043d \u0435\u0449\u0451 \u043d\u0435 \u0437\u043d\u0430\u0435\u0442.\n\n\u0411\u0430\u0437\u0430 \u0445\u0440\u0430\u043d\u0438\u0442\u0441\u044f \u043d\u0430 \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0435, \u0438 \u0431\u0435\u0437 \u0441\u0435\u0442\u0438 \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442 \u0432\u0441\u0451 \u043e\u0441\u043d\u043e\u0432\u043d\u043e\u0435: \u0437\u0430\u043f\u0438\u0441\u044c \u0435\u0434\u044b, \u0441\u0435\u0433\u043e\u0434\u043d\u044f\u0448\u043d\u0438\u0439 \u0431\u0430\u043b\u0430\u043d\u0441 \u0438 \u0438\u0441\u0442\u043e\u0440\u0438\u044f.\n\n\u0420\u0410\u0417\u0420\u0415\u0428\u0415\u041d\u0418\u042f\n\n\u0410\u043a\u0442\u0438\u0432\u043d\u043e\u0441\u0442\u044c \u0438 \u0434\u0430\u043d\u043d\u044b\u0435 \u0442\u0435\u043b\u0430 \u0447\u0438\u0442\u0430\u044e\u0442\u0441\u044f \u0438\u0437 Health Connect \u0438 \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u043e\u0441\u043b\u0435 \u0442\u043e\u0433\u043e, \u043a\u0430\u043a \u0432\u044b \u0438\u0445 \u0432\u044b\u0434\u0430\u043b\u0438: \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u0441\u043f\u0440\u0430\u0448\u0438\u0432\u0430\u0435\u0442 \u043d\u0430 \u044d\u043a\u0440\u0430\u043d\u0435 \u00ab\u0421\u0435\u0433\u043e\u0434\u043d\u044f\u00bb \u0432 \u043f\u0435\u0440\u0432\u044b\u0439 \u0440\u0430\u0437, \u043a\u043e\u0433\u0434\u0430 \u043e\u043d\u0438 \u043d\u0443\u0436\u043d\u044b. \u041a\u0430\u043c\u0435\u0440\u0430 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0435\u0442\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u0434\u043b\u044f \u0448\u0442\u0440\u0438\u0445\u043a\u043e\u0434\u043e\u0432 \u0438 \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u043e\u043a\u0430 \u043e\u0442\u043a\u0440\u044b\u0442 \u0441\u043a\u0430\u043d\u0435\u0440.\n\n\u0422\u0420\u0415\u0411\u041e\u0412\u0410\u041d\u0418\u042f\n\nAndroid 9 \u0438\u043b\u0438 \u043d\u043e\u0432\u0435\u0435. Health Connect \u043d\u0443\u0436\u0435\u043d Android 14 \u0438\u043b\u0438 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435 Health Connect \u043d\u0430 \u0431\u043e\u043b\u0435\u0435 \u0441\u0442\u0430\u0440\u044b\u0445 \u0432\u0435\u0440\u0441\u0438\u044f\u0445. \u0414\u0430\u043d\u043d\u044b\u0435 \u0431\u0440\u0430\u0441\u043b\u0435\u0442\u0430 \u043f\u0440\u0438\u0445\u043e\u0434\u044f\u0442 \u0447\u0435\u0440\u0435\u0437 Gadgetbridge; \u0431\u0435\u0437 \u0431\u0440\u0430\u0441\u043b\u0435\u0442\u0430 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u0442\u043e\u0436\u0435 \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442 \u0438 \u043e\u0446\u0435\u043d\u0438\u0432\u0430\u0435\u0442 \u0440\u0430\u0441\u0445\u043e\u0434 \u043f\u043e \u0444\u043e\u0440\u043c\u0443\u043b\u0435.\n\n\u0418\u0441\u0445\u043e\u0434\u043d\u044b\u0439 \u043a\u043e\u0434 \u043e\u0442\u043a\u0440\u044b\u0442, \u0438 \u0432\u0435\u0441\u044c \u0437\u0430\u043f\u0438\u0441\u0430\u043d\u043d\u044b\u0439 \u0445\u043e\u0434 \u0440\u0430\u0431\u043e\u0442\u044b - \u043a\u0430\u0436\u0434\u043e\u0435 \u0440\u0435\u0448\u0435\u043d\u0438\u0435 \u0438 \u043e\u0442\u0432\u0435\u0440\u0433\u043d\u0443\u0442\u044b\u0435 \u0430\u043b\u044c\u0442\u0435\u0440\u043d\u0430\u0442\u0438\u0432\u044b - \u0432 \u0440\u0435\u043f\u043e\u0437\u0438\u0442\u043e\u0440\u0438\u0438.\n",
+          "name": "\u0411\u0430\u043b\u0430\u043d\u0441 \u041a\u0430\u043b\u043e\u0440\u0438\u0439",
+          "phoneScreenshots": [
+            "01_today.png",
+            "02_food.png",
+            "03_recipes.png",
+            "04_history.png",
+            "05_weight.png"
+          ],
+          "summary": "\u0411\u0430\u043b\u0430\u043d\u0441 \u043a\u0430\u043b\u043e\u0440\u0438\u0439 \u0438\u0437 \u0431\u0440\u0430\u0441\u043b\u0435\u0442\u0430 \u0438 \u0434\u043d\u0435\u0432\u043d\u0438\u043a\u0430 \u0435\u0434\u044b. \u0411\u0435\u0437 \u0430\u043a\u043a\u0430\u0443\u043d\u0442\u0430 \u0438 \u043e\u0431\u043b\u0430\u043a\u0430.",
+          "whatsNew": "\u0412\u0435\u0440\u0441\u0438\u044f 1.0.2.\n\n- \u0422\u043e \u0436\u0435 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435, \u0447\u0442\u043e \u0438 1.0.1: \u0441\u0431\u043e\u0440\u043a\u0430 \u043d\u0443\u0436\u043d\u0430 \u0434\u043b\u044f \u0442\u043e\u0433\u043e, \u0447\u0442\u043e\u0431\u044b \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043f\u0440\u0438\u0445\u043e\u0434\u0438\u043b\u0438 \u0438\u0437 \u0441\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u0433\u043e F-Droid-\u0440\u0435\u043f\u043e\u0437\u0438\u0442\u043e\u0440\u0438\u044f, \u043f\u043e\u0434\u043f\u0438\u0441\u0430\u043d\u043d\u043e\u0433\u043e \u0441\u0432\u043e\u0438\u043c \u043a\u043b\u044e\u0447\u043e\u043c, \u0430 \u043d\u0435 \u043e\u0442\u043b\u0430\u0434\u043e\u0447\u043d\u044b\u043c."
+        }
+      }
+    }
+  ],
+  "packages": {
+    "com.balancecalories": [
+      {
+        "added": 1794588651000,
+        "apkName": "com.balancecalories_4.apk",
+        "hash": "21e705f1227bacaa8f31cc7b9e53c5b94226687a2c56d39d4ee4bcc2b65877a1",
+        "hashType": "sha256",
+        "minSdkVersion": 28,
+        "nativecode": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "packageName": "com.balancecalories",
+        "sig": "68209402599a1e4804aef80ef7412250",
+        "signer": "2b3b027128a8ad0cbbce75a2d8712710306a6de2ac4d3270305e9c5f7c2acff7",
+        "size": 12192154,
+        "targetSdkVersion": 36,
+        "uses-permission": [
+          [
+            "android.permission.INTERNET",
+            null
+          ],
+          [
+            "android.permission.CAMERA",
+            null
+          ],
+          [
+            "android.permission.health.READ_STEPS",
+            null
+          ],
+          [
+            "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+            null
+          ],
+          [
+            "android.permission.health.READ_TOTAL_CALORIES_BURNED",
+            null
+          ],
+          [
+            "android.permission.health.READ_DISTANCE",
+            null
+          ],
+          [
+            "android.permission.health.READ_RESTING_HEART_RATE",
+            null
+          ],
+          [
+            "android.permission.RECEIVE_BOOT_COMPLETED",
+            null
+          ],
+          [
+            "android.permission.WAKE_LOCK",
+            null
+          ],
+          [
+            "android.permission.ACCESS_NETWORK_STATE",
+            null
+          ],
+          [
+            "android.permission.FOREGROUND_SERVICE",
+            null
+          ],
+          [
+            "com.balancecalories.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+            null
+          ]
+        ],
+        "versionCode": 4,
+        "versionName": "1.0.2"
+      }
+    ]
+  }
+}

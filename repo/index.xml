@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fdroid>
+	<repo icon="icon.png" name="BalanceCalories" pubkey="3082057d30820365a0030201020208673e9e9bfb96efda300d06092a864886f70d01010b0500306c310b3009060355040613025255310f300d060355040713064d6f73636f7731183016060355040a130f42616c616e636543616c6f7269657331133011060355040b130a73686f67756e2d6b7562311d301b0603550403131442616c616e636543616c6f72696573207265706f3020170d3236313131333136343932335a180f32303534303333313136343932335a306c310b3009060355040613025255310f300d060355040713064d6f73636f7731183016060355040a130f42616c616e636543616c6f7269657331133011060355040b130a73686f67756e2d6b7562311d301b0603550403131442616c616e636543616c6f72696573207265706f30820222300d06092a864886f70d01010105000382020f003082020a0282020100b03ab2f9c34d8a56549361cbe986e062b02ccc55747903f3e3429f9afedd38b971f32736c7b44cca1be0e9d07e3305b8a9c30d9e8e6db910e76f89b18f272984fda51b78a2c00a86fa21d1506812205dbf9328a349df04c87dbee977dbdc4cd0a6991cea68fb371924895e31f58307197e44568fc92a118a267fb67d1b22e61d046a9f2bb62d634c2b98f7a9fc650e27dcca8aadcf8fb295b50b70e8fe5b152a8d9bad31d1bbfcbf7b6c0d3091cc6a76fdc63047fcc2de8e6700c5c0aeaed76d022b405f5393e9fe6f820da7b5d3d37650eb12327b957e4f9f8d5de241d7ada7ea128dea7e6c7d04c000a65b47634ccbd108ae137370d0b8ea38f974f52686f93c1106c65ee5c3ba4b3401843a1a2f666add1b47c42ef5bc202fb7a722e2ff2d6164f87bc843de2042d67412a767485f27b91538cd0e255035ccdb749c12e6e0e84b923dcad861f1cfcb7d02c0206e0c143c99d683eb40129a35b193b8605422ccc0370ebbbb3d9cd7c016f1fcf76fe06e6bf55ac36d9867830a637b0a11571848ca7d6f74696335b516092d66ff0efa18ca58138caf6ee7dae6772ea810585dad67c84c2ad30858a0a953e62b482f60595334a6ec337b1d0466ddde728caeb75f146da85d499fac1eb3327f7f9d8f77c807cef20d60cfb67693a95d753c2c2a59899fae2c6f5b33c38fe85fc08605ab5bdb1fd13a04a71253a2b46452f752cd0203010001a321301f301d0603551d0e04160414d4f5ce2413bab9306477125af2bcf7906d03a292300d06092a864886f70d01010b0500038202010065b48b9588032bd29dd1a1f40cdf939a50af772744a6b6242945fa447bff3c0db2885482d0920ffb8b3e4c7acb39ad74714d3f09932362d63e0de85e061c59ad0e6912594ea268f434ede2d585d76ed2f72a0437bb620d7bf99d89961e538f9d9cb0876248bf3d8789fc93b6cd250f83999765fd268e16ae73210b8946b00bb09d90293a4aee150f0249d28e910da12dd67f1e3552d17135f00dd261f00e137eb48b57f309ffc4557b1511f13028c455085831bdf747a40d086512fb86e9f135f52a2952faa04c77e0846b74bdaeaae8fcea73c43ae0285b8618c2668f767f76045f796ea946eb379db24ad5347bab480184bade0e21b660da7fd0bff783a444acc1dba94731483b15db30e14f396de521dfd4740888fe26cb25983800b2aae628ec445da3c2dbc8908ca1af12d286124742e569da5351955f21b7df227106925d33d44c3083e50460a7b498784c89d755b33e0d44295df1cdab02fbfb7a63cb066e2024b5c1e0d29c9cece00aac35b0f7846c74e0df42523922f67f9a4b0b717b906fd3634daf16c23183a1315d776c2e637fa60bd96f7438d0e628a17e464cafd26b337f7e6663861e50cc87a823e5da5dac4a95afcaf5414987f1c1862957062eda3fa0138366485add0144ec6a5ad0902b901b86d019af68d95231cef0ff128fd0b41c54a684ddcc47bbbafb86defc299409f586f05fad0be7b1ff4eff85" timestamp="1794588661" url="https://shogun-kub.github.io/balance-calories/repo" version="20002">
+		<description>The household's own builds of BalanceCalories, signed here.</description>
+	</repo>
+	<application id="com.balancecalories">
+		<id>com.balancecalories</id>
+		<added>2026-11-13</added>
+		<lastupdated>2026-11-13</lastupdated>
+		<name>Balance Calories</name>
+		<summary>Local-first calorie balance: activity from Health Connect, food you log, one number a day.</summary>
+		<desc>One honest number: energy in minus energy out.
+
+Balance Calories reads your activity from Health Connect (which Gadgetbridge fills from a Huawei band) and your food from its own catalogue, and shows the day as a balance instead of a pile of separate counters. It was built for two people who wanted to see the whole day at once.
+
+WHAT IT DOES
+
+Today: a half-doughnut of eaten against the target, one card per meal, and the day's balance. Burn comes from the band when it is there and from a formula when it is not - and the screen says which of the two it is using, because a measurement and an estimate are not the same claim.
+
+Food: a searchable catalogue that starts with about a hundred common products, a barcode scanner that works offline, and a text search that falls back to Open Food Facts by itself when the phone has nothing to offer. Recipes are ingredients plus the weight the dish has after cooking, so a portion is measured against what is actually on the plate rather than a guess.
+
+History: intake and burn per day, a weight trend, and an adaptive TDEE that learns from what actually happened - and refuses by name when it does not have enough days to be honest.
+
+Weight: manual entry and a chart, in kilograms or pounds.
+
+Settings: units, the hour your day starts, language, macro norms (four presets or your own grams), and the meals themselves - names, times, order.
+
+Backup: a versioned JSON export and a CSV of the food log, both written where you choose.
+
+WHAT IT DOES NOT DO
+
+No account, no sign-up, no analytics, no crash upload, no advertising. There is no server: nothing about your body or your food leaves the phone. The only network traffic is the product search you type into Open Food Facts and the barcode lookup for a code your phone has never seen.
+
+The database is local and the app works without a network: logging food, viewing today and reading history all work in a lift.
+
+PERMISSIONS
+
+Activity and body data are read from Health Connect, and only after you grant them; the app asks on the Today screen the first time it needs them. The camera is used only for barcode scanning, and only while the scanner is open.
+
+REQUIREMENTS
+
+Android 9 or newer. Health Connect needs Android 14, or the Health Connect app on older versions. Band data arrives through Gadgetbridge, which speaks to Huawei bands; without a band the app still works and estimates the burn.
+
+The source code is published, and the whole design record - every decision, with the alternatives it rejected - is in the repository.
+</desc>
+		<license>Apache-2.0</license>
+		<categories>Sports &amp; Health</categories>
+		<category>Sports &amp; Health</category>
+		<web>https://github.com/shogun-kub/balance-calories</web>
+		<source>https://github.com/shogun-kub/balance-calories</source>
+		<tracker>https://github.com/shogun-kub/balance-calories/issues</tracker>
+		<changelog>https://github.com/shogun-kub/balance-calories/releases</changelog>
+		<author>Ne_Che_Guevara</author>
+		<marketversion>1.0.2</marketversion>
+		<marketvercode>4</marketvercode>
+		<package>
+			<version>1.0.2</version>
+			<versioncode>4</versioncode>
+			<apkname>com.balancecalories_4.apk</apkname>
+			<hash type="sha256">21e705f1227bacaa8f31cc7b9e53c5b94226687a2c56d39d4ee4bcc2b65877a1</hash>
+			<size>12192154</size>
+			<sdkver>28</sdkver>
+			<targetSdkVersion>36</targetSdkVersion>
+			<added>2026-11-13</added>
+			<sig>68209402599a1e4804aef80ef7412250</sig>
+			<permissions>ACCESS_NETWORK_STATE,CAMERA,FOREGROUND_SERVICE,INTERNET,RECEIVE_BOOT_COMPLETED,WAKE_LOCK,com.balancecalories.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION,health.READ_ACTIVE_CALORIES_BURNED,health.READ_DISTANCE,health.READ_RESTING_HEART_RATE,health.READ_STEPS,health.READ_TOTAL_CALORIES_BURNED</permissions>
+			<nativecode>arm64-v8a,armeabi-v7a,x86,x86_64</nativecode>
+		</package>
+	</application>
+</fdroid>
