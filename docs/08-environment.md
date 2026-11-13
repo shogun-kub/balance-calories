@@ -268,3 +268,37 @@ read. Two things it cannot do:
 - **Open the merge request from the API**, for the same reason. Push options carry it instead
   (`-o merge_request.create -o merge_request.target=master`), which needs only the SSH key.
 
+### What the buildserver has
+
+Read from the image definition rather than guessed, because a first build fails on its tools long before it
+fails on our code. `fdroidserver/buildserver/Dockerfile` starts from `debian:trixie` and installs
+`default-jdk-headless`, which in trixie is `2:1.21-76` — **JDK 21**, the same major version as this machine.
+That matters twice: `:core` asks for `jvmToolchain(21)`, and `provision-gradle` writes
+`~/.gradle/gradle.properties` with
+
+```
+org.gradle.daemon=false
+org.gradle.java.installations.auto-download=false
+```
+
+so a toolchain request has to be satisfied by an installed JDK and cannot download one.
+
+`gradle` on that machine is not Gradle: `provision-gradle` clones
+<https://gitlab.com/fdroid/gradlew-fdroid> and symlinks its `gradlew-fdroid` (a Python reimplementation of
+the wrapper) to both `gradle` and `gradlew-fdroid`. It reads `gradle/wrapper/gradle-wrapper.properties`,
+downloads that distribution from `downloads.gradle.org`, and **checks its sha256** against
+`fdroid/gradle-transparency-log` (`sha256/gradle-<version>-bin.zip.sha256`), merged over a built-in list.
+An unknown version is fatal: `No hash for gradle version 9.8.2! Exiting...`. Ours is known —
+`gradle-9.8.2-bin.zip` is
+`21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607`. `fdroidserver`'s `build.py` then deletes
+`gradlew` and `gradlew.bat` from the checkout before building, which is harmless because the wrapper in use
+is theirs.
+
+The Android SDK is mostly *not* preinstalled. The Dockerfile calls
+`provision-android-sdk "tools;25.2.5"`, which replaces the script's long package list with that one entry, so
+the image ships no platform and no build-tools; `platforms/` and `build-tools/` are group-writable precisely
+so that AGP can install them, and the four licence hashes are written into `$ANDROID_HOME/licenses/` in
+advance (`android-sdk-license` = `24333f8a63b6825ea9c5514f83c2829b004d1fee`). `compileSdk 36` is therefore
+downloaded during the build, not missing.
+
+

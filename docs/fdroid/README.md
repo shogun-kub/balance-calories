@@ -44,6 +44,14 @@ into Open Food Facts and a barcode lookup for a code the phone has never seen; b
 - Cold start 308 ms on the Android 11 device, 1 370 ms for a debug build on Android 14; database 204 KiB
   now, ~3.4 MiB modelled for a year.
 - Two hundred and fifty-five JVM tests and 126 device tests.
+- Checked against the buildserver image definition (`fdroidserver/buildserver`), because the three things
+  that usually break a first build are all decided there: the image is Debian trixie, whose
+  `default-jdk-headless` is 2:1.21-76, so **JDK 21 is installed** while JVM auto-provisioning is switched
+  off — the `jvmToolchain(21)` in `:core` has a real JDK to find; `gradlew-fdroid` takes the version from
+  `gradle/wrapper/gradle-wrapper.properties` and verifies the download against the gradle-transparency log,
+  where **`gradle-9.8.2-bin.zip` is present** (sha256 `21bd5da2…`); and the image installs **no Android
+  platform** (`provision-android-sdk "tools;25.2.5"`), so `compileSdk 36` is downloaded by AGP using the
+  licences the image pre-accepts.
 
 ### Anti-features
 
@@ -76,9 +84,10 @@ Everything except one click is prepared. The steps in order:
    ```
 
    `$desc` is the block above, read from this file between the two `---` lines.
-3. **Watch the pipeline.** `fdroid build --test com.balancecalories` runs on their buildserver. If it fails
-   on `compileSdk 36` (Android 16) because their SDK image is older, the fix is on their side — reply in the
-   merge request rather than lowering the SDK here.
+3. **Watch the pipeline.** `fdroid build --test com.balancecalories` runs on their buildserver. The three
+   things it needs were checked against that image and are listed under "What was verified" above, so a
+   failure should be a real defect here rather than a missing tool on their side — reply in the merge
+   request with what the log says.
 
 The SSH key already in the agent authenticates as `@Ne_Che_Guevara`
 (`ssh -T git@gitlab.com` → `Welcome to GitLab, @Ne_Che_Guevara!`), so the push needs no new credential and
