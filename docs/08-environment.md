@@ -266,7 +266,10 @@ read. Two things it cannot do:
   does hold a gitlab.com entry for `Ne_Che_Guevara`, but it is the account password and GitLab answers
   `401` to it on `/api/v4/user`, so the fork is a browser click and nothing else on the list is.
 - **Open the merge request from the API**, for the same reason. Push options carry it instead
-  (`-o merge_request.create -o merge_request.target=master`), which needs only the SSH key.
+  (`-o merge_request.create -o merge_request.target=master`), which needs only the SSH key. The title and a
+  one-line description fit; Markdown does not, because **git refuses a push option containing a newline**:
+  `fatal: push options must not have new line characters`. So a long description is pasted in the browser or
+  posted through the API, and the branch itself never needs a token.
 
 ### What the buildserver has
 

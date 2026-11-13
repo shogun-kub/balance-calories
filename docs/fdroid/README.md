@@ -60,38 +60,51 @@ None claimed. No ads, no tracking, no non-free network service, no non-free depe
 
 ---
 
-## What to do (for the owner)
+## Why the recipe has no comments
 
-Everything except one click is prepared. The steps in order:
+fdroiddata's pipeline runs `fdroid rewritemeta` on every changed metadata file and then
+`git diff --exit-code`. `rewritemeta` never keeps comments, so a commented recipe fails that job, and the
+diff it prints contains nothing but the deleted comment lines — which reads like "no change". The file in
+`metadata/` is therefore exactly the canonical output, and the reasoning that would have lived in comments
+lives above instead: the two deliberate absences are points 1 and 2 of the description, the anti-features are
+the section before the last one. **P-44** in `docs/07-pitfalls.md` has the failure as it happened.
 
-1. **Fork — the one step that needs the GitLab web session.** Open
-   <https://gitlab.com/fdroid/fdroiddata/-/forks/new> and fork into `Ne_Che_Guevara` (public, `master`).
-   Why it cannot be scripted: the API can fork only with a personal access token, and the only credential
-   this machine holds for gitlab.com is a stored password, which GitLab answers with `401`.
-2. **Then the branch and the merge request are mechanical.** Shallow-clone the fork, add
-   [`metadata/com.balancecalories.yml`](metadata/com.balancecalories.yml) as the only change, commit, and
-   push to branch `com.balancecalories` with the merge request created by push options:
+## Where the merge request stands
 
-   ```powershell
-   git clone --depth 1 git@gitlab.com:Ne_Che_Guevara/fdroiddata.git
-   Copy-Item docs\fdroid\metadata\com.balancecalories.yml fdroiddata\metadata\
-   git -C fdroiddata checkout -b com.balancecalories
-   git -C fdroiddata add metadata/com.balancecalories.yml
-   git -C fdroiddata commit -m "New app: BalanceCalories"
-   git -C fdroiddata push -o merge_request.create -o merge_request.target=master `
-       -o merge_request.title="New app: BalanceCalories" `
-       -o merge_request.description="$desc" origin HEAD
-   ```
+Fork `git@gitlab.com:Ne_Che_Guevara/fdroiddata.git`, branch `com.balancecalories`, one commit that adds
+`metadata/com.balancecalories.yml` and nothing else. The merge request is
+<https://gitlab.com/fdroid/fdroiddata/-/merge_requests/57200>.
 
-   `$desc` is the block above, read from this file between the two `---` lines.
-3. **Watch the pipeline.** `fdroid build --test com.balancecalories` runs on their buildserver. The three
-   things it needs were checked against that image and are listed under "What was verified" above, so a
-   failure should be a real defect here rather than a missing tool on their side — reply in the merge
-   request with what the log says.
+Two things about it are worth knowing before the next round:
+
+- **The description there is one paragraph, not the block above.** `git push` refuses a push option that
+  contains a newline — `fatal: push options must not have new line characters` — so
+  `-o merge_request.description=…` cannot carry Markdown, and the long line in the merge request points back
+  at this file instead. The block above belongs in the description and is pasted in the browser, from
+  `tmp/mr-description.md`, which is exactly the text between the two `---` lines.
+- **The first pipeline went red on `fdroid rewritemeta` and on nothing else.** `schema validation`,
+  `git redirect`, `fdroid lint`, `checkupdates`, `check source code` and `tools check scripts` passed; the
+  cause is the comment block the recipe used to carry — see "Why the recipe has no comments" above.
+
+The commands that did the push, for the next round:
+
+```powershell
+git clone --depth 1 -b master git@gitlab.com:Ne_Che_Guevara/fdroiddata.git
+Copy-Item docs\fdroid\metadata\com.balancecalories.yml fdroiddata\metadata\
+git -C fdroiddata checkout -b com.balancecalories
+git -C fdroiddata add metadata/com.balancecalories.yml
+git -C fdroiddata commit -m "New app: BalanceCalories"
+git -C fdroiddata push -o merge_request.create -o merge_request.target=master `
+    -o merge_request.title="New app: BalanceCalories" origin HEAD
+```
+
+`fdroid build` is the job that matters and the slow one: it clones `v1.0.1` on their buildserver and runs
+Gradle there. The three things it needs are listed under "What was verified" above, so a failure should be a
+real defect here rather than a missing tool on their side — read the log and reply in the merge request.
 
 The SSH key already in the agent authenticates as `@Ne_Che_Guevara`
-(`ssh -T git@gitlab.com` → `Welcome to GitLab, @Ne_Che_Guevara!`), so the push needs no new credential and
-no token.
+(`ssh -T git@gitlab.com` → `Welcome to GitLab, @Ne_Che_Guevara!`), so pushes need no new credential and no
+token; what a token would unlock is the API, and with it the description and the review replies.
 
 ## Before pressing submit
 
@@ -105,4 +118,5 @@ no token.
       `versionCode 3`, and five screenshots per language.
 - [x] Author name and website in the metadata: `AuthorName: Ne_Che_Guevara`, `WebSite` the repository — the
       owner's decision.
-- [ ] Fork of `fdroiddata` exists (step 1 above).
+- [x] Fork of `fdroiddata` exists and the merge request is open:
+      <https://gitlab.com/fdroid/fdroiddata/-/merge_requests/57200>.

@@ -397,3 +397,15 @@ because clearing the semantics also clears the action a screen reader activates;
 `uiautomator dump`: the node with your `content-desc` must have an ancestor, or itself, with
 `clickable="true"`. [2026-11-13]
 
+**P-44 — fdroiddata fails a metadata file that carries comments, and the diff it prints looks empty.**
+Symptom: on the first merge request the job `fdroid rewritemeta` went red (`script_failure`) while `fdroid
+lint`, `schema validation`, `checkupdates`, `check source code` and `tools check scripts` all passed. Cause:
+that job runs `fdroid rewritemeta $CHANGED` and then `git diff --exit-code` (`.gitlab-ci.yml`), and
+`rewritemeta` never keeps comments — so the reviewer notes written at the top of the recipe, the ones meant to
+be read, are exactly what makes the file "not in canonical form". The diff it prints contains nothing but the
+deleted comment lines, and an empty-looking diff is easy to read as "nothing changed". Fix: **metadata files
+in fdroiddata carry no comments at all** (one file in the whole repository has any); the reasoning lives in
+the merge-request description and in `docs/fdroid/README.md`. Check locally by running `fdroid rewritemeta`
+and diffing the *content*: on Windows it rewrites the file with CRLF, so a byte comparison reports a
+difference of exactly one byte per line while `Compare-Object` finds no changed line. [2026-11-13]
+
