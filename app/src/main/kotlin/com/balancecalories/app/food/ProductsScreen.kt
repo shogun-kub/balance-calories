@@ -21,6 +21,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -215,7 +217,14 @@ fun ProductsScreen(
 
 @Composable
 private fun ProductRow(product: Product, languageTag: String?, onClick: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp)) {
+    // A row that opens something is a button to a screen reader, and it has to be tall enough to hit: 48 dp is
+    // the accessibility minimum, and `Text` alone lands a couple of dp short of it.
+    Column(
+        modifier = Modifier.fillMaxWidth()
+            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.a11y_open), onClick = onClick)
+            .heightIn(min = 48.dp)
+            .padding(vertical = 8.dp),
+    ) {
         Text(text = product.displayName(languageTag), style = MaterialTheme.typography.bodyLarge)
         WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
@@ -242,7 +251,12 @@ private fun ProductRow(product: Product, languageTag: String?, onClick: () -> Un
  */
 @Composable
 private fun RecentRow(recent: RecentlyEaten, languageTag: String?, onClick: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp)) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.a11y_open), onClick = onClick)
+            .heightIn(min = 48.dp)
+            .padding(vertical = 8.dp),
+    ) {
         Text(text = recent.product.displayName(languageTag), style = MaterialTheme.typography.bodyLarge)
         WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(

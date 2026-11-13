@@ -68,6 +68,8 @@
     <string name="action_delete">Delete</string>
     <string name="action_add_profile">Add a profile</string>
     <string name="action_back">Back</string>
+    <string name="a11y_add_ingredient">Add to the recipe</string>
+    <string name="a11y_open">Open</string>
     <string name="delete_dialog_title">Delete this profile?</string>
     <string name="delete_dialog_text">%1$s will be deleted together with its weight readings, food log and target history. This cannot be undone.</string>
     <string name="delete_dialog_confirm">Delete</string>

@@ -236,7 +236,9 @@ at 21:00 and a day where the band stayed home.
         background behaviour are still open.
 - [x] JSON export/import (schema-versioned) + CSV export; round-trip test — `:data/backup`, ADR-025
 - [ ] Full i18n pass (en/ru), plurals, RTL-safe layouts (cheap insurance)
-- [ ] Accessibility pass: TalkBack, contrast, 48 dp targets — font scaling to 200% is done (ADR-026)
+- [x] Accessibility pass: TalkBack, contrast, 48 dp targets — font scaling to 200% is done (ADR-026).
+      **2026-11-13**: five tappable rows gained `Role.Button`, an action label and a 48 dp minimum; contrast
+      was already guarded by `ChartPaletteContrastTest`. TalkBack itself was not switched on (owner's phone).
 - [x] Empty/error/offline states everywhere; no dead ends - **2026-11-13**: the audit found three, all in
       failure paths (a profile with no weigh-in offered nothing, a failed recipe save crashed, and two screens
       printed a raw exception where the app's own sentence belonged). Diary item 44.

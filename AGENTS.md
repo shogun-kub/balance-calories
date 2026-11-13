@@ -27,7 +27,7 @@ navigates by **four tabs** (`Сегодня` · `Еда` · `История` · 
 prints each logged portion's protein, fat and carbs with the macro it is proportionally richest in marked
 in that macro's colour, and a product can carry a **barcode** that a scan resolves without the network.
 The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie
-on one side and a steel-blue dumbbell on the other. Strings are **386/386** (374 `<string>` + 12
+on one side and a steel-blue dumbbell on the other. Strings are **388/388** (376 `<string>` + 12
 `<plurals>` per language) and lint is down to five reviewed warnings.
 
 Next: the rest of **M6** — device matrix on both phones, TalkBack, release signing, README — then the

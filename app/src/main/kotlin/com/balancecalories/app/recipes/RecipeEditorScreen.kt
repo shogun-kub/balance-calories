@@ -24,6 +24,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -230,7 +232,11 @@ fun RecipeEditorScreen(
 
         for (product in found) {
             Row(
-                modifier = Modifier.fillMaxWidth().clickable {
+                modifier = Modifier.fillMaxWidth()
+                    .clickable(
+                        role = Role.Button,
+                        onClickLabel = stringResource(R.string.a11y_add_ingredient),
+                    ) {
                     // A hundred grams is the default because it is one round number to correct, not a guess at
                     // the recipe; the field is right there and stays editable.
                     draft.items.add(DraftIngredient(product.id, "100"))
@@ -274,7 +280,11 @@ fun RecipeEditorScreen(
                     )
                     for (hit in hits) {
                         Row(
-                            modifier = Modifier.fillMaxWidth().clickable {
+                            modifier = Modifier.fillMaxWidth()
+                                .clickable(
+                                    role = Role.Button,
+                                    onClickLabel = stringResource(R.string.a11y_add_ingredient),
+                                ) {
                                 scope.launch {
                                     val stored = runCatching { container.products.importSearchHit(hit) }.getOrNull()
                                     if (stored != null) {

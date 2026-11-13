@@ -68,6 +68,8 @@
     <string name="action_delete">Удалить</string>
     <string name="action_add_profile">Добавить профиль</string>
     <string name="action_back">Назад</string>
+    <string name="a11y_add_ingredient">Добавить в рецепт</string>
+    <string name="a11y_open">Открыть</string>
     <string name="delete_dialog_title">Удалить профиль?</string>
     <string name="delete_dialog_text">%1$s будет удалён вместе с записями веса, дневником еды и историей цели. Отменить это нельзя.</string>
     <string name="delete_dialog_confirm">Удалить</string>

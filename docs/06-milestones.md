@@ -560,3 +560,17 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     reason to note the two tables that would grow if a band ever wrote per-minute data.
     Two caveats worth keeping: the numbers are from a **debug** build without R8, so the release APK should be
     faster, and `am start -W` measures until the first frame, not until the first meal card has its numbers.
+46. **Accessibility: the rows that were not buttons to a screen reader** - M6's TalkBack and 48 dp item,
+    2026-11-13.
+    The audit found the app in better shape than expected - the gauge, both charts and the tab bar already carry
+    `contentDescription`, and the charts describe their data rather than their pixels - but **five tappable rows were
+    invisible to a screen reader as controls**: a product row, a "recently eaten" row, a recipe row and the two
+    "add this ingredient" rows in the editor were plain `Column`s with `Modifier.clickable`. TalkBack reads them as
+    text, so a blind user hears the numbers and never learns that the row does anything; and `Text` plus 8 dp of
+    padding lands a couple of dp under the 48 dp minimum for a touch target. All five now declare `role = Role.Button`,
+    an `onClickLabel` («Открыть» / «Добавить в рецепт») and `heightIn(min = 48.dp)`.
+    **What was not done, and why:** TalkBack itself was not turned on, because this is the owner's daily phone and a
+    screen reader changes every gesture on it (hard rule 10). The claim here is therefore narrower than "TalkBack
+    works": the semantics are present and compile, the labels exist in both languages, and the layout was checked on
+    the device after the change - the food list still scrolls, the rows are a little taller, and nothing overlaps.
+    Two follow-ups if a blind user ever appears: a real TalkBack pass, and `AccessibilityScanner`.
