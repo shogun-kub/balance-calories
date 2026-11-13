@@ -253,7 +253,9 @@ at 21:00 and a day where the band stayed home.
 - [x] ProGuard rules and release signing (no flavours: ADR-017 dropped the split) - **2026-11-13**: R8 and
       shrinking on with justified keep rules, `keystore.properties` optional so F-Droid can build it unsigned.
       Target changed from Google Play to **F-Droid**; metadata, licence and the recipe draft are in
-      [`docs/fdroid/`](fdroid/). Diary item 47.
+      [`docs/fdroid/`](fdroid/). Diary item 47. **Submitted 2026-11-13** as merge request
+      [!57200](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/57200): its pipeline is green, including
+      `fdroid build` on the F-Droid buildserver (356 s). Diary item 53.
 - [ ] README for the household: how to install GB, pair, enable HC, pair the second phone
 
 ## M7 — Interface (6.5 d)

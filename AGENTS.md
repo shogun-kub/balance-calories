@@ -30,11 +30,12 @@ The launcher icon is a **vector adaptive icon** — a balance beam with a slice 
 on one side and a steel-blue dumbbell on the other. Strings are **394/394** (382 `<string>` + 12
 `<plurals>` per language) and lint is down to five reviewed warnings.
 
-Next: submit [`docs/fdroid/`](docs/fdroid/) to F-Droid - the recipe, the screenshots and the merge-request
-description are ready, and the only step left needs the owner's GitLab account. The device matrix (Honor
-X7c, Android 14; Redmi Note 8 Pro, Android 11) and the TalkBack pass are done, diary items 50 and 51. The
+Submitted: fdroiddata merge request [!57200](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/57200),
+whose pipeline is green including `fdroid build` on the F-Droid buildserver (356 s); what is left is their
+review, their signature and the entry in the index. The device matrix (Honor X7c, Android 14; Redmi Note 8
+Pro, Android 11) and the TalkBack pass are done, diary items 50 and 51, and the submission is item 53. The
 repository is published (Apache-2.0, tag `v1.0.1`) at <https://github.com/shogun-kub/balance-calories>;
-pushes go through the Windows ssh-agent (P-42).
+pushes go through the Windows ssh-agent (P-42), and the GitLab side works the same way (P-44).
 
 ## Where everything lives
 
@@ -51,7 +52,7 @@ pushes go through the Windows ssh-agent (P-42).
 | `docs/07-pitfalls.md` | **traps** (`P-nn`) and **judgement calls** (`J-nn`) | before and after anything that bites |
 | `docs/08-environment.md` | this machine, its devices, build and test commands, instrumentation recipe | running anything |
 
-## Ten traps that cost hours here
+## Traps that cost hours here
 
 One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 
@@ -71,6 +72,7 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | **P-41** | never pipe a database into `adb shell`: push it and copy it on the device, then check the size |
 | **P-42** | git has its own ssh and cannot see the Windows agent: put the absolute `C:/Windows/System32/OpenSSH/ssh.exe` in `core.sshCommand` |
 | **P-43** | TalkBack reads a switch's state before its label: name first, and put the description on the node that carries the action |
+| **P-44** | fdroiddata fails a metadata file that has comments in it (`rewritemeta` strips them, the job diffs the file) and git refuses a newline in a push option, so the MR description cannot be set from the CLI |
 
 ## Naming and the visible language
 

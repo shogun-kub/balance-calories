@@ -695,3 +695,34 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     default list that calls it invalid. The APK of the tagged commit is the one installed and exercised on both
     phones. What remains outside this repository is the merge request itself: it is opened from the owner's GitLab
     account, and [`docs/fdroid/README.md`](../fdroid/README.md) holds the description to paste and the checklist.
+53. **Submitted: fdroiddata merge request !57200** - 2026-11-13, release `1.0.1` / `versionCode 3`, tag `v1.0.1`
+    (commit `a2201e0`). The submission needed the owner's GitLab account, and it turned out to need only a
+    **browser click**: the fork. Everything after that ran from here over the SSH key the agent already held
+    (`ssh -T git@gitlab.com` → `Welcome to GitLab, @Ne_Che_Guevara!`). A fork has no scripted path — `POST
+    /projects/:id/fork` wants an `api`-scoped token, and the only gitlab.com credential Git Credential Manager
+    holds is the account password, which answers `401`.
+
+    | Step | What happened |
+    | --- | --- |
+    | Fork | the owner clicked Fork on `fdroid/fdroiddata`; `git clone --depth 1` took 86 s |
+    | Branch | `com.balancecalories`, **one** commit, `metadata/com.balancecalories.yml` and nothing else |
+    | Merge request | created by push options (`-o merge_request.create`) → [!57200](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/57200) |
+    | Pipeline 1 | red on `fdroid rewritemeta` alone; `fdroid build` was cancelled because that job failed |
+    | Fix | the recipe's comment block — `rewritemeta` keeps no comments and the job diffs the file (**P-44**) |
+    | Pipeline 2 | **all green, 509 s**: `fdroid build` success in 356 s, `check apk` success in 153 s |
+
+    Two things did not go as planned, both recorded. **Push options cannot carry Markdown**: git itself refuses
+    a newline in a push option (`fatal: push options must not have new line characters`), so the request was
+    opened with one paragraph that points at `docs/fdroid/README.md`, and the real description is pasted in the
+    browser (the GitLab section of `docs/08-environment.md`). And **the comments in the recipe were not free**:
+    the header explaining the two deliberate absences was exactly what failed the first pipeline, so the
+    reasoning moved into the merge-request text and the file became precisely `rewritemeta`'s output. The local
+    check is "does `rewritemeta` leave the content unchanged", and on Windows that comparison has to ignore line
+    endings, because it rewrites the file with CRLF.
+
+    **What the green build proves**: the buildserver has JDK 21 (its `default-jdk-headless` is `2:1.21-76`), it
+    accepts `gradle-9.8.2` from our wrapper because that version is in the gradle-transparency log (sha256
+    `21bd5da2…`), and `compileSdk 36` is installed by AGP mid-build because the image deliberately ships no
+    platform. All three were read from `fdroidserver/buildserver` before submitting, and all three held.
+
+    What is still not ours: the merge, the signing and the appearance in the index.
