@@ -3,21 +3,21 @@
 # This file is the merge-request payload for https://gitlab.com/fdroid/fdroiddata, not something the build
 # reads. It is kept here so the recipe can be reviewed together with the commit it builds.
 #
-# Fill in `<github-user>` before submitting, and submit the commit hash that carries the `v1.0.0` tag.
+# The commit submitted must carry the `v1.0.0` tag; `UpdateCheckMode: Tags` follows later tags.
 
 Categories:
   - Sports & Health
 License: Apache-2.0
 AuthorName: Michael (BalanceCalories)
-WebSite: https://github.com/<github-user>/BalanceCalories
-SourceCode: https://github.com/<github-user>/BalanceCalories
-IssueTracker: https://github.com/<github-user>/BalanceCalories/issues
-Changelog: https://github.com/<github-user>/BalanceCalories/releases
+WebSite: https://github.com/shogun-kub/balance-calories
+SourceCode: https://github.com/shogun-kub/balance-calories
+IssueTracker: https://github.com/shogun-kub/balance-calories/issues
+Changelog: https://github.com/shogun-kub/balance-calories/releases
 
 AutoName: Balance Calories
 
 RepoType: git
-Repo: https://github.com/<github-user>/BalanceCalories.git
+Repo: https://github.com/shogun-kub/balance-calories.git
 
 Builds:
   - versionName: 1.0.0

@@ -4,7 +4,8 @@ Android app that turns a Huawei band into a **calorie balance tracker**: food in
 recipes) minus energy burned (band activity + BMR), per person, per day. One honest number: energy in
 minus energy out.
 
-**M1–M5 and M7 are done and the app runs on both phones; M6 (hardening and release) is in progress.** The
+**M1–M5 and M7 are done and the app runs on both phones; M6 (hardening and release) is in progress.**
+Source: <https://github.com/shogun-kub/balance-calories>. The
 whole loop works today: profiles and targets, food products, barcode scanning, logging, recipes, activity
 from Health Connect, the daily balance, history with an adaptive TDEE, weight, settings, backup.
 

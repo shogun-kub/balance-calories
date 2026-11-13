@@ -18,9 +18,8 @@ left is publishing the repository and opening one merge request.
 
 ## What must happen before the merge request
 
-1. **Publish the repository** at `https://github.com/<github-user>/BalanceCalories` and replace
-   `<github-user>` in the recipe draft and in `README.md`.
-2. **Tag the release**: `git tag -a v1.0.0 -m "1.0.0"` and push the tag. `UpdateCheckMode: Tags` needs it.
+1. ~~Publish the repository~~ — done 2026-11-13: <https://github.com/shogun-kub/balance-calories>.
+2. ~~Tag the release~~ — done: `v1.0.0` is pushed, and `UpdateCheckMode: Tags` needs nothing more.
 3. Check that a clean clone builds without `local.properties` — F-Droid sets `ANDROID_HOME` itself:
    `git clone … && cd BalanceCalories && ./gradlew :app:assembleRelease`.
 4. Open the merge request against <https://gitlab.com/fdroid/fdroiddata> with
