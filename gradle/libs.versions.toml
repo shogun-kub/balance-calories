@@ -35,6 +35,8 @@ zxing-cpp = "3.1.1"
 # Test-only: Android's org.json is a stub on the JVM, so :data unit tests need a real implementation.
 # The app itself uses the platform's org.json and ships nothing extra.
 org-json = "20260814"
+# SonarScanner for Gradle. 7.3 is the first release that supports AGP 9, and the build cannot run it otherwise.
+sonar = "7.6.0.18749"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -43,6 +45,7 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+sonarqube = { id = "org.sonarqube", version.ref = "sonar" }
 
 [libraries]
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }

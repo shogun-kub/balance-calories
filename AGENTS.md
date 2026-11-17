@@ -111,7 +111,7 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | `tools/` | Build-time generators | Starter-ingredient pack generator, icon geometry, fixture capture, plus the two host-side helpers that talk to a phone (`serve_lan_repo.ps1`, `serve_backup.py`). Runs on the host, never in the app. |
 | `fixtures/` | Test inputs | Sanitised OpenFoodFacts payloads, synthetic Health Connect dumps, barcode images. **No real personal data.** |
 | `gradle/libs.versions.toml` | Version truth | Every dependency version lives here and nowhere else. |
-| `build/`, `.gradle/`, `local.properties`, `*.keystore`, `*.apk`, `*.aab` | Build output and secrets | Never tracked. |
+| `build/`, `.gradle/`, `local.properties`, `sonar.token`, `*.keystore`, `*.apk`, `*.aab` | Build output and secrets | Never tracked. |
 | `tmp/` | Scratch: screenshots, previews, pulled databases | Git-ignored. Nothing here is evidence, and nothing here is safe to commit. |
 | `E:\Projects\BalanceCalories-acl-recovery\` | ACL rollback record | Outside the repo. Leave in place: it documents the permission repair that made this workspace writable. |
 | `E:\Projects\BalanceCalories-fdroid\` | fdroiddata-style data directory for **our own** F-Droid repository: `config.yml`, `metadata/`, `repo/` (served on the LAN), and the repository signing key | Outside the repo, and it holds a private key. Never copy any of it into the tree; `docs/fdroid/self-hosted.md` is the manual. |

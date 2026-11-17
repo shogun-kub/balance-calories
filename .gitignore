@@ -17,6 +17,7 @@ release/
 # --- Local configuration and secrets ---
 local.properties
 keystore.properties
+sonar.token
 *.jks
 *.keystore
 
