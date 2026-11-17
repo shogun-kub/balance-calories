@@ -122,9 +122,19 @@ applies `org.sonarqube` `7.6.0.18749` (7.3 is the first release that supports AG
 - Android lint findings **are** imported (`external_android-lint:VectorPath` showed up in the first run) but
   only from `build/reports/lint-results-*.xml` if one already exists, so they are as old as the last lint
   run: `.\gradlew.bat lint` first when they matter.
-- **Not wired:** JaCoCo coverage and detekt. Coverage reads `0.0`, and this server's gate only checks
-  `new_violations`, so the gate still passes — the number is only honest once `:core`'s JaCoCo XML is fed
-  in.
+- **Coverage** is fed from the two modules whose tests run on the JVM, so `sonar` also runs the tests:
+  - `:core` — the `jacoco` plugin and `jacocoTestReport`; 86.3 % of lines, 68.1 % of branches on
+    2026-11-17 (`718/832` lines, `459/674` branches).
+  - `:data` — `enableUnitTestCoverage` on the debug build type writes `testDebugUnitTest.exec`, and
+    `jacocoDebugUnitTestReport` turns it into XML; 18.0 % of lines (`325/1802`), because the repositories
+    are exercised by the **device** tests, not the JVM ones.
+  - `:app` contributes nothing: Compose UI is measured by device tests only, and its files count as
+    uncovered, which is why the project badge reads about 27 % while `:core` alone is 86 %.
+  - `jacocoDebugUnitTestReport` reads AGP's `built_in_kotlinc` output directory directly — there is no
+    public artefact API for class directories in AGP 9.5.1, so the path is a `shortcut:` in the build file.
+- **Not wired:** detekt, and device-test coverage (`enableAndroidTestCoverage` +
+  `createDebugAndroidTestCoverageReport`, which needs a phone attached) — that is what would move `:data`
+  off 18 %.
 
 ### Instrumentation tests: install and instrument by hand
 

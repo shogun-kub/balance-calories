@@ -14,14 +14,27 @@ plugins {
 // scan simply asks for a token instead of failing the build.
 val sonarToken = rootProject.file("sonar.token").takeIf { it.isFile }?.readText()?.trim().orEmpty()
 
+// Coverage comes from the two modules whose tests run on the JVM: :core's formulas and :data's parsers.
+// Absolute paths because submodules inherit the property and would resolve it against their own directory.
+// :app is Compose UI, measured by device tests, so it contributes nothing here and is left out.
+val coverageReports = listOf(
+    "core/build/reports/jacoco/test/jacocoTestReport.xml",
+    "data/build/reports/jacoco/jacocoDebugUnitTestReport/jacocoDebugUnitTestReport.xml",
+).map { layout.projectDirectory.file(it).asFile.absolutePath }
+
 sonar {
     properties {
         property("sonar.projectKey", "com.balancecalories")
         property("sonar.projectName", "Balance Calories")
         property("sonar.host.url", "http://alpine-box.lan:9000")
         property("sonar.sourceEncoding", "UTF-8")
+        property("sonar.coverage.jacoco.xmlReportPaths", coverageReports.joinToString(","))
         if (sonarToken.isNotEmpty()) {
             property("sonar.token", sonarToken)
         }
     }
+}
+
+tasks.named("sonar") {
+    dependsOn(":core:jacocoTestReport", ":data:jacocoDebugUnitTestReport")
 }

@@ -2,6 +2,7 @@ plugins {
     // AGP 9 has Kotlin support built in: applying org.jetbrains.kotlin.android is an error.
     alias(libs.plugins.android.library)
     alias(libs.plugins.ksp)
+    jacoco
 }
 
 android {
@@ -11,6 +12,14 @@ android {
     defaultConfig {
         minSdk = 28
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        // Instruments the JVM unit tests so JaCoCo can write testDebugUnitTest.exec; the report that
+        // SonarQube reads is jacocoDebugUnitTestReport, registered below.
+        getByName("debug") {
+            enableUnitTestCoverage = true
+        }
     }
 
     compileOptions {
@@ -27,6 +36,30 @@ android {
 ksp {
     // Schemas are committed, so a migration diff is reviewable (AGENTS.md, hard rule 8).
     arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+// SonarQube reads this XML. AGP itself only writes the .exec file, so the report is a plain JacocoReport.
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { _ ->
+        tasks.register<JacocoReport>("jacocoDebugUnitTestReport") {
+            dependsOn("testDebugUnitTest")
+            executionData(
+                layout.buildDirectory.file("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
+            )
+            // shortcut: this is AGP's built-in-Kotlin output directory, not a public API; move it when
+            // AGP renames the intermediates.
+            classDirectories.setFrom(
+                fileTree(layout.buildDirectory.dir("intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes")) {
+                    exclude("**/R.class", "**/R\$*.class", "**/BuildConfig*", "**/*_Impl*")
+                },
+            )
+            sourceDirectories.setFrom(files("src/main/kotlin"))
+            reports {
+                xml.required.set(true)
+                html.required.set(false)
+            }
+        }
+    }
 }
 
 dependencies {

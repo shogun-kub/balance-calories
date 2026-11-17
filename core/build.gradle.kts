@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    jacoco
 }
 
 // Pure Kotlin, no Android. Consumed by :data and :app later; keeping the JVM target at 17
@@ -28,5 +29,14 @@ tasks.test {
     useJUnitPlatform()
     testLogging {
         events("passed", "skipped", "failed")
+    }
+}
+
+// The only module whose coverage SonarQube reads: it holds the maths, and its tests are plain JUnit.
+// :data and :app would need AGP's unit-test instrumentation and a report task per variant.
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
     }
 }
