@@ -110,14 +110,21 @@ applies `org.sonarqube` `7.6.0.18749` (7.3 is the first release that supports AG
 
 - `sonar.token` is git-ignored, sits beside `keystore.properties`, and is **empty in the tree**; an empty
   or absent file leaves the analysis failing with "check the property sonar.token" instead of breaking
-  the build.
-- One project, key `com.balancecalories`, over `app/src/main`, `core/src/main`, `data/src/main`. The
-  modules are too small to read as separate keys, and test sources are not indexed.
+  the build. An `sqa_…` token ("analysis token") is enough: the first run created the project itself.
+- One project, key `com.balancecalories`, whose modules the plugin names `com.balancecalories_app`,
+  `_core` and `_data`. **Do not set `sonar.sources` at the root**: each subproject already contributes its
+  own AGP-derived sources, and a root-level `app/src/main` lands `AndroidManifest.xml` in two modules, which
+  fails the scan with `File … can't be indexed twice`. Test sources are not indexed, and the root module
+  itself has none.
 - Kotlin is analysed by the server's own Kotlin analyzer, which ships in every edition of Community Build
   and fully supports 2.3 — no bytecode, no extra plugin. `sonar` compiles `:data` and `:app` first
   (`compileDebugKotlin`, then `sonarResolver`), so no separate `assembleDebug` is needed.
-- **Not wired:** JaCoCo coverage, Android lint and detekt reports. The dashboard shows no coverage, and the
-  default quality gate has a coverage condition, so it cannot go green until that is added.
+- Android lint findings **are** imported (`external_android-lint:VectorPath` showed up in the first run) but
+  only from `build/reports/lint-results-*.xml` if one already exists, so they are as old as the last lint
+  run: `.\gradlew.bat lint` first when they matter.
+- **Not wired:** JaCoCo coverage and detekt. Coverage reads `0.0`, and this server's gate only checks
+  `new_violations`, so the gate still passes — the number is only honest once `:core`'s JaCoCo XML is fed
+  in.
 
 ### Instrumentation tests: install and instrument by hand
 

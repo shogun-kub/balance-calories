@@ -391,21 +391,13 @@ private fun Root() {
             initialBarcode = scannedBarcode,
             initialName = formNameSeed,
             onSaved = { saved ->
-                if (formEditing != null) {
-                    // Correcting a product is not logging it: show the corrected numbers, then let the user
-                    // decide the portion. Straight to Today would hide the change the user just made.
-                    openedProduct = saved
-                    formEditing = null
-                    overlay = Overlay.PRODUCT
-                } else {
-                    // A product typed here was typed in order to be eaten, so the next screen is its portion:
-                    // grams, meal, and a Log button, with Back meaning "keep the product, drop the meal". Saving
-                    // it into the catalogue and stopping there left the person to find their own product again
-                    // in yesterday's list (ADR-035).
-                    openedProduct = saved
-                    formEditing = null
-                    overlay = Overlay.PRODUCT
-                }
+                // Saving a product - new or corrected - leads to its portion screen, never straight to Today:
+                // a correction must be seen before the next bite, and a product typed here was typed in order
+                // to be eaten (ADR-035). The two cases were separate branches with identical bodies until
+                // SonarQube's kotlin:S3923 pointed that out.
+                openedProduct = saved
+                formEditing = null
+                overlay = Overlay.PRODUCT
             },
             onCancel = {
                 formNameSeed = null

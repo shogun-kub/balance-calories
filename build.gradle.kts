@@ -14,14 +14,12 @@ plugins {
 // scan simply asks for a token instead of failing the build.
 val sonarToken = rootProject.file("sonar.token").takeIf { it.isFile }?.readText()?.trim().orEmpty()
 
-// One project, three source roots: the modules are too small to read as separate keys.
 sonar {
     properties {
         property("sonar.projectKey", "com.balancecalories")
         property("sonar.projectName", "Balance Calories")
         property("sonar.host.url", "http://alpine-box.lan:9000")
         property("sonar.sourceEncoding", "UTF-8")
-        property("sonar.sources", "app/src/main,core/src/main,data/src/main")
         if (sonarToken.isNotEmpty()) {
             property("sonar.token", sonarToken)
         }
