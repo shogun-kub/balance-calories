@@ -47,6 +47,10 @@ import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.Recipe
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.RecipeMath
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 /**
@@ -63,8 +67,12 @@ fun RecipeScreen(
     recipe: Recipe,
     onBack: () -> Unit,
     onEdit: () -> Unit,
+    /** Starts a new recipe from this one's ingredients, under [copyName]. */
+    onCopy: (String) -> Unit,
     onLogged: () -> Unit,
     onDeleted: () -> Unit,
+    /** The day the portion belongs to, when the person is filling in a past one. */
+    logDate: LocalDate? = null,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -104,6 +112,10 @@ fun RecipeScreen(
             // Back goes to the list this recipe came from, and the button says so instead of "Назад".
         TextButton(onClick = onBack) { Text(stringResource(R.string.recipes_title)) }
             TextButton(onClick = onEdit) { Text(stringResource(R.string.action_edit)) }
+            val copyName = stringResource(R.string.recipe_copy_name, recipe.name)
+            // A variation of a dish is a new recipe that starts from the old one's ingredients: nobody wants to
+            // re-enter eight items to change one of them (owner, 2026-11-20).
+            TextButton(onClick = { onCopy(copyName) }) { Text(stringResource(R.string.action_copy)) }
         }
 
         Text(text = recipe.name, style = MaterialTheme.typography.titleLarge)
@@ -184,6 +196,21 @@ fun RecipeScreen(
 
         error?.let { Text(text = it, color = MaterialTheme.colorScheme.error) }
 
+        logDate?.takeIf { it != LocalDate.now() }?.let { day ->
+            Text(
+                text = stringResource(
+                    R.string.food_log_date,
+                    remember(day) {
+                        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                            .withLocale(Locale.getDefault())
+                            .format(day)
+                    },
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+        }
+
         Button(
             onClick = {
                 val value = grams ?: return@Button
@@ -191,7 +218,13 @@ fun RecipeScreen(
                 error = null
                 scope.launch {
                     runCatching {
-                        container.food.logRecipe(profileId, recipe, value, mealKey ?: return@runCatching)
+                        container.food.logRecipe(
+                            profileId = profileId,
+                            recipe = recipe,
+                            grams = value,
+                            mealKey = mealKey ?: return@runCatching,
+                            on = logDate ?: LocalDate.now(),
+                        )
                     }
                         .onSuccess { onLogged() }
                         .onFailure {

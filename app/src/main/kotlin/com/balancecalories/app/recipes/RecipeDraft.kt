@@ -60,6 +60,16 @@ class RecipeDraft {
         recipe.items.forEach { items.add(DraftIngredient(it.product.id, trim(it.grams))) }
     }
 
+    /**
+     * Fills the draft from a stored recipe as a **new** one: the id is cleared, so saving inserts instead of
+     * overwriting, and the name says which dish it started from.
+     */
+    fun seedCopyOf(recipe: Recipe, name: String) {
+        seedFrom(recipe)
+        recipeId = null
+        this.name = name
+    }
+
     companion object {
 
         private const val VERSION = "v1"

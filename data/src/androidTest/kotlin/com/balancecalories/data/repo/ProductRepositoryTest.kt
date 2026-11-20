@@ -249,7 +249,9 @@ class ProductRepositoryTest {
 
         val result = resolver.resolve("3017620422003") { OffLookup.Found(off(kcal = null)) }
 
-        assertEquals(Lookup.Unusable(UnusableReason.NO_ENERGY), result)
+        val unusable = result as Lookup.Unusable
+        assertEquals(UnusableReason.NO_ENERGY, unusable.reason)
+        assertEquals("the name travels, so the manual form can start from it", "Nutella", unusable.name)
         assertEquals(0, db.productDao().count())
     }
 

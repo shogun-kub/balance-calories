@@ -599,6 +599,31 @@ migrates the database cannot be reviewed or rolled back cleanly.
       portion screen opened on save. Two device cases added (search by code, `barcodeOwner`), 122 :data.
       ADR-037.
 
+### M7.9 — Days you can go back to, and the places that had nothing to press
+
+- [x] **Today reads one day at a time and can be walked into the past.** A `‹`/`›` pair moves a day per tap,
+      forward is dead on today, and the day is an **offset from today** rather than a stored date, so a phone
+      that sits on the evening screen and is picked up the next morning shows the new day instead of the old
+      one (the bug this came from). Verified on the Honor X7c: `‹` → «Вчера» with yesterday's 1514 kcal.
+- [x] **Food can be logged on a past day, and only today's burn comes from the band.** A forgotten dinner goes
+      to the day that is on screen; the portion screen says «Запись на 19 нояб. 2026 г.» when that day is not
+      the calendar's, and «Синхронизировать браслет» disappears on a past day because the sync writes today.
+      Verified: logged a banana on «Вчера» from the meal card's `+`, the screen came back to «Вчера» with the
+      entry, then the entry was deleted again.
+- [x] **A barcode OpenFoodFacts knows but cannot be logged leads somewhere.** The scanner now offers «Добавить
+      этот продукт вручную» for an unusable product as well as for an unknown one, and the manual form opens
+      with the code **and** the name filled in; the same for an unusable OpenFoodFacts search hit, which used
+      to be a dead row.
+- [x] **A portion can be nudged instead of retyped.** The portion dialog has «Убрать 10 г» / «Добавить 10 г»
+      beside the field, so "180 was really 200" is two taps and no arithmetic; the step never lands below a
+      gram, where the save button would refuse it.
+- [x] **A recipe can be copied.** «Копировать» on the recipe screen opens the editor with the same ingredients
+      and the name «… (копия)», with no id, so saving inserts a second dish; verified on the Honor and the copy
+      deleted afterwards.
+- [x] `1.0.3` / `versionCode 5`, installed over `1.0.2` with `adb install -r` (the household key). 176 :core,
+      46 :data and 35 :app JVM tests, and **124** `:data` device tests; the four `:app` decoder tests cannot run
+      against a release-signed install (**P-50**). ADR-043, ADR-044, P-49, P-50, P-51.
+
 ## M8 — Optional v1.1 (post-release)
 
 Adaptive-TDEE refinements, HC write-back (`NutritionRecord`, `WeightRecord`), widget, notifications,

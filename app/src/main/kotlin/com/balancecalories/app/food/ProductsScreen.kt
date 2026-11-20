@@ -62,7 +62,7 @@ fun ProductsScreen(
     container: AppContainer,
     profileId: Long,
     onPick: (Product) -> Unit,
-    onAddManual: (String?) -> Unit,
+    onAddManual: (ProductSeed) -> Unit,
     onScan: () -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
@@ -171,7 +171,7 @@ fun ProductsScreen(
                     val found = state.search
                     if (found.isEmpty) {
                         item("remote-none-named") {
-                            TextButton(onClick = { onAddManual(query.trim()) }) {
+                            TextButton(onClick = { onAddManual(ProductSeed(name = query.trim())) }) {
                                 Text(stringResource(R.string.food_add_manual_named, query.trim()))
                             }
                         }
@@ -196,11 +196,17 @@ fun ProductsScreen(
                             RemoteProductRow(
                                 hit = hit,
                                 onClick = {
-                                    scope.launch {
-                                        val stored = runCatching {
-                                            container.products.importSearchHit(hit)
-                                        }.getOrNull()
-                                        if (stored != null) onPick(stored)
+                                    if (hit.isUsable) {
+                                        scope.launch {
+                                            val stored = runCatching {
+                                                container.products.importSearchHit(hit)
+                                            }.getOrNull()
+                                            if (stored != null) onPick(stored)
+                                        }
+                                    } else {
+                                        // Known name, known code, no energy: tapping starts the manual form
+                                        // with both filled in instead of doing nothing at all.
+                                        onAddManual(ProductSeed(barcode = hit.code, name = hit.name))
                                     }
                                 },
                             )
@@ -211,7 +217,7 @@ fun ProductsScreen(
         }
 
         TextButton(onClick = onScan) { Text(stringResource(R.string.action_scan)) }
-        TextButton(onClick = { onAddManual(null) }) { Text(stringResource(R.string.food_add_manual)) }
+        TextButton(onClick = { onAddManual(ProductSeed()) }) { Text(stringResource(R.string.food_add_manual)) }
     }
 }
 
@@ -277,8 +283,9 @@ private fun RecentRow(recent: RecentlyEaten, languageTag: String?, onClick: () -
 /**
  * One OpenFoodFacts hit.
  *
- * A hit with no energy is shown but not clickable, with the reason in place of a number: hiding it would
- * look like the search failed, and logging it would put a zero-calorie product on the plate.
+ * A hit with no energy is still tappable: the name and the code are known, and the manual form is where a person
+ * supplies the number OpenFoodFacts never recorded. Hiding the tap (the old behaviour) made the search look
+ * broken at the exact moment it had found the right food.
  */
 @Composable
 private fun RemoteProductRow(hit: OffProduct, onClick: () -> Unit) {
@@ -286,7 +293,7 @@ private fun RemoteProductRow(hit: OffProduct, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = usable, onClick = onClick)
+            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.a11y_open), onClick = onClick)
             .padding(vertical = 8.dp),
     ) {
         Text(text = hit.name ?: hit.code, style = MaterialTheme.typography.bodyLarge)

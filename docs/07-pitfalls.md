@@ -280,6 +280,15 @@ constant is the tell: scan the history for a value that does not move. The rule 
 `_platform` pseudo-origin explicitly (`PLATFORM_ORIGIN` in `:core`, used by the mapper and by both read
 paths), and the two symptoms are documented together, because fixing one shape left the other alive.
 
+**P-49 · `remember { LocalDate.now() }` is a snapshot of the clock, not a date.** Today read its day once
+and kept it for the life of the composition, so a phone left on the evening screen and unlocked the next
+morning showed **yesterday's** numbers until the app was killed (owner, 2026-11-20) — no error, no stale-data
+marker, just a wrong day that looked exactly like the right one. Two things fixed it and both are needed: the
+day is re-read on `Lifecycle.Event.ON_RESUME` (`DayWindow.dateOf(Instant.now(), zone, profile.dayStartHour)`,
+not `LocalDate.now()`, so the 04:00 boundary agrees with the band data), and the screen holds an **offset**
+from today instead of a date, so "0" means today even after midnight. Anything time-derived that a person
+looks at for more than a minute is state with a source, never a `remember`ed literal. [2026-11-20]
+
 ### Data and storage
 
 **P-26 · A backup must be self-consistent.** The first export skipped the 69 starter products to save
@@ -325,6 +334,22 @@ up with `roundToInt`. A percentage printed beside a rounded kcal now uses `round
 (`Space characters in SimpleName … not allowed prior to DEX version 040`) because `minSdk` is 28. `:core`
 uses JUnit 5 and backticked names; `:data` and `:app` use JUnit 4 and camelCase. It is a module convention,
 not a preference.
+
+**P-50 · `:app:connectedDebugAndroidTest` cannot install its APK over a household-signed install, and the task
+still says BUILD SUCCESSFUL.** The test engine installs the **debug** APK first, and since 2026-11-13 both
+phones carry the household release key, so the install dies with `INSTALL_FAILED_UPDATE_INCOMPATIBLE:
+signatures do not match` — and Gradle reports success with no test run at all (the same family as P-40). The
+`:data` tests are unaffected: that module's test APK carries its own code, so 124 cases run against the
+installed release build. Running the four `:app` decoder tests costs a full uninstall of the app (hard rule 10)
+or a `release` signing config on the androidTest variant; neither is worth it for a decoder this change does
+not touch, so they are recorded as **not re-run** rather than green. Always read `tests=` in
+`app/build/outputs/androidTest-results/connected/debug/*.xml` before believing the task. [2026-11-20]
+
+**P-51 · `uiautomator dump` can omit visible Compose nodes; a screenshot is the source of truth.** On the
+Honor X7c, the portion screen's `FilterChip` row and its «Записать» button were on screen in a
+`screencap` and absent from the dump, and a swipe that visibly moved the content changed nothing in the XML.
+Read the dump for names and bounds, then confirm with an image before concluding that something is missing
+from the UI — otherwise a working screen looks like a rendering bug. [2026-11-20]
 
 ### Docs
 

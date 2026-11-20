@@ -22,6 +22,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,6 +39,7 @@ import com.balancecalories.app.backup.BackupScreen
 import com.balancecalories.app.debug.DebugScreen
 import com.balancecalories.app.food.ProductFormScreen
 import com.balancecalories.app.food.ProductScreen
+import com.balancecalories.app.food.ProductSeed
 import com.balancecalories.app.food.ProductsScreen
 import com.balancecalories.app.history.HistoryScreen
 import com.balancecalories.app.profile.ProfileFormScreen
@@ -57,6 +59,7 @@ import com.balancecalories.app.weight.WeightScreen
 import com.balancecalories.core.food.Product
 import com.balancecalories.core.food.Recipe
 import com.balancecalories.core.profile.Profile
+import java.time.LocalDate
 import kotlinx.coroutines.launch
 
 /**
@@ -128,6 +131,13 @@ private fun Root() {
     // The meal a person tapped + on, carried into the portion screen. Not saved across a process death:
     // it belongs to the tap, and a restored half-flow would open a product nobody asked for.
     var pendingMealKey by remember { mutableStateOf<String?>(null) }
+    // The day a portion picked from the Food tab should land on. Null means today; it is set only when the
+    // person started from a past day on Today, so an ordinary trip to the food list never lands in the past.
+    var pendingLogDate by remember { mutableStateOf<LocalDate?>(null) }
+    // Which day Today is showing, as days back from today. Hoisted, because a trip through the food list must
+    // come back to the day the portion went to, and a rotation must not throw the person out of the day they
+    // were reading.
+    var dayOffset by rememberSaveable { mutableIntStateOf(0) }
     // Which slot the meal editor is working on, and whether it is creating one. Both null means the
     // editor is not open; `mealCreating` distinguishes "new" from "no slot chosen yet".
     var mealEditingKey by remember { mutableStateOf<String?>(null) }
@@ -299,14 +309,23 @@ private fun Root() {
             container = container,
             profileId = active.id,
             recipe = openedRecipe ?: return@Root,
+            logDate = pendingLogDate,
             onBack = { overlay = null },
             onEdit = {
                 recipeDraft.seedFrom(openedRecipe!!)
                 overlay = Overlay.RECIPE_FORM
             },
+            onCopy = { copyName ->
+                // A copy is a new recipe with the same ingredients: the id is cleared, so saving inserts.
+                openedRecipe?.let { recipe ->
+                    recipeDraft.seedCopyOf(recipe, copyName)
+                    overlay = Overlay.RECIPE_FORM
+                }
+            },
             onLogged = {
                 openedRecipe = null
                 overlay = null
+                pendingLogDate = null
                 tab = Tab.TODAY
             },
             onDeleted = {
@@ -342,8 +361,8 @@ private fun Root() {
                 recipeDraft.items.add(DraftIngredient(product.id, "100"))
                 overlay = Overlay.RECIPE_FORM
             },
-            onAddManually = { code ->
-                recipeDraft.scanMiss = code
+            onAddManually = { seed ->
+                recipeDraft.scanMiss = seed.barcode
                 overlay = Overlay.RECIPE_FORM
             },
         )
@@ -355,9 +374,10 @@ private fun Root() {
                 openedProduct = product
                 overlay = Overlay.PRODUCT
             },
-            onAddManually = { barcode ->
+            onAddManually = { seed ->
                 formEditing = null
-                scannedBarcode = barcode
+                scannedBarcode = seed.barcode
+                formNameSeed = seed.name
                 overlay = Overlay.PRODUCT_FORM
             },
         )
@@ -367,8 +387,10 @@ private fun Root() {
             container = container,
             profileId = active.id,
             initialMealKey = pendingMealKey,
+            logDate = pendingLogDate,
             onBack = {
                 pendingMealKey = null
+                pendingLogDate = null
                 overlay = null
             },
             onEdit = {
@@ -379,6 +401,7 @@ private fun Root() {
             onLogged = {
                 openedProduct = null
                 pendingMealKey = null
+                pendingLogDate = null
                 formEditing = null
                 overlay = null
                 tab = Tab.TODAY
@@ -408,7 +431,11 @@ private fun Root() {
         // Otherwise: the tabs.
         else -> TabScaffold(
             tab = tab,
-            onSelectTab = { tab = it },
+            onSelectTab = {
+                // A tap on the bar starts at today; only a meal card on a past day carries a date into the list.
+                if (it == Tab.FOOD) pendingLogDate = null
+                tab = it
+            },
             profile = active,
             onOpenSettings = { overlay = Overlay.SETTINGS },
         ) {
@@ -416,8 +443,13 @@ private fun Root() {
                 Tab.TODAY -> TodayScreen(
                     profile = active,
                     container = container,
-                    onAddFood = { key ->
+                    dayOffset = dayOffset,
+                    onDayOffsetChange = { dayOffset = it },
+                    // The day the screen is showing, so a portion added from it lands on that day and not on
+                    // whatever the calendar says at midnight.
+                    onAddFood = { key, date ->
                         pendingMealKey = key
+                        pendingLogDate = date
                         tab = Tab.FOOD
                     },
                     onAddWeight = { tab = Tab.WEIGHT },
@@ -449,8 +481,8 @@ private fun Root() {
                             onAddManual = { seed ->
                                 openedProduct = null
                                 formEditing = null
-                                scannedBarcode = null
-                                formNameSeed = seed
+                                scannedBarcode = seed.barcode
+                                formNameSeed = seed.name
                                 overlay = Overlay.PRODUCT_FORM
                             },
                             onScan = { overlay = Overlay.SCAN },

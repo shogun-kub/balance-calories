@@ -157,6 +157,9 @@ adb = 'C:\Program Files\Android\Sdk\platform-tools\adb.exe'
 App instrumentation tests are a **separate** APK and runner: `com.balancecalories.test` (not
 `com.balancecalories.app.test`), installed with `-t` alongside the app APK, and the app APK must be
 reinstalled whenever a dependency is added — the test APK alone resolves classes from the installed app.
+Since 2026-11-13 that also means they cannot run at all: the test APK is debug-signed and the app carries the
+household key, so `:app:connectedDebugAndroidTest` fails to install and still reports BUILD SUCCESSFUL
+(**P-50**). `:data:connectedDebugAndroidTest` is unaffected and is the suite to run (124 cases).
 
 ## Devices and how to test on them
 

@@ -21,3 +21,18 @@ internal fun trimNumber(value: Double): String {
 
 /** Labels do not carry more precision than this; more digits are decoded float, not measured food. */
 private const val MAX_DECIMALS = 3
+
+/**
+ * The portion a «−10 г» or «+10 г» tap lands on.
+ *
+ * Parsed with the same comma tolerance as every other field, never below [MIN_PORTION_G] — the repository
+ * refuses a non-positive portion, and a button that produces a value the save button then rejects is a trap —
+ * and formatted by [trimNumber], so the field never shows `160.00000000000003`.
+ */
+internal fun stepGrams(current: String, delta: Double): String {
+    val value = current.replace(',', '.').toDoubleOrNull() ?: 0.0
+    return trimNumber((value + delta).coerceAtLeast(MIN_PORTION_G))
+}
+
+/** A portion below a gram is not a portion. */
+private const val MIN_PORTION_G = 1.0

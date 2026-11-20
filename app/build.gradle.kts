@@ -20,8 +20,10 @@ android {
         // fixes and the torch fix landed, and a released tag is not moved - a new version says what is in it.
         // 4 / 1.0.2 exists for the self-hosted repository: the first build signed by the household's own key, so
         // that updates can arrive through an F-Droid client instead of `adb install -r`. The code is 1.0.1's.
-        versionCode = 4
-        versionName = "1.0.2"
+        // 5 / 1.0.3 adds past-day browsing and logging on Today, the barcode dead ends that now lead to the
+        // manual form, recipe copying, and the +/- portion steps.
+        versionCode = 5
+        versionName = "1.0.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -44,10 +45,15 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.PermissionController
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.balancecalories.app.food.stepGrams
 import com.balancecalories.app.food.title
 import com.balancecalories.app.ui.ChartPalette
 import com.balancecalories.app.ui.displayNumber
@@ -69,6 +75,7 @@ import com.balancecalories.core.food.MealTimes
 import com.balancecalories.core.food.MealTotals
 import com.balancecalories.core.food.LoggedEntry
 import com.balancecalories.core.profile.Profile
+import com.balancecalories.core.time.DayWindow
 import com.balancecalories.data.health.HealthConnectState
 import com.balancecalories.data.health.HealthConnectSupport
 import java.time.Instant
@@ -76,6 +83,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.Locale
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
@@ -91,17 +99,44 @@ import kotlinx.coroutines.launch
 fun TodayScreen(
     profile: Profile,
     container: AppContainer,
-    onAddFood: (String?) -> Unit,
+    /** Days back from today: 0 is today, 1 is yesterday. Hoisted, so returning from the food list lands on
+     * the same day the portion was logged on. */
+    dayOffset: Int,
+    onDayOffsetChange: (Int) -> Unit,
+    /** The meal to pre-select and the day the portion belongs to — today's date when the screen shows today. */
+    onAddFood: (String?, LocalDate) -> Unit,
     onAddWeight: () -> Unit,
 ) {
-    val today = remember { LocalDate.now() }
     val scope = rememberCoroutineScope()
     val languageTag = LocalConfiguration.current.locales[0]?.toLanguageTag()
+    val zone = remember { ZoneId.systemDefault() }
+
+    // The day this screen believes it is. Re-read whenever the app comes back to the foreground: a phone left on
+    // the evening screen and picked up the next morning used to keep showing yesterday's numbers (owner,
+    // 2026-11-20), because `LocalDate.now()` was remembered once for the life of the composition.
+    var today by remember(profile.id) {
+        mutableStateOf(DayWindow.dateOf(Instant.now(), zone, profile.dayStartHour))
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, profile.id) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                today = DayWindow.dateOf(Instant.now(), zone, profile.dayStartHour)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // The day being read. An offset rather than a date, so "today" stays today when midnight passes and the
+    // screen is re-read.
+    val date = today.minusDays(dayOffset.toLong())
+    val isToday = dayOffset == 0
 
     var weightKg by remember(profile.id) { mutableStateOf<Double?>(null) }
     var intake by remember(profile.id) { mutableStateOf<DailyIntake?>(null) }
     var refresh by remember { mutableIntStateOf(0) }
-    var yesterdayCount by remember { mutableIntStateOf(0) }
+    var previousDayCount by remember { mutableIntStateOf(0) }
     var slots by remember(profile.id) { mutableStateOf<List<MealSlot>>(emptyList()) }
     var editingEntry by remember { mutableStateOf<LoggedEntry?>(null) }
     var editGrams by remember { mutableStateOf("") }
@@ -114,18 +149,21 @@ fun TodayScreen(
     var syncResult by remember(profile.id) { mutableStateOf<DailyActivityRepository.SyncResult?>(null) }
     var syncing by remember(profile.id) { mutableStateOf(false) }
 
-    LaunchedEffect(profile.id, refresh) {
+    LaunchedEffect(profile.id, refresh, date) {
+        // The numbers of the day that was on screen must not survive one frame of the day now asked for.
+        intake = null
+        burn = null
         val weight = container.body.latestWeightKg(profile.id)
         weightKg = weight
         if (weight != null) {
             val target = TargetCalculator.seed(
                 profile = profile.toEnergyProfile(weight),
                 goalRateKgPerWeek = profile.goalRateKgPerWeek,
-                on = today,
+                on = date,
             )
-            intake = container.food.day(profile.id, today, target.kcal)
-            yesterdayCount = container.food.countForDay(profile.id, today.minusDays(1))
-            burn = container.activity.burn(profile.id, today, target.bmrKcal, target.tdeeKcal)
+            intake = container.food.day(profile.id, date, target.kcal)
+            previousDayCount = container.food.countForDay(profile.id, date.minusDays(1))
+            burn = container.activity.burn(profile.id, date, target.bmrKcal, target.tdeeKcal)
             slots = container.meals.slots(profile.id)
         }
     }
@@ -164,6 +202,14 @@ fun TodayScreen(
     ) {
         Text(text = stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
 
+        // The day being shown, and the two ways to move to another one. Today is the default and the forward
+        // arrow never goes into the future: a day that has not happened has nothing to show.
+        DayHeader(
+            label = dayLabel(dayOffset, date, LocalConfiguration.current.locales[0]),
+            canGoForward = dayOffset > 0,
+            onPrevious = { onDayOffsetChange(dayOffset + 1) },
+            onNext = { onDayOffsetChange(dayOffset - 1) },
+        )
 
         if (weightKg == null) {
             // A profile can exist without a weight (an archived one restored, an import, a form left early), and
@@ -176,11 +222,11 @@ fun TodayScreen(
             return@Column
         }
 
-        val target = remember(profile.id, weightKg, today) {
+        val target = remember(profile.id, weightKg, date) {
             TargetCalculator.seed(
                 profile = profile.toEnergyProfile(weightKg!!),
                 goalRateKgPerWeek = profile.goalRateKgPerWeek,
-                on = today,
+                on = date,
             )
         }
 
@@ -230,7 +276,7 @@ fun TodayScreen(
                 )
             }
         }
-        if (profile.bandEnabled) {
+        if (profile.bandEnabled && isToday) {
             if (hcState != HealthConnectState.AVAILABLE) {
                 Text(
                     text = stringResource(R.string.today_health_connect_missing),
@@ -291,18 +337,21 @@ fun TodayScreen(
         HorizontalDivider()
 
         if (loadedIntake.meals.isEmpty()) {
-            Text(text = stringResource(R.string.today_empty), style = MaterialTheme.typography.bodyMedium)
-            if (yesterdayCount > 0) {
+            Text(
+                text = stringResource(if (isToday) R.string.today_empty else R.string.day_empty),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (previousDayCount > 0) {
                 OutlinedButton(
                     onClick = {
                         scope.launch {
-                            container.food.copyDay(profile.id, today.minusDays(1), today)
+                            container.food.copyDay(profile.id, date.minusDays(1), date)
                             refresh++
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(stringResource(R.string.action_copy_yesterday, yesterdayCount))
+                    Text(stringResource(R.string.action_copy_previous_day, previousDayCount))
                 }
             }
         }
@@ -315,7 +364,7 @@ fun TodayScreen(
                 planned = slot.plannedMinutes?.let { MealTimes.formatClock(it) },
                 totals = loadedIntake.totalsFor(slot.key),
                 share = loadedIntake.shareOfTargetFor(slot.key),
-                onAdd = { onAddFood(slot.key) },
+                onAdd = { onAddFood(slot.key, date) },
             ) {
                 for (entry in loadedIntake.entriesFor(slot.key)) {
                     EntryRow(
@@ -338,7 +387,7 @@ fun TodayScreen(
         }
 
         HorizontalDivider()
-        Button(onClick = { onAddFood(null) }, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = { onAddFood(null, date) }, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.today_add_food))
         }
         // Kept from the M1 screen: the inputs behind the target stay visible while the maths is fresh.
@@ -372,8 +421,66 @@ fun TodayScreen(
 }
 
 /**
+ * The day being shown, with the two directions it can move in.
+ *
+ * The arrows are text glyphs rather than icons — the app ships no icon set — with a spoken name of their own, so
+ * a screen reader hears "previous day" instead of "less than". Forward is disabled on today: a day that has not
+ * happened yet has nothing to show.
+ */
+@Composable
+private fun DayHeader(
+    label: String,
+    canGoForward: Boolean,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+) {
+    val previousSaid = stringResource(R.string.day_previous)
+    val nextSaid = stringResource(R.string.day_next)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TextButton(
+            onClick = onPrevious,
+            modifier = Modifier.semantics { contentDescription = previousSaid },
+        ) {
+            Text(text = "‹", style = MaterialTheme.typography.headlineSmall)
+        }
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.titleMedium,
+        )
+        TextButton(
+            onClick = onNext,
+            enabled = canGoForward,
+            modifier = Modifier.semantics { contentDescription = nextSaid },
+        ) {
+            Text(text = "›", style = MaterialTheme.typography.headlineSmall)
+        }
+    }
+}
+
+/** "Today", "Yesterday", or the date itself: a day far enough back has no name of its own. */
+@Composable
+private fun dayLabel(offset: Int, date: LocalDate, locale: Locale?): String = when (offset) {
+    0 -> stringResource(R.string.day_today)
+    1 -> stringResource(R.string.day_yesterday)
+    else -> {
+        val formatter = remember(locale) {
+            DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale ?: Locale.getDefault())
+        }
+        remember(formatter, date) { formatter.format(date) }
+    }
+}
+
+/**
  * Changing the weight rescales the entry's own snapshot, so the preview here uses the same ratio the
  * repository will apply — no re-read of the product, which may have changed since.
+ *
+ * The two step buttons exist because the common correction is "a bit more than I logged", and doing that in
+ * the head — 180 g plus 30 — is exactly the mental arithmetic the entry screen should not require.
  */
 @Composable
 private fun EditPortionDialog(
@@ -402,6 +509,18 @@ private fun EditPortionDialog(
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 )
+                WrappingRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = { onGramsChange(stepGrams(grams, -GRAMS_STEP)) },
+                    ) {
+                        Text(stringResource(R.string.entry_step_remove, GRAMS_STEP.toInt()))
+                    }
+                    OutlinedButton(
+                        onClick = { onGramsChange(stepGrams(grams, GRAMS_STEP)) },
+                    ) {
+                        Text(stringResource(R.string.entry_step_add, GRAMS_STEP.toInt()))
+                    }
+                }
                 if (previewKcal != null) {
                     Text(text = stringResource(R.string.entry_edit_kcal, previewKcal))
                 }
@@ -417,6 +536,9 @@ private fun EditPortionDialog(
         },
     )
 }
+
+/** How much one tap of «−10 г» / «+10 г» moves the portion: a typical bite, not a scale tick. */
+private const val GRAMS_STEP = 10.0
 
 /** 150.0 → "150" in a field a human will edit. */
 private fun trimGrams(grams: Double): String =

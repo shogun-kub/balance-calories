@@ -69,6 +69,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.balancecalories.app.ui.ChartPalette
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.AppContainer
+import com.balancecalories.app.food.ProductSeed
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.app.R
 import com.balancecalories.core.food.Barcode
@@ -95,7 +96,7 @@ private sealed interface ScanState {
     data class Looking(val barcode: String) : ScanState
     data class NotFound(val barcode: String) : ScanState
     data class Offline(val barcode: String) : ScanState
-    data class Unusable(val barcode: String, val reason: UnusableReason) : ScanState
+    data class Unusable(val barcode: String, val reason: UnusableReason, val name: String?) : ScanState
     data class Invalid(val barcode: String) : ScanState
 }
 
@@ -114,7 +115,7 @@ fun ScannerScreen(
     container: AppContainer,
     onBack: () -> Unit,
     onProduct: (Product) -> Unit,
-    onAddManually: (String) -> Unit,
+    onAddManually: (ProductSeed) -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -195,7 +196,7 @@ fun ScannerScreen(
                 }
                 is Lookup.Unusable -> {
                     detected = null
-                    ScanState.Unusable(barcode, result.reason)
+                    ScanState.Unusable(barcode, result.reason, result.name)
                 }
                 is Lookup.Invalid -> {
                     detected = null
@@ -316,10 +317,18 @@ fun ScannerScreen(
 
         stateMessage(state)?.let { Text(text = it, color = MaterialTheme.colorScheme.error) }
 
+        // Both "nothing there" and "there, but not loggable" leave the person holding a real barcode, so both
+        // must offer the manual form instead of a sentence with nothing to do next.
+        val manualSeed = when (val current = state) {
+            is ScanState.NotFound -> ProductSeed(barcode = current.barcode)
+            is ScanState.Unusable -> ProductSeed(barcode = current.barcode, name = current.name)
+            else -> null
+        }
         if (state is ScanState.NotFound) {
             Text(text = stringResource(R.string.scan_not_found_note))
-            val barcode = (state as ScanState.NotFound).barcode
-            TextButton(onClick = { onAddManually(barcode) }) {
+        }
+        if (manualSeed != null) {
+            TextButton(onClick = { onAddManually(manualSeed) }) {
                 Text(stringResource(R.string.scan_add_manually))
             }
         }

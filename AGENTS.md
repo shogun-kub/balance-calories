@@ -16,20 +16,26 @@ Two outputs, everything else supports them:
 
 ## Current state
 
-**M1–M5 and M7 complete; M6 nearly done.** `versionName 1.0.2` / `versionCode 4`, R8 on, Apache-2.0, shipping
+**M1–M5 and M7 complete; M6 nearly done.** `versionName 1.0.3` / `versionCode 5`, R8 on, Apache-2.0, shipping
 through the household's own F-Droid repository. `:core` (176 JVM tests) and `:data` (schema **v7**, 11 DAOs,
-13 repositories) build green, and `:app` has the whole loop: Today with the macro gauge, one card per meal (the set is the person's), burned and balance;
+13 repositories) build green, and `:app` has the whole loop: Today, which walks back a day at a time with `‹`/`›`
+and logs a forgotten meal on the day it belongs to, with the macro gauge, one card per meal (the set is the person's), burned and balance;
 the food side (two tabs: products and recipes, search that falls back to Open Food Facts by itself, scanning, logging, recipes); History with the adaptive TDEE, the recap,
 the intake/burn chart, a weight trend and a projection; a weight tab with entry and chart; settings with
 units, day start, language and macro norms (four presets or one's own grams) and the meal editor; and backup / restore / CSV.
 
-176 :core + 46 :data + 33 :app JVM tests and **126 device tests** (122 :data, 4 :app) pass. The app
+176 :core + 46 :data + 35 :app JVM tests and **124** `:data` device tests pass; the four `:app` decoder tests
+cannot run against a release-signed install (**P-50**). The app
 navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`), follows the phone's dark setting, and
 prints each logged portion's protein, fat and carbs with the macro it is proportionally richest in marked
 in that macro's colour, and a product can carry a **barcode** that a scan resolves without the network.
 The launcher icon is a **vector adaptive icon** — a balance beam with a slice of pie
-on one side and a steel-blue dumbbell on the other. Strings are **394/394** (382 `<string>` + 12
-`<plurals>` per language) and lint is down to five reviewed warnings.
+on one side and a steel-blue dumbbell on the other. Strings are **404/404** (392 `<string>` + 12
+`<plurals>` per language). `:app:lintDebug` is **not** part of the build and currently reports 6 errors and 11
+warnings, all older than this milestone and reviewed: two `RestrictedApi` on the camera's metering factory and
+four `LocalContextGetResourceValueCall` on `context.getString` in three screens are the errors, the warnings
+are the icon's long vector path, three unused `meal_times_*` strings, two build-config notes and the scanner's
+`setOnTouchListener`.
 
 Submitted once: fdroiddata merge request [!57200](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/57200)
 built green on the F-Droid buildserver (`fdroid build` 356 s, `check apk` clean) and was then **closed on a
@@ -41,7 +47,9 @@ repository on the home LAN** — `http://KATANA:8080/repo`, served by `tools/ser
 — because uploads above about a megabyte do not leave this machine (**P-45**), which is what killed the GitHub
 Pages attempt. **The phones are on that key since 2026-11-13, so a new build installs over the current one**; no
 F-Droid client is installed, so for now a release is `adb install -r`, and the LAN repository is ready but
-unread. Both phones are on `1.0.2` / `versionCode 4`, and both carry their own data: the Redmi's history came
+unread. The **Honor is on `1.0.3` / `versionCode 5`** since 2026-11-20 (day browsing, past-day logging, the
+barcode dead ends, recipe copying, ±10 g) and the **Redmi is still on `1.0.2` / `versionCode 4`**, and both
+carry their own data: the Redmi's history came
 back as a **103-row** restore (diary item 58, and **P-47** for the MIUI picker that made it hard), and its band
 now reaches the app because **Gadgetbridge's Health Connect export was finally switched on** — until 2026-11-13
 the app had only ever seen Health Connect's `_platform` baseline there (**P-48**, `docs/02-research.md` §1.4.3).
@@ -90,6 +98,9 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | **P-46** | fdroidserver is a Linux tool: it splits walked paths on `/` (run `tools/patch_fdroidserver.py`) and decodes UTF-8 JSON as cp1251 (set `PYTHONUTF8=1`) |
 | **P-47** | a backup that arrives by `adb push` is a document MIUI will not open ("0 Б"): serve it (`tools/serve_backup.py`), let the browser download it, and select it in the picker with `TAB`/`DPAD_DOWN`/`ENTER` |
 | **P-48** | an empty band in our app usually means Gadgetbridge's *Health Connect export* is off and its permissions were never granted — Health Connect then answers only with its `_platform` baseline |
+| **P-49** | `remember { LocalDate.now() }` is a snapshot of the clock, not a date: re-read the day on `ON_RESUME` and hold an **offset**, or the screen quietly shows yesterday |
+| **P-50** | `:app:connectedDebugAndroidTest` cannot install its debug APK over a household-signed app and still reports BUILD SUCCESSFUL — read `tests=` in the results XML |
+| **P-51** | `uiautomator dump` can omit visible Compose nodes (chips, buttons); confirm with `screencap` before calling a control missing |
 
 ## Naming and the visible language
 

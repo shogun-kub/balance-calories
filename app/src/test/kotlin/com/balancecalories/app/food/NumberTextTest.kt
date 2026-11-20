@@ -52,4 +52,20 @@ class NumberTextTest {
         assertEquals("", trimNumber(Double.NaN))
         assertEquals("", trimNumber(Double.POSITIVE_INFINITY))
     }
+
+    @Test
+    fun aStepMovesThePortionAndWritesItTheWayTheFieldDoes() {
+        assertEquals("160", stepGrams("150", 10.0))
+        assertEquals("140", stepGrams("150", -10.0))
+        // A comma is what a Russian keyboard produces in that field.
+        assertEquals("165.5", stepGrams("155,5", 10.0))
+        assertEquals("160.5", stepGrams("160.5", 0.0))
+    }
+
+    @Test
+    fun aStepNeverReachesZeroBecauseTheSaveButtonWouldRefuseIt() {
+        assertEquals("1", stepGrams("5", -10.0))
+        assertEquals("1", stepGrams("", -10.0))
+        assertEquals("10", stepGrams("", 10.0))
+    }
 }

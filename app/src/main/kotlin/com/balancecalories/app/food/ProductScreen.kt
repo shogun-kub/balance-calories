@@ -46,6 +46,10 @@ import com.balancecalories.core.food.MealSlot
 import com.balancecalories.core.food.guessMealKey
 import com.balancecalories.app.ui.WrappingRow
 import com.balancecalories.core.food.Product
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 /**
@@ -64,6 +68,8 @@ fun ProductScreen(
     onEdit: () -> Unit,
     onLogged: () -> Unit,
     initialMealKey: String? = null,
+    /** The day this portion belongs to, when it is not today: a forgotten dinner logged the next morning. */
+    logDate: LocalDate? = null,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -155,6 +161,23 @@ fun ProductScreen(
 
         error?.let { Text(text = it, color = MaterialTheme.colorScheme.error) }
 
+        // Naming the day only when it is not the calendar day keeps the ordinary screen one line shorter, and
+        // still answers "where did this go?" before the button is pressed.
+        logDate?.takeIf { it != LocalDate.now() }?.let { day ->
+            Text(
+                text = stringResource(
+                    R.string.food_log_date,
+                    remember(day) {
+                        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                            .withLocale(Locale.getDefault())
+                            .format(day)
+                    },
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+        }
+
         Button(
             onClick = {
                 val value = grams ?: return@Button
@@ -162,7 +185,13 @@ fun ProductScreen(
                 error = null
                 scope.launch {
                     runCatching {
-                        container.food.log(profileId, product, value, mealKey ?: return@launch)
+                        container.food.log(
+                            profileId = profileId,
+                            product = product,
+                            grams = value,
+                            mealKey = mealKey ?: return@launch,
+                            on = logDate ?: LocalDate.now(),
+                        )
                     }.onSuccess {
                         onLogged()
                     }.onFailure {

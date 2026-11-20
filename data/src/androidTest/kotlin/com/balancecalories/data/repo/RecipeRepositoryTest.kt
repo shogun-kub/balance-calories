@@ -196,6 +196,26 @@ class RecipeRepositoryTest {
     }
 
     @Test
+    fun copyingARecipeStoresANewRowWithTheSameIngredients() = runBlocking {
+        val original = pilaf(RecipeItem(chicken(), 300.0), RecipeItem(rice(), 150.0))
+
+        // What "Копировать" does: the same ingredients under a new name, with no id so save() inserts.
+        val copy = recipes.save(
+            original.copy(id = Recipe.NEW, name = "Chicken pilaf (copy)"),
+        )
+
+        assertTrue("a copy is a new row", copy.id > 0)
+        assertTrue("the original is untouched", copy.id != original.id)
+        assertEquals(2, recipes.list(1L).size)
+        val read = recipes.byId(copy.id)!!
+        assertEquals("Chicken pilaf (copy)", read.name)
+        assertEquals(
+            original.items.map { it.product.id to it.grams },
+            read.items.map { it.product.id to it.grams },
+        )
+    }
+
+    @Test
     fun theNameIsTrimmedAndTheTimestampsHold() = runBlocking {
         val stored = recipes.save(
             Recipe(profileId = 1L, name = "  Soup  ", items = listOf(RecipeItem(chicken(), 100.0))),

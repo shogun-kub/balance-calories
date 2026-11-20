@@ -60,6 +60,7 @@
     <string name="error_weight_imperial">Вес должен быть 66–661 фунт</string>
     <string name="error_save">Не удалось сохранить профиль: %1$s</string>
     <string name="food_log_failed">Не удалось записать: %1$s</string>
+    <string name="food_log_date">Запись на %1$s</string>
     <string name="recipe_save_failed">Не удалось сохранить рецепт: %1$s</string>
 
     <string name="profiles_title">Профили</string>
@@ -142,7 +143,7 @@
     <string name="food_search_hint">Поиск по названию или бренду</string>
     <string name="food_add_manual">Добавить продукт вручную</string>
     <string name="food_add_manual_named">Добавить «%1$s» вручную</string>
-    <string name="recipe_scan_not_found">Штрихкод %1$s на телефоне не найден</string>
+    <string name="recipe_scan_not_found">Штрихкод %1$s не стал ингредиентом: сначала добавьте продукт в «Еде», черновик рецепта сохранится.</string>
     <string name="food_empty">Ничего не найдено</string>
     <string name="food_empty_note">Ищите в стартовом списке или добавьте продукт со своими цифрами.</string>
     <string name="food_source_starter">стартовый набор</string>
@@ -197,6 +198,11 @@
     <string name="error_barcode_taken">Этот штрихкод уже занят продуктом «%1$s»</string>
     <string name="today_empty">Сегодня ничего не записано</string>
     <string name="today_add_food">Добавить еду</string>
+    <string name="day_today">Сегодня</string>
+    <string name="day_yesterday">Вчера</string>
+    <string name="day_previous">Предыдущий день</string>
+    <string name="day_next">Следующий день</string>
+    <string name="day_empty">За этот день ничего не записано</string>
     <string name="today_entry_line">%1$.0f г · %2$.0f ккал</string>
     <string name="today_entry_protein">Белки</string>
     <string name="today_entry_fat">Жиры</string>
@@ -206,7 +212,11 @@
     <string name="loading">Загрузка…</string>
     <string name="entry_edit_title">Изменить порцию</string>
     <string name="entry_edit_kcal">%1$.0f ккал после изменения</string>
-    <string name="action_copy_yesterday">Повторить вчерашнее (%1$d)</string>
+    <string name="entry_step_add">Добавить %1$d г</string>
+    <string name="entry_step_remove">Убрать %1$d г</string>
+    <string name="action_copy_previous_day">Повторить предыдущий день (%1$d)</string>
+    <string name="action_copy">Копировать</string>
+    <string name="recipe_copy_name">%1$s (копия)</string>
     <string name="scan_title">Сканировать штрихкод</string>
     <string name="scan_found">Найдено %1$s</string>
     <string name="scan_hint">Наведите камеру на штрихкод на упаковке</string>
@@ -232,7 +242,7 @@
     <string name="food_search_off_count">В OpenFoodFacts найдено: %1$d</string>
     <string name="food_search_off_nothing">OpenFoodFacts не знает продукта с таким названием.</string>
     <string name="food_search_off_failed">OpenFoodFacts не ответил: %1$s</string>
-    <string name="food_search_off_no_energy">Нет данных о калориях — нельзя записать</string>
+    <string name="food_search_off_no_energy">Нет данных о калориях — можно добавить вручную</string>
     <string name="food_search_off_note">Значения собраны пользователями, это не лабораторное измерение. Проверьте упаковку, если число выглядит странным.</string>
     <string name="food_recent">Недавно съеденное</string>
     <string name="food_recent_times">%1$d×</string>

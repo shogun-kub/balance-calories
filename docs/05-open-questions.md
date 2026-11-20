@@ -252,3 +252,18 @@ whether it belongs on the band card or in settings, and whether a "провер�
 should deep-link into GB's `HealthConnectPreferencesActivity` — a component name of a third-party app, which
 is exactly the sort of thing that breaks silently on a GB update. Recommended: the hint, no deep link, three
 empty days, and one line in the band card rather than a new screen.
+
+### L. The recipe editor is still a one-way street for a food it cannot find — open since 2026-11-20
+
+The restaurant barcode dead ends are closed (ADR-044): the scanner and the search list now both open the manual
+form with the code and the name filled in. The **recipe editor's** scanner is the one route that did not get the
+same treatment, because the manual form is a different screen and an ingredient is a reference: adding a product
+there means leaving the editor, creating the product in Еда, coming back and adding it — the draft survives
+(ADR-042), but the person has to know that. For now the message says so in one sentence.
+
+The mechanism is not obvious: `ProductFormScreen` ends by opening the *portion* screen for the new product
+(ADR-035), which is wrong inside a recipe; the editor would need the form to return a `Product` to a caller that
+wants an ingredient, not a meal. Options: a `returnTo` parameter on the product form; a product form opened in an
+"ingredient" mode that saves and hands the id back to the draft; or accepting the round trip and making the
+sentence louder. Recommended when it is built: the second, because the draft already knows how to take a
+`productId`, and the portion screen has no meaning in an ingredient list.

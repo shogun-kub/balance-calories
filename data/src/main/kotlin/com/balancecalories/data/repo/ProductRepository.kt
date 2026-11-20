@@ -29,7 +29,7 @@ sealed interface Lookup {
     data object KnownMiss : Lookup
 
     /** The product exists but cannot be logged (no name, or no energy). See [reason]. */
-    data class Unusable(val reason: UnusableReason) : Lookup
+    data class Unusable(val reason: UnusableReason, val name: String? = null) : Lookup
 
     /** The network failed; the barcode is queued for a later retry. */
     data class Offline(val reason: String) : Lookup
@@ -205,7 +205,12 @@ class BarcodeResolver(
                     products.clearPending(barcode)
                     Lookup.Fetched(stored)
                 } else {
-                    Lookup.Unusable(answer.product.unusableReason ?: UnusableReason.NO_ENERGY)
+                    // The name travels with the refusal: the barcode and the words are exactly what a manual
+                    // row needs, and both are known here even though the energy is not.
+                    Lookup.Unusable(
+                        reason = answer.product.unusableReason ?: UnusableReason.NO_ENERGY,
+                        name = answer.product.nameRu?.takeIf { it.isNotBlank() } ?: answer.product.name,
+                    )
                 }
             }
 

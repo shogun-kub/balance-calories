@@ -844,3 +844,44 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     Also fixed on the way: the phone had been left locked in landscape by an earlier instrumentation run
     (`settings put system accelerometer_rotation 1`, `user_rotation 0`, then `accelerometer_rotation 0` — the
     override only clears when the rotation is toggled through the enabled state, **P-08**'s neighbour).
+
+59. **Days you can go back to, and the dead ends that now lead somewhere** - 2026-11-20. Six items from the
+    owner in one message: two bugs and three features, all of them about a screen that had one day and one way.
+
+    **The two bugs were the same disease.** Today captured `val today = remember { LocalDate.now() }`, so the
+    day was whatever it was when the composition started: a phone left on the evening screen and unlocked in
+    the morning showed yesterday's numbers under the word «Сегодня» (**P-49**). It was also the reason a past
+    day could not be reached at all. The day is now an **offset** from today, re-read on `ON_RESUME` through
+    `DayWindow` (so the 04:00 boundary agrees with the band data instead of `LocalDate.now()` disagreeing
+    with it at 01:00), and hoisted into MainActivity so a trip through the food list comes back to the day the
+    portion went to. The second half of the same change: food **may** be logged on a past day, the portion
+    screen prints «Запись на 19 нояб. 2026 г.» when that day is not the calendar's, and «Синхронизировать
+    браслет» is hidden there because a sync writes today (ADR-043).
+
+    **The barcode dead end was a missing verb, not a missing number.** A product OpenFoodFacts knows but cannot
+    log (no energy, no name) ended the scan at a sentence: `Lookup.Unusable` carried a reason and the barcode
+    died with the state. It now carries the **name** too, the scanner offers «Добавить этот продукт вручную»
+    in that case as well as in "not found", and the manual form opens with code and name filled in. The same
+    audit found the second dead end: an unusable OpenFoodFacts **search hit** was rendered and not tappable,
+    at the exact moment the search had found the right food — it is tappable now and lands in the same form.
+    The recipe editor's scanner is the one route left out (**question L**).
+
+    Smaller asks, same principle of not making a person do arithmetic the phone can do: «Убрать 10 г» /
+    «Добавить 10 г» beside the portion field (`stepGrams`, clamped at 1 g, two new JVM tests), and «Копировать»
+    on a recipe, which opens the editor with the same ingredients under «… (копия)» — id cleared, so saving
+    inserts a second dish rather than overwriting the first (ADR-044).
+
+    Measured on the Honor X7c, `1.0.3` / `versionCode 5`, installed over `1.0.2` with `adb install -r` on the
+    household key: `‹` → «Вчера» with yesterday's 1514 kcal from the band; meal `+` on «Вчера» → products →
+    banana → «Запись на 19 нояб. 2026 г.» → logged, the screen returned to «Вчера» with 89 kcal on the plate;
+    the entry dialog stepped 100 → 120 g with the preview moving 89 → 107 kcal and the saved row reading
+    «120 г · 107 ккал»; «Копировать» on «Pilaf» opened «Pilaf (копия)» with both ingredients and saved as a
+    second recipe, which was then deleted along with the test entry so the Test fixture is back to clean.
+    **176 :core + 46 :data + 35 :app** JVM tests and **124** `:data` device tests pass. The four `:app` device
+    tests did not run: their debug-signed APK cannot install over a household-signed app and the Gradle task
+    lies about it (**P-50**); the scanner's unusable branch was reviewed but not exercised, because it needs a
+    pack whose barcode OpenFoodFacts holds without energy.
+
+    The Honor was in landscape when it was plugged in (the `install -r` aftermath of **P-08**) and its
+    auto-rotate was back on at the end; the Test profile was used for every write and the owner's profile
+    was never touched. The Redmi is still on `1.0.2` — updating it is a separate, deliberate act.
