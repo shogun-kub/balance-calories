@@ -345,6 +345,16 @@ or a `release` signing config on the androidTest variant; neither is worth it fo
 not touch, so they are recorded as **not re-run** rather than green. Always read `tests=` in
 `app/build/outputs/androidTest-results/connected/debug/*.xml` before believing the task. [2026-11-20]
 
+**P-50 (continued, same day) — and it uninstalls the app under test before it fails.** The run on the Honor did
+not merely fail: it **deleted `com.balancecalories`** first, so the owner's own database went with it. The
+symptom was not an error but a screen: the next `adb install -r` of 1.0.3 became a *first* install
+(`firstInstallTime` = that minute), the app opened on "create a profile", and nothing in the task's output had
+said the word "uninstall". It was recovered from a backup the app had written to the **SD card** on 13
+November (123 859 bytes, schema 7, 233 rows) — see diary item 60 — but the rule is not "check the tests": it
+is **never run an `:app` instrumentation task against a phone that holds real data**. Use a throwaway device,
+or export a verified backup immediately before, and read `:app:connectedDebugAndroidTest` as
+uninstall-then-install with two ways to lose data. [2026-11-20]
+
 **P-51 · `uiautomator dump` can omit visible Compose nodes; a screenshot is the source of truth.** On the
 Honor X7c, the portion screen's `FilterChip` row and its «Записать» button were on screen in a
 `screencap` and absent from the dump, and a swipe that visibly moved the content changed nothing in the XML.

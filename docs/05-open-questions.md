@@ -267,3 +267,17 @@ wants an ingredient, not a meal. Options: a `returnTo` parameter on the product 
 "ingredient" mode that saves and hands the id back to the draft; or accepting the round trip and making the
 sentence louder. Recommended when it is built: the second, because the draft already knows how to take a
 `productId`, and the portion screen has no meaning in an ingredient list.
+
+### M. An empty app cannot reach its own restore screen — open since 2026-11-20
+
+Found during the recovery of diary item 60. With no profile in the database the app draws the profile form and
+nothing else: `BackupScreen` lives under Settings, Settings lives behind the tab bar, and the tab bar needs an
+active profile. So the one situation where a restore matters most — a fresh install after the data is gone —
+is the one where the button cannot be reached. The workaround used was to invent a throwaway profile, restore
+over it, and then pick the real one from Профили.
+
+The fix is small but touches a signature: `BackupScreen` takes a `Profile` (the CSV export needs it), and the
+empty state has none. Either the screen splits into "restore only" (no profile needed) and "export/CSV"
+(profile needed), or it takes a nullable profile and hides the parts that require one. Recommended: one
+`Восстановить из копии` button on the empty profile screen that opens the restore half only, because that is
+the whole of what a person with no data can do with a backup.

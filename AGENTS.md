@@ -48,8 +48,12 @@ repository on the home LAN** — `http://KATANA:8080/repo`, served by `tools/ser
 Pages attempt. **The phones are on that key since 2026-11-13, so a new build installs over the current one**; no
 F-Droid client is installed, so for now a release is `adb install -r`, and the LAN repository is ready but
 unread. The **Honor is on `1.0.3` / `versionCode 5`** since 2026-11-20 (day browsing, past-day logging, the
-barcode dead ends, recipe copying, ±10 g) and the **Redmi is still on `1.0.2` / `versionCode 4`**, and both
-carry their own data: the Redmi's history came
+barcode dead ends, recipe copying, ±10 g) and the **Redmi is still on `1.0.2` / `versionCode 4`**. On 2026-11-20
+`:app:connectedDebugAndroidTest` **uninstalled the app and its data** on the Honor and failed to install its
+debug APK (**P-50**); the Honor's database came back from a backup the app had written to its **SD card** on
+2026-11-13 — 233 rows, everything except the food entries of 14–20 November — and its Health Connect grants have
+to be given again (diary item 60). Both
+phones carry their own data: the Redmi's history came
 back as a **103-row** restore (diary item 58, and **P-47** for the MIUI picker that made it hard), and its band
 now reaches the app because **Gadgetbridge's Health Connect export was finally switched on** — until 2026-11-13
 the app had only ever seen Health Connect's `_platform` baseline there (**P-48**, `docs/02-research.md` §1.4.3).
@@ -99,7 +103,7 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | **P-47** | a backup that arrives by `adb push` is a document MIUI will not open ("0 Б"): serve it (`tools/serve_backup.py`), let the browser download it, and select it in the picker with `TAB`/`DPAD_DOWN`/`ENTER` |
 | **P-48** | an empty band in our app usually means Gadgetbridge's *Health Connect export* is off and its permissions were never granted — Health Connect then answers only with its `_platform` baseline |
 | **P-49** | `remember { LocalDate.now() }` is a snapshot of the clock, not a date: re-read the day on `ON_RESUME` and hold an **offset**, or the screen quietly shows yesterday |
-| **P-50** | `:app:connectedDebugAndroidTest` cannot install its debug APK over a household-signed app and still reports BUILD SUCCESSFUL — read `tests=` in the results XML |
+| **P-50** | `:app:connectedDebugAndroidTest` **uninstalls the app first**, then cannot install its debug APK over a household-signed one, and still reports BUILD SUCCESSFUL — never run it on a phone with real data |
 | **P-51** | `uiautomator dump` can omit visible Compose nodes (chips, buttons); confirm with `screencap` before calling a control missing |
 
 ## Naming and the visible language

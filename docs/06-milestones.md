@@ -885,3 +885,38 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     The Honor was in landscape when it was plugged in (the `install -r` aftermath of **P-08**) and its
     auto-rotate was back on at the end; the Test profile was used for every write and the owner's profile
     was never touched. The Redmi is still on `1.0.2` — updating it is a separate, deliberate act.
+
+60. **A test task deleted the owner's data, and a backup on the SD card brought it back** - 2026-11-20. The
+    instrumentation run meant to check four decoder tests (item 59) **uninstalled `com.balancecalories`** on the
+    Honor and then failed to install its debug APK, because the app had carried the household key since
+    2026-11-13. The reinstall of 1.0.3 that followed was therefore a *first* install
+    (`firstInstallTime 2026-11-20 08:03:29`, empty database, "create a profile"), and nothing in the Gradle
+    output had said the word "uninstall" — **P-50** now carries that half. This is the hard rule 10 failure of
+    the milestone, and it was mine: a task that replaces the app under test does not belong on a daily driver.
+
+    What was recoverable, and from where:
+
+    | Source | Date | Rows |
+    | --- | --- | --- |
+    | `/sdcard/Download/balancecalories-1794148977116.json` | 2026-11-08 17:43 | 1 profile, 72 products, 4 entries, 30 days |
+    | `E:\Projects\BalanceCalories\tmp\backup\balancecalories.db` (a pulled snapshot) | 2026-11-11 08:23 | 80 products, 12 entries, 63 days |
+    | `/storage/B9CC-6BE8/Download/balancecalories-1794590739532.json` — **the SD card** | 2026-11-13 20:25 | **233 rows**: 2 profiles, 2 weights, 3 targets, 101 products, 3 recipes + 13 items, 44 entries, 65 days |
+
+    The newest one was found last, because `ls /sdcard/Download` and the first picker view showed only the two
+    8 November files: **the backup was on the external SD card**, and the picker's aggregated "Download" view
+    was the only place that listed it. Restore path, once the file was known: install 1.0.3, create a throwaway
+    profile (the app has no way into settings without one, **question M**), Settings → Данные → «Восстановить
+    из копии», pick the SD-card file, confirm — *"восстановлено строк: 233, копия схемы 7"*, the exact row
+    count of the file. The restore does not carry `app_setting`, so the throwaway profile's id dangled and the
+    app fell back to «Test»; one tap on «Михаил» in Профили made it his again, with his **2283 kcal** target
+    and 13 November showing 1533 kcal eaten, 1241 burned and 576 steps.
+
+    What is gone: the food entries for 14–20 November (the days between that backup and the loss). Band days
+    are not lost — Health Connect still holds them, and the 30-day backfill rebuilds them once a profile reads
+    the band. The uninstall also **revoked the app's Health Connect grants** (they die with the package), so
+    Today asks for «Разрешить доступ к активности» once; that was left to the owner as a permission change
+    (hard rule 10), and until it is done the burn is the formula estimate.
+
+    Two smaller things this cost, both now written down: a hand-built backup can be produced from a pulled
+    snapshot (the 11 November file in this table was made that way, and the app would have accepted it), and a
+    restore is the one operation that must be reachable from an empty app — which it is not (**question M**).
