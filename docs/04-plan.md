@@ -660,6 +660,11 @@ migrates the database cannot be reviewed or rolled back cleanly.
       with the app's own row count.
 - [x] `1.0.4` / `versionCode 6`, installed over `1.0.3` with `adb install -r`. The unusable-barcode branch is
       still the one thing not exercised: OpenFoodFacts answered timeouts from this host again at 10:58.
+- [ ] **The profiles list in landscape hides its second card (P-52, not fixed).** Switching back to the
+      owner's profile at the end of the run showed one card where two exist: `LazyColumn(weight(1f))` gets
+      140 px in landscape, the second card is composed below the clip, and neither the dump nor a screenshot
+      can see it. The fix is a single scrolling column (or `heightIn(min = 320.dp)`), and it should land
+      before anything else is added to that screen.
 
 ## M8 — Optional v1.1 (post-release)
 
