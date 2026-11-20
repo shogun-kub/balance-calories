@@ -921,3 +921,10 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     Two smaller things this cost, both now written down: a hand-built backup can be produced from a pulled
     snapshot (the 11 November file in this table was made that way, and the app would have accepted it), and a
     restore is the one operation that must be reachable from an empty app — which it is not (**question M**).
+    The rule written afterwards is **hard rule 14**, and it is a command rather than a resolution: before any
+    `install`, `uninstall`, `pm clear` or restore, `python tools\check_backup.py --serial <device>` must exit 0 —
+    a `balancecalories.backup` file written **today**, with a schema this build can read and rows in it, found
+    in the internal `Download` **or** on an SD card. Exit 1 means the only move is to make one first. Both
+    branches were exercised on the Honor the same morning: exit 1 with three backups all older than today,
+    then exit 0 after «Сохранить копию (JSON)» wrote `balancecalories-1795154345950.json` (123 859 bytes,
+    schema 7, 233 rows) to the SD card.

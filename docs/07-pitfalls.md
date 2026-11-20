@@ -353,7 +353,10 @@ said the word "uninstall". It was recovered from a backup the app had written to
 November (123 859 bytes, schema 7, 233 rows) — see diary item 60 — but the rule is not "check the tests": it
 is **never run an `:app` instrumentation task against a phone that holds real data**. Use a throwaway device,
 or export a verified backup immediately before, and read `:app:connectedDebugAndroidTest` as
-uninstall-then-install with two ways to lose data. [2026-11-20]
+uninstall-then-install with two ways to lose data. The check is now **hard rule 14** and
+`tools/check_backup.py --serial <device>`, which must exit 0 — a `balancecalories-*.json` written today and
+parsed — before any install, uninstall or restore; it sweeps internal `Download` and every SD card, because
+that is where the copy that saved the day actually was. [2026-11-20]
 
 **P-51 · `uiautomator dump` can omit visible Compose nodes; a screenshot is the source of truth.** On the
 Honor X7c, the portion screen's `FilterChip` row and its «Записать» button were on screen in a

@@ -123,7 +123,7 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | --- | --- | --- |
 | `docs/` | Design and findings | Numbered Markdown, tracked in git. |
 | `app/`, `core/`, `data/` | Gradle modules | `:core` is pure Kotlin, zero Android imports. `:data` owns Room, Health Connect, OpenFoodFacts, Gadgetbridge. `:app` owns Compose UI. |
-| `tools/` | Build-time generators | Starter-ingredient pack generator, icon geometry, fixture capture, plus the two host-side helpers that talk to a phone (`serve_lan_repo.ps1`, `serve_backup.py`). Runs on the host, never in the app. |
+| `tools/` | Build-time generators | Starter-ingredient pack generator, icon geometry, fixture capture, plus the host-side helpers that talk to a phone (`serve_lan_repo.ps1`, `serve_backup.py`, `check_backup.py`). Runs on the host, never in the app. |
 | `fixtures/` | Test inputs | Sanitised OpenFoodFacts payloads, synthetic Health Connect dumps, barcode images. **No real personal data.** |
 | `gradle/libs.versions.toml` | Version truth | Every dependency version lives here and nowhere else. |
 | `build/`, `.gradle/`, `local.properties`, `sonar.token`, `*.keystore`, `*.apk`, `*.aab` | Build output and secrets | Never tracked. |
@@ -150,6 +150,10 @@ was selected last.
   paused — switch back when the run ends.
 - **A new profile does not take the band** while another profile holds it (ADR-030). Moving it is one tap on
   «Читать браслет» on that profile's card, and it moves the owner's band data with it — ask before doing it.
+- **Before any install or uninstall, prove a same-day backup exists** — `python tools\check_backup.py
+  --serial <device>` must exit 0 (hard rule 14). The app writes its export wherever the person chose:
+  internal `Download`, the SD card, or a folder they picked, so a check that only lists `/sdcard/Download`
+  is not a check — the 13 November copy that saved this milestone was on the SD card.
 - **Database pulls for diagnosis go to `tmp/`**, the database and its `-wal` together (P-07), never into
   git (hard rule 1), and are deleted when the run ends. Nothing about the owner's day is a screenshot.
 
@@ -192,6 +196,14 @@ was selected last.
     `values-ru/strings.xml` together. `StringResourceParityTest` (`:app:testDebugUnitTest`) fails when a
     key, a format argument or a plural's quantity set exists in only one file, so drift is a red build,
     not a Russian screen with English sentences in it.
+14. **A same-day backup exists before anything touches the installation.** `adb install`, `install -r`,
+    `adb uninstall`, `pm clear`, a restore over live data, and every `connected*AndroidTest` for `:app`
+    (the task uninstalls the app first, **P-50**) require proof that a backup written **today** is on the
+    phone and parses: `python tools\check_backup.py --serial <device>` must exit 0. Exit 1 means make one
+    first (Настройки → Данные → «Сохранить копию (JSON)»), pull it off the phone, and only then continue.
+    A backup from last week is not a backup: on 2026-11-20 a test run deleted the app and the newest copy
+    was three days old (diary item 60). The check sweeps every `Download` — internal **and** each SD
+    card — because the app writes where the person chose.
 
 ## Workflow
 

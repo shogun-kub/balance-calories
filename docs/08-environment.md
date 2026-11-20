@@ -161,6 +161,26 @@ Since 2026-11-13 that also means they cannot run at all: the test APK is debug-s
 household key, so `:app:connectedDebugAndroidTest` fails to install and still reports BUILD SUCCESSFUL
 (**P-50**). `:data:connectedDebugAndroidTest` is unaffected and is the suite to run (124 cases).
 
+### Before installing on a phone with real data
+
+Hard rule 14: prove a backup written **today** exists before any `install`, `uninstall`, `pm clear` or
+restore — `:app` instrumentation tasks uninstall the app first (**P-50**), and on 2026-11-20 that took a
+day's data with it.
+
+```powershell
+python tools\check_backup.py --adb 'C:\Program Files\Android\Sdk\platform-tools\adb.exe' --serial A7UPBB5802104075
+# device date: 2026-11-20
+# balancecalories-1794590739532.json   123859  2026-11-13   7   233  valid but old
+# balancecalories-1795154345950.json   123859  2026-11-20   7   233  TODAY
+# OK: 1 backup(s) from today. Safe to uninstall/install — but pull a copy first.
+```
+
+Exit 0 means a `balancecalories.backup` file dated today with rows in it is on the phone. It looks in the
+internal `Download` **and** in every SD card's, because the app saves wherever the person chose — the copy
+that recovered the Honor was on the SD card and was invisible to a plain `ls /sdcard/Download`. Exit 1 means
+make one first: Настройки → Данные → «Сохранить копию (JSON)», then pull it off the phone. The check pulls
+each file only into a temporary directory, parses it and deletes it.
+
 ## Devices and how to test on them
 
 | Device | Role | Constraints |
