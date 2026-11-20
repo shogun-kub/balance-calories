@@ -613,7 +613,10 @@ migrates the database cannot be reviewed or rolled back cleanly.
 - [x] **A barcode OpenFoodFacts knows but cannot be logged leads somewhere.** The scanner now offers «Добавить
       этот продукт вручную» for an unusable product as well as for an unknown one, and the manual form opens
       with the code **and** the name filled in; the same for an unusable OpenFoodFacts search hit, which used
-      to be a dead row.
+      to be a dead row. The unusable branch was **not** exercised on a device: it needs a barcode whose
+      OpenFoodFacts record has a name and no energy at all, and the search API answered 503/timeouts from this
+      host all morning (2026-11-20), so none could be produced. The data half — that the name travels with the
+      refusal — is pinned by `ProductRepositoryTest.anUnusableProductIsReportedWithAReasonAndNotStored`.
 - [x] **A portion can be nudged instead of retyped.** The portion dialog has «Убрать 10 г» / «Добавить 10 г»
       beside the field, so "180 was really 200" is two taps and no arithmetic; the step never lands below a
       gram, where the save button would refuse it.

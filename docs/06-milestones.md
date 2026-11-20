@@ -880,7 +880,8 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     **176 :core + 46 :data + 35 :app** JVM tests and **124** `:data` device tests pass. The four `:app` device
     tests did not run: their debug-signed APK cannot install over a household-signed app and the Gradle task
     lies about it (**P-50**); the scanner's unusable branch was reviewed but not exercised, because it needs a
-    pack whose barcode OpenFoodFacts holds without energy.
+    pack whose barcode OpenFoodFacts holds without energy, and the service answered 503 and timeouts from this
+    host on the morning of 2026-11-20.
 
     The Honor was in landscape when it was plugged in (the `install -r` aftermath of **P-08**) and its
     auto-rotate was back on at the end; the Test profile was used for every write and the owner's profile
