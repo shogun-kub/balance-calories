@@ -79,6 +79,7 @@ through the Windows ssh-agent (P-42), and the GitLab side works the same way (P-
 | `docs/06-milestones.md` | the diary: what each milestone changed, with the numbers of the day | you want to know *when* and *what it took* |
 | `docs/07-pitfalls.md` | **traps** (`P-nn`) and **judgement calls** (`J-nn`) | before and after anything that bites |
 | `docs/08-environment.md` | this machine, its devices, build and test commands, instrumentation recipe | running anything |
+| `docs/09-releases.md` | branches, tag grammar, the four release rules, and what "publish" means here | tagging, merging to `main`, or cutting a build for a phone |
 
 ## Traps that cost hours here
 
@@ -128,7 +129,7 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | --- | --- | --- |
 | `docs/` | Design and findings | Numbered Markdown, tracked in git. |
 | `app/`, `core/`, `data/` | Gradle modules | `:core` is pure Kotlin, zero Android imports. `:data` owns Room, Health Connect, OpenFoodFacts, Gadgetbridge. `:app` owns Compose UI. |
-| `tools/` | Build-time generators | Starter-ingredient pack generator, icon geometry, fixture capture, plus the host-side helpers that talk to a phone (`serve_lan_repo.ps1`, `serve_backup.py`, `check_backup.py`). Runs on the host, never in the app. |
+| `tools/` | Build-time generators | Starter-ingredient pack generator, icon geometry, fixture capture, plus the host-side helpers that talk to a phone (`serve_lan_repo.ps1`, `serve_backup.py`, `check_backup.py`) and the tag check (`check_release.py`). Runs on the host, never in the app. |
 | `fixtures/` | Test inputs | Sanitised OpenFoodFacts payloads, synthetic Health Connect dumps, barcode images. **No real personal data.** |
 | `gradle/libs.versions.toml` | Version truth | Every dependency version lives here and nowhere else. |
 | `build/`, `.gradle/`, `local.properties`, `sonar.token`, `*.keystore`, `*.apk`, `*.aab` | Build output and secrets | Never tracked. |
@@ -224,6 +225,26 @@ was selected last.
     (**P-53**), and a `dump` of a `LazyColumn(weight(1f))` screen shows one row of two, which reads as lost
     data (**P-52**).
 
+## Releases — branches, tags, and four rules
+
+Set by the owner on 2026-11-20; the full text, the commands and the grandfather list are in
+`docs/09-releases.md`. An agent must not produce a repository state that breaks any of these:
+
+1. **Two long-lived branches.** `dev` takes everything being worked on; `main` holds only trees that were
+   released. A commit goes to `dev` unless it is part of a release.
+2. **A pre-release is a tag `v<X.Y.Z>p<N>` on `dev`** (`v1.0.6p1`, `v1.0.6p2`) — the literal `v`, the version of
+   the next release, the literal `p`, the build number. It is created **only on the owner's explicit
+   instruction**: a push to `dev` publishes nothing.
+3. **Nothing reaches `main` without a release tag `v<X.Y.Z>`**, and the version must already exist as a
+   pre-release. No release without a pre-release.
+4. **A released version cannot be pre-released again.** After `v1.0.6` the next pre-release is `v1.0.7p1` or
+   higher: at least one of major, minor, patch moves.
+
+Check before pushing anything under `refs/tags`: `python tools\check_release.py` (all tags) or
+`python tools\check_release.py --tag v1.0.6p1` (one tag, before creating it). Exit 0 means the rules hold.
+"Publish" here is the LAN F-Droid repository or `adb install -r` — nothing leaves this machine (**P-45**) — so
+the tag is what makes a build identifiable later, which is what hard rule 5 asks for.
+
 ## Workflow
 
 1. **Scope** — which milestone item, which files, which device. If the request is ambiguous, read
@@ -236,6 +257,9 @@ was selected last.
 5. **Record** — update the docs when behaviour or a decision changed; a feature that contradicts the
    docs is unfinished, not "done with a note". A milestone entry goes into `docs/06-milestones.md`, and a
    trap or a judgement call that cost more than half an hour into `docs/07-pitfalls.md`.
+6. **Release** — only on the owner's instruction, and only through the tag rules above: `dev` gets the
+   pre-release tag, `main` gets the release tag of the same version, and `python tools\check_release.py`
+   is run before either tag is pushed.
 
 ## Code standards (Android)
 
