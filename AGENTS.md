@@ -159,6 +159,11 @@ was selected last.
   --serial <device>` must exit 0 (hard rule 14). The app writes its export wherever the person chose:
   internal `Download`, the SD card, or a folder they picked, so a check that only lists `/sdcard/Download`
   is not a check — the 13 November copy that saved this milestone was on the SD card.
+- **Before the first look at a screen, put the phone in portrait** and remember the pair to put back:
+  `settings get system accelerometer_rotation` and `settings get system user_rotation`; lock with
+  `accelerometer_rotation 1` → `user_rotation 0` → `accelerometer_rotation 0`, and restore the read value when
+  the run ends (hard rule 15). A landscape phone answers probes in a rotated frame and hides rows of a
+  `weight(1f)` list — both look like broken code (**P-53**, **P-52**).
 - **Database pulls for diagnosis go to `tmp/`**, the database and its `-wal` together (P-07), never into
   git (hard rule 1), and are deleted when the run ends. Nothing about the owner's day is a screenshot.
 
@@ -209,6 +214,15 @@ was selected last.
     A backup from last week is not a backup: on 2026-11-20 a test run deleted the app and the newest copy
     was three days old (diary item 60). The check sweeps every `Download` — internal **and** each SD
     card — because the app writes where the person chose.
+15. **Interface checks run in portrait, and the phone's rotation settings are put back afterwards.** Before
+    the first `uiautomator dump`, `screencap` or `input` probe, read `settings get system
+    accelerometer_rotation` and `settings get system user_rotation` — that pair is what has to be restored —
+    and lock portrait (`accelerometer_rotation 1` → `user_rotation 0` → `accelerometer_rotation 0`; the recipe
+    is in `docs/08-environment.md`). When the run ends, write the value read at the start back (the Honor's
+    normal state is `accelerometer_rotation 1`, auto-rotate on). A landscape phone takes probes in a
+    `1610×720` frame, so a portrait coordinate lands outside the display and produces **no event at all**
+    (**P-53**), and a `dump` of a `LazyColumn(weight(1f))` screen shows one row of two, which reads as lost
+    data (**P-52**).
 
 ## Workflow
 

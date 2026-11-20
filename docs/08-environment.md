@@ -240,6 +240,13 @@ adb shell settings put system accelerometer_rotation 0     # then lock portrait
 adb shell dumpsys display | Select-String "mOverrideDisplayInfo"   # expect cur=1080x2340 app=1080x2134
 ```
 
+**Hard rule 15 makes this the first step of every interface check, not a repair after one.** Read
+`accelerometer_rotation` and `user_rotation` before touching anything (that pair is what to put back), lock
+portrait with the three commands above, and after the run restore the value that was read — the Honor's normal
+state is `accelerometer_rotation 1` (auto-rotate on). A phone in landscape accepts coordinates against
+`1610×720`, so a probe written for portrait (`input swipe 200 800 …`) lands outside the display and produces no
+event at all (**P-53**), and a `dump` of a screen whose list has `weight(1f)` shows one row of two (**P-52**).
+
 
 ### Previewing English on a Russian phone
 
