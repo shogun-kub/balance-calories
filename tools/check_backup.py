@@ -28,10 +28,13 @@ import sys
 import tempfile
 
 FORMAT_ID = "balancecalories.backup"
-FORMAT_VERSION = 1
+# The app writes format 2 since 2026-11-20 (v2 added the meal set); a v1 file still restores, so both are accepted.
+FORMAT_VERSION = 2
 # Every schema this build can restore. A backup newer than this cannot be read back, so it is not a backup.
 MAX_SCHEMA_VERSION = 7
-BACKUP_TABLES = (
+# The tables every backup has carried since format 1. `meal` arrived in format 2 and a v1 file does not have it,
+# so it is not required — the app seeds default slots when a file brings none.
+REQUIRED_TABLES = (
     "profile",
     "body_measurement",
     "target_history",
@@ -108,7 +111,9 @@ def inspect(adb: list[str], directory: str, name: str, workdir: str) -> dict | N
             os.remove(local)
 
     tables = document.get("tables") or {}
-    rows = sum(len(tables.get(table) or []) for table in BACKUP_TABLES)
+    # Count every array the file carries, not a fixed list: a format that grows must not report a smaller number
+    # than a person can see in the app (249 rows when the count stopped at the eight base tables).
+    rows = sum(len(value) for value in tables.values() if isinstance(value, list))
     exported_at = document.get("exportedAt")
     schema = document.get("schemaVersion")
     valid = (
@@ -117,7 +122,7 @@ def inspect(adb: list[str], directory: str, name: str, workdir: str) -> dict | N
         and 1 <= document["formatVersion"] <= FORMAT_VERSION
         and isinstance(schema, int)
         and 1 <= schema <= MAX_SCHEMA_VERSION
-        and all(table in tables for table in BACKUP_TABLES)
+        and all(table in tables for table in REQUIRED_TABLES)
         and rows > 0
     )
     exported = dt.datetime.fromtimestamp(exported_at / 1000.0) if isinstance(exported_at, int) else None
@@ -180,7 +185,7 @@ def main() -> int:
         )
 
     if fresh:
-        print(f"\nOK: {fresh} backup(s) from today. Safe to uninstall/install — but pull a copy first.")
+        print(f"\nOK: {fresh} backup(s) from today. Safe to uninstall/install - but pull a copy first.")
         return 0
     print("\nNO backup from today. Make one before touching the installation:")
     print("  Settings - Data - 'Save a copy (JSON)', then pull it off the phone (hard rule 14).")

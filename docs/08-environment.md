@@ -181,6 +181,11 @@ that recovered the Honor was on the SD card and was invisible to a plain `ls /sd
 make one first: Настройки → Данные → «Сохранить копию (JSON)», then pull it off the phone. The check pulls
 each file only into a temporary directory, parses it and deletes it.
 
+The verdict column is the point, and it was tried against files that are not usable backups: a truncated
+JSON reads `not a backup`, and a file claiming `formatVersion: 9` / `schemaVersion: 99` reads `unreadable`
+and does not count as today's copy even when its `exportedAt` is today. The app writes **file format 2**
+since `1.0.4` (`meal` travels; ADR-045) and a v1 file still restores, so both formats count here.
+
 ## Devices and how to test on them
 
 | Device | Role | Constraints |

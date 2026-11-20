@@ -83,7 +83,10 @@ object BackupReader {
         }
         val tables = root.optJSONObject("tables")
             ?: return ImportOutcome.Refused(ImportOutcome.Refusal.DAMAGED)
-        if (BackupTables.TABLES.any { tables.optJSONArray(it.name) == null }) {
+        // Only the tables the file's own format promised. A v1 file has no `meal` array, and requiring one would make
+        // every backup older than format 2 unreadable — the opposite of what a backup is for.
+        val carried = BackupTables.TABLES.filter { it.since <= formatVersion }
+        if (carried.any { tables.optJSONArray(it.name) == null }) {
             // Every table is written by this format, so a missing one means a truncated or edited file. Restoring
             // the part that happens to parse would leave a database that is neither the backup nor the old data.
             return ImportOutcome.Refused(ImportOutcome.Refusal.DAMAGED)
@@ -93,11 +96,12 @@ object BackupReader {
         var rows = 0
         db.beginTransaction()
         try {
-            // Children first, so no delete hits a foreign key that the file still needs.
-            BackupTables.TABLES.asReversed().forEach { table ->
+            // Children first, so no delete hits a foreign key that the file still needs. The list is the file's, not
+            // this build's: deleting rows a restore cannot put back would be data loss dressed up as a restore.
+            carried.asReversed().forEach { table ->
                 db.execSQL("DELETE FROM \"${table.name}\"")
             }
-            BackupTables.TABLES.forEach { table ->
+            carried.forEach { table ->
                 rows += insertTable(db, table.name, tables.getJSONArray(table.name), droppedColumns)
             }
             // The product index is external-content FTS4: rows written straight into `product` are invisible to

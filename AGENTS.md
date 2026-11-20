@@ -16,7 +16,7 @@ Two outputs, everything else supports them:
 
 ## Current state
 
-**M1–M5 and M7 complete; M6 nearly done.** `versionName 1.0.3` / `versionCode 5`, R8 on, Apache-2.0, shipping
+**M1–M5 and M7 complete; M6 nearly done.** `versionName 1.0.4` / `versionCode 6`, R8 on, Apache-2.0, shipping
 through the household's own F-Droid repository. `:core` (176 JVM tests) and `:data` (schema **v7**, 11 DAOs,
 13 repositories) build green, and `:app` has the whole loop: Today, which walks back a day at a time with `‹`/`›`
 and logs a forgotten meal on the day it belongs to, with the macro gauge, one card per meal (the set is the person's), burned and balance;
@@ -24,7 +24,7 @@ the food side (two tabs: products and recipes, search that falls back to Open Fo
 the intake/burn chart, a weight trend and a projection; a weight tab with entry and chart; settings with
 units, day start, language and macro norms (four presets or one's own grams) and the meal editor; and backup / restore / CSV.
 
-176 :core + 46 :data + 35 :app JVM tests and **124** `:data` device tests pass; the four `:app` decoder tests
+176 :core + 46 :data + 35 :app JVM tests and **126** `:data` device tests pass; the four `:app` decoder tests
 cannot run against a release-signed install (**P-50**). The app
 navigates by **four tabs** (`Сегодня` · `Еда` · `История` · `Вес`), follows the phone's dark setting, and
 prints each logged portion's protein, fat and carbs with the macro it is proportionally richest in marked
@@ -47,12 +47,14 @@ repository on the home LAN** — `http://KATANA:8080/repo`, served by `tools/ser
 — because uploads above about a megabyte do not leave this machine (**P-45**), which is what killed the GitHub
 Pages attempt. **The phones are on that key since 2026-11-13, so a new build installs over the current one**; no
 F-Droid client is installed, so for now a release is `adb install -r`, and the LAN repository is ready but
-unread. The **Honor is on `1.0.3` / `versionCode 5`** since 2026-11-20 (day browsing, past-day logging, the
-barcode dead ends, recipe copying, ±10 g) and the **Redmi is still on `1.0.2` / `versionCode 4`**. On 2026-11-20
+unread. The **Honor is on `1.0.4` / `versionCode 6`** since 2026-11-20 (day browsing, past-day logging, the
+barcode dead ends, recipe copying, ±10 g, and a backup that finally carries the meal set — file format 2,
+ADR-045) and the **Redmi is still on `1.0.2` / `versionCode 4`**. On 2026-11-20
 `:app:connectedDebugAndroidTest` **uninstalled the app and its data** on the Honor and failed to install its
 debug APK (**P-50**); the Honor's database came back from a backup the app had written to its **SD card** on
-2026-11-13 — 233 rows, everything except the food entries of 14–20 November — and its Health Connect grants have
-to be given again (diary item 60). Both
+2026-11-13 — 233 rows, everything except the food entries of 14–20 November. The Health Connect grants were
+given again the same morning, the 30-day backfill rebuilt 2026-11-09…11-19 from Health Connect (diary item 61),
+and the food entries of 14–20 November are the only thing still missing. Both
 phones carry their own data: the Redmi's history came
 back as a **103-row** restore (diary item 58, and **P-47** for the MIUI picker that made it hard), and its band
 now reaches the app because **Gadgetbridge's Health Connect export was finally switched on** — until 2026-11-13

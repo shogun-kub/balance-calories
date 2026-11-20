@@ -1,13 +1,13 @@
 package com.balancecalories.data.backup
 
 /**
- * One table as it appears in a backup: its name, and the query that reads it.
+ * One table as it appears in a backup: its name, the query that reads it, and the file format that first carried it.
  *
  * The `ORDER BY` is part of the format, not an optimisation: two exports of unchanged data must produce the same
  * bytes, otherwise "is this backup newer than that one" is a question nobody can answer, and a test that compares
  * files fails for reasons that have nothing to do with the data.
  */
-internal data class BackupTable(val name: String, val select: String)
+internal data class BackupTable(val name: String, val select: String, val since: Int = 1)
 
 /**
  * The backup format's own constants, and which tables travel in it.
@@ -30,8 +30,16 @@ internal object BackupTables {
     /** Written into every file, so an unrelated JSON file is rejected by name and not by a parser exception. */
     const val FORMAT_ID = "balancecalories.backup"
 
-    /** Bumped only when the *file shape* changes, independently of the database schema version. */
-    const val FORMAT_VERSION = 1
+    /**
+     * Bumped only when the *file shape* changes, independently of the database schema version.
+     *
+     * - **1** — the eight tables the format started with.
+     * - **2** — adds `meal`. The person's own meal names and times (schema v7) travelled in no list at all, so every
+     *   restore silently put both phones back on «Завтрак 08:00». A table records the format that first carried it,
+     *   which is what keeps a v1 file restorable: the reader asks for the tables *its* format promised, not for
+     *   every table this build knows.
+     */
+    const val FORMAT_VERSION = 2
 
     /**
      * Parents before children.
@@ -42,6 +50,8 @@ internal object BackupTables {
      */
     val TABLES = listOf(
         BackupTable("profile", "SELECT * FROM profile ORDER BY id"),
+        // The meal set: names and planned times are the person's decision, so they belong in the file (format 2).
+        BackupTable("meal", "SELECT * FROM meal ORDER BY profile_id, sort_order", since = 2),
         BackupTable("body_measurement", "SELECT * FROM body_measurement ORDER BY id"),
         BackupTable("target_history", "SELECT * FROM target_history ORDER BY profile_id, effective_from"),
         // Every product, starter pack included.

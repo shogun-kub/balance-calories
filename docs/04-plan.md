@@ -627,6 +627,40 @@ migrates the database cannot be reviewed or rolled back cleanly.
       46 :data and 35 :app JVM tests, and **124** `:data` device tests; the four `:app` decoder tests cannot run
       against a release-signed install (**P-50**). ADR-043, ADR-044, P-49, P-50, P-51.
 
+### M7.10 — The meal set travels in the backup, and the rest of the plan gets exercised
+
+- [x] **The backup carries the meal set.** Found while asking what still needed testing: `BackupTables` listed
+      eight tables and `meal` (schema v7: the person's own names and times) was not among them, so every
+      restore put both phones back on «Завтрак 08:00» and said nothing. The file format is now **v2**: each
+      table records the format that first carried it, and the reader requires only the tables *that file's*
+      format promised — so a v1 file, of which every phone holds one, still restores instead of being refused
+      as damaged. Deleting follows the same list, so a v1 restore cannot delete meals it has nothing to put
+      back. ADR-045; `BackupRoundTripTest` has two new cases (the meal set comes back; a v1 file still
+      restores) and **126** `:data` device tests pass.
+- [x] **Verified on the Honor:** renamed the Test profile's breakfast to «Kofe», exported
+      `balancecalories-1795160558782.json` (129 136 bytes, `formatVersion 2`, `appVersion 1.0.4`, 9 tables,
+      **249 rows**, meal rows carrying `Kofe`/480 min), restored it — *«восстановлено строк: 249, копия
+      схемы 7»* — and the meal was still «Kofe». Before the fix the same restore would have shown «Завтрак».
+- [x] **The band days the restore lost came back by themselves.** After the owner granted Health Connect
+      again, the 30-day backfill wrote 2026-11-09…11-19, which the CSV export shows as `complete` days with
+      steps and burn (11-15: 12 111 steps, 2335,6 kcal; 11-19: 63 steps, 1863,7 kcal), and 2026-11-20 as
+      `partial` (516,9 kcal, 13 steps) because the day is still running. Today renders it as «Сожжено
+      517 ккал» + «данные браслета ещё уточняются» / «Последняя синхронизация: 20.11.2026, 10:39 AM».
+- [x] **The rest of M7.9 exercised, not just reasoned about:** a recipe can be logged onto a past day
+      («Запись на 19 нояб. 2026 г.» → 446 ккал on «Вчера», «энергия оценена»); «Повторить предыдущий
+      день (1)» appears on an empty day when its predecessor has food and copies it; a recipe can be copied,
+      **edited** and saved independently (chicken 200 → 250 г: «Pilaf (копия)» 848 ккал / 424 на порцию, the
+      original still 788 / 394); ±10 г works both on today and on a past day (100 → 120 г, 89 → 107 ккал).
+- [x] **At a 200 % font scale** the day header and the portion dialog hold: «Убрать 10 г» and «Добавить 10 г»
+      stack onto their own lines instead of squeezing, and nothing clips. TalkBack itself was not re-run —
+      the project's pass is diary item 51, and the new controls carry names, not descriptions.
+- [x] **`tools/check_backup.py` against a broken file and a too-new one:** a truncated JSON reads «not a
+      backup», a `formatVersion 9` / `schemaVersion 99` file reads «unreadable» and does **not** count as
+      today's backup. Also fixed: row counts now sum every array in the file (241 → 249), so the tool agrees
+      with the app's own row count.
+- [x] `1.0.4` / `versionCode 6`, installed over `1.0.3` with `adb install -r`. The unusable-barcode branch is
+      still the one thing not exercised: OpenFoodFacts answered timeouts from this host again at 10:58.
+
 ## M8 — Optional v1.1 (post-release)
 
 Adaptive-TDEE refinements, HC write-back (`NutritionRecord`, `WeightRecord`), widget, notifications,

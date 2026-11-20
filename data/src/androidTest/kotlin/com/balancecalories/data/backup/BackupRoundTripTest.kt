@@ -100,12 +100,16 @@ class BackupRoundTripTest {
             "INSERT INTO target_history (profile_id, effective_from, kcal, tdee_kcal, mode, tdee_confidence) " +
                 "VALUES (1, '2026-11-01', 1924, 2405.0, 'seed', NULL)",
         )
+        sql.execSQL(
+            "INSERT INTO meal (profile_id, meal_key, name, sort_order, planned_minutes, fixed) " +
+                "VALUES (1, 'breakfast', 'Утренний кофе', 0, 480, 0)",
+        )
     }
 
     private fun export(): String = BackupWriter.write(
         db = sql,
         appVersion = "test",
-        schemaVersion = 6,
+        schemaVersion = 7,
         exportedAt = now,
     )
 
@@ -135,7 +139,7 @@ class BackupRoundTripTest {
         sql.execSQL("DELETE FROM profile")
         assertEquals(0, count("food_entry"))
 
-        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 6)
+        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 7)
 
         assertTrue("restore should succeed, got $outcome", outcome is ImportOutcome.Restored)
         // Starter rows are not carried: only the user's product and the corrected starter row.
@@ -160,7 +164,7 @@ class BackupRoundTripTest {
         seed()
         val json = export()
 
-        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 6)
+        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 7)
         assertTrue(outcome is ImportOutcome.Restored)
 
         // The FTS index is external-content: rows written directly into `product` are invisible until rebuilt, and
@@ -200,7 +204,7 @@ class BackupRoundTripTest {
         sql.execSQL("DELETE FROM product")
         sql.execSQL("DELETE FROM profile")
 
-        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 6)
+        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 7)
 
         assertTrue("a file with its own foreign keys must restore, got $outcome", outcome is ImportOutcome.Restored)
         assertEquals(3, count("product"))
@@ -210,14 +214,14 @@ class BackupRoundTripTest {
     fun aRestoreSaysWhetherTheStarterPackCameWithTheFile() {
         seed()
 
-        val outcome = BackupReader.restore(sql, export(), currentSchemaVersion = 6) as ImportOutcome.Restored
+        val outcome = BackupReader.restore(sql, export(), currentSchemaVersion = 7) as ImportOutcome.Restored
 
         assertTrue("the products travelled, so the importer must not add a second copy", outcome.containsStarterProducts)
     }
 
     @Test
     fun aFileThatIsNotABackupIsRefusedByItsHeader() {
-        val outcome = BackupReader.restore(sql, """{"hello":"world"}""", currentSchemaVersion = 6)
+        val outcome = BackupReader.restore(sql, """{"hello":"world"}""", currentSchemaVersion = 7)
 
         assertEquals(ImportOutcome.Refused(ImportOutcome.Refusal.NOT_A_BACKUP), outcome)
     }
@@ -225,9 +229,9 @@ class BackupRoundTripTest {
     @Test
     fun aBackupFromANewerSchemaIsRefusedRatherThanGuessed() {
         seed()
-        val json = export().replace("\"schemaVersion\": 6", "\"schemaVersion\": 99")
+        val json = export().replace("\"schemaVersion\": 7", "\"schemaVersion\": 99")
 
-        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 6)
+        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 7)
 
         assertEquals(ImportOutcome.Refused(ImportOutcome.Refusal.NEWER_SCHEMA), outcome)
         assertEquals("and it changed nothing", 1, count("food_entry"))
@@ -240,7 +244,7 @@ class BackupRoundTripTest {
         // Drop the last table's array: a file that was cut off mid-write, which is what a failed transfer looks like.
         val truncated = json.substringBefore("\"daily_activity\"")
 
-        val outcome = BackupReader.restore(sql, truncated, currentSchemaVersion = 6)
+        val outcome = BackupReader.restore(sql, truncated, currentSchemaVersion = 7)
 
         assertFalse(outcome is ImportOutcome.Restored)
         assertEquals("the existing data is still there", 1, count("food_entry"))
@@ -253,7 +257,7 @@ class BackupRoundTripTest {
         // Keeps the file parseable while removing one required table, which is what an edited file looks like.
         val json = export().replace("\"daily_activity\":", "\"daily_activity_removed\":")
 
-        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 6)
+        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 7)
 
         assertEquals(ImportOutcome.Refused(ImportOutcome.Refusal.DAMAGED), outcome)
         assertEquals("nothing was deleted on the way to refusing", 1, count("food_entry"))
@@ -264,7 +268,7 @@ class BackupRoundTripTest {
         seed()
         val json = export().replace("\"body_fat_pct\"", "\"body_fat_pct_removed\"")
 
-        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 6)
+        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 7)
 
         val restored = outcome as ImportOutcome.Restored
         assertEquals(setOf("body_measurement.body_fat_pct_removed"), restored.droppedColumns)
@@ -279,9 +283,46 @@ class BackupRoundTripTest {
             assertTrue("table ${table.name} must be present even when empty", json.contains("\"${table.name}\""))
         }
 
-        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 6)
+        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 7)
 
         assertTrue(outcome is ImportOutcome.Restored)
         assertEquals(0, (outcome as ImportOutcome.Restored).rows)
+    }
+
+    @Test
+    fun theMealSetTravelsAndComesBack() {
+        seed()
+
+        val json = export()
+        sql.execSQL("DELETE FROM meal")
+
+        val outcome = BackupReader.restore(sql, json, currentSchemaVersion = 7)
+
+        assertTrue("restore should succeed, got $outcome", outcome is ImportOutcome.Restored)
+        // Before format 2 this row existed in no list at all, so a restore put both phones back on «Завтрак 08:00»
+        // and nobody noticed until they saw a name they had not chosen.
+        val slot = queryOne("SELECT name, planned_minutes FROM meal WHERE meal_key = 'breakfast'") {
+            it.getString(0) to it.getInt(1)
+        }
+        assertEquals("Утренний кофе" to 480, slot)
+    }
+
+    @Test
+    fun aFormatOneFileStillRestoresEvenThoughItHasNoMealSet() {
+        seed()
+        // Every backup written before this build: no `meal` array, format 1. Refusing it would make the files people
+        // actually have unreadable, which is the one thing a backup must never become.
+        val v1 = org.json.JSONObject(export()).also { root ->
+            root.put("formatVersion", 1)
+            root.getJSONObject("tables").remove("meal")
+        }.toString()
+
+        val outcome = BackupReader.restore(sql, v1, currentSchemaVersion = 7)
+
+        val restored = outcome as ImportOutcome.Restored
+        assertEquals(1, restored.fromFormatVersion)
+        // A restore replaces the profiles, so meals cascade away with them; `MealRepository.ensureDefaults` seeds the
+        // default set on the next read. That is all a file without a meal set can honestly restore.
+        assertEquals(0, count("meal"))
     }
 }

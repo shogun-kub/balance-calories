@@ -22,8 +22,8 @@ android {
         // that updates can arrive through an F-Droid client instead of `adb install -r`. The code is 1.0.1's.
         // 5 / 1.0.3 adds past-day browsing and logging on Today, the barcode dead ends that now lead to the
         // manual form, recipe copying, and the +/- portion steps.
-        versionCode = 5
-        versionName = "1.0.3"
+        versionCode = 6
+        versionName = "1.0.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
