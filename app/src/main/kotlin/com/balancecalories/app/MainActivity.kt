@@ -172,7 +172,10 @@ private fun Root() {
                 }
                 Overlay.RECIPE, Overlay.RECIPE_FORM -> null
             Overlay.RECIPE_SCAN -> Overlay.RECIPE_FORM
-                Overlay.BACKUP, Overlay.DEBUG -> Overlay.SETTINGS
+                // From an app with no profile there is no settings screen behind the data one: back goes to the
+                // profile form, which is the screen this overlay was opened from (question M).
+                Overlay.BACKUP -> if (allProfiles.isEmpty()) null else Overlay.SETTINGS
+                Overlay.DEBUG -> Overlay.SETTINGS
                 else -> {
                     editing = null
                     null
@@ -198,12 +201,22 @@ private fun Root() {
         // Nothing shown until both reads answer: one frame of blank beats a frame of the wrong screen.
         loadedProfiles == null || !settingsLoaded -> Box(modifier = Modifier.fillMaxSize())
 
-        // No profile at all: the only thing to do is create one, so the tabs would be four empty rooms.
-        allProfiles.isEmpty() -> ProfileFormScreen(
-            container = container,
-            existing = null,
-            onSaved = { tab = Tab.TODAY },
-        )
+        // No profile at all: create one, or restore one. The restore screen used to be behind the tab bar, which
+        // needs a profile — exactly the state a lost phone leaves (question M, diary item 60).
+        allProfiles.isEmpty() -> if (overlay == Overlay.BACKUP) {
+            BackupScreen(
+                container = container,
+                profile = null,
+                onBack = { overlay = null },
+            )
+        } else {
+            ProfileFormScreen(
+                container = container,
+                existing = null,
+                onSaved = { tab = Tab.TODAY },
+                onRestore = { overlay = Overlay.BACKUP },
+            )
+        }
 
         // Onboarding and profile management are the whole screen when there is nobody to show data for.
         active == null -> ProfilesScreen(

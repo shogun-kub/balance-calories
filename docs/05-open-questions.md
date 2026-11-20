@@ -268,7 +268,7 @@ wants an ingredient, not a meal. Options: a `returnTo` parameter on the product 
 sentence louder. Recommended when it is built: the second, because the draft already knows how to take a
 `productId`, and the portion screen has no meaning in an ingredient list.
 
-### M. An empty app cannot reach its own restore screen — open since 2026-11-20
+### M. An empty app could not reach its own restore screen — **answered 2026-11-20: fixed in 1.0.6**
 
 Found during the recovery of diary item 60. With no profile in the database the app draws the profile form and
 nothing else: `BackupScreen` lives under Settings, Settings lives behind the tab bar, and the tab bar needs an
@@ -276,11 +276,17 @@ active profile. So the one situation where a restore matters most — a fresh in
 is the one where the button cannot be reached. The workaround used was to invent a throwaway profile, restore
 over it, and then pick the real one from Профили.
 
-The fix is small but touches a signature: `BackupScreen` takes a `Profile` (the CSV export needs it), and the
-empty state has none. Either the screen splits into "restore only" (no profile needed) and "export/CSV"
-(profile needed), or it takes a nullable profile and hides the parts that require one. Recommended: one
-`Восстановить из копии` button on the empty profile screen that opens the restore half only, because that is
-the whole of what a person with no data can do with a backup.
+**Fixed the recommended way**, in `1.0.6`: `BackupScreen` takes `Profile?` and draws the spreadsheet only when
+there is a profile to build one from; `ProfileFormScreen` gained an optional `onRestore`, drawn as a
+`TextButton` under the save button and only while creating the first profile; and `MainActivity`'s empty branch
+renders the backup screen when `Overlay.BACKUP` is set, with back going to the form rather than to a settings
+screen that needs a profile. The button reuses the existing `backup_import_json` string, so the two languages
+stay in step. After a restore the flow re-reads the profiles and lands on Today, because `BackupScreen` already
+points the app at the first profile that exists (ADR-036).
+
+What is **not** verified: the end-to-end walk through the empty state on a phone. Reaching it means an app with
+no profiles at all, and that means wiping a phone — it will be exercised when the Redmi gets `1.0.6` from a
+clean install.
 
 ### N. The bottom bar starts at today — **answered 2026-11-20: keep it that way**
 

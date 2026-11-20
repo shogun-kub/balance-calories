@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -60,17 +60,21 @@ fun ProfilesScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            // One scrolling column, not a weighted lazy list: in landscape the list was given about 140 px, the
+            // second profile was composed below the clip, and both a dump and a screenshot looked like deleted
+            // data (P-52). A profile list is a handful of rows; it does not need to be lazy.
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(stringResource(R.string.profiles_title), style = MaterialTheme.typography.headlineMedium)
         Text(stringResource(R.string.profiles_note), style = MaterialTheme.typography.bodySmall)
 
-        LazyColumn(
-            modifier = Modifier.weight(1f),
+        Column(
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(profiles, key = { it.id }) { profile ->
+            profiles.forEach { profile ->
                 val isCurrent = profile.id == activeProfileId
                 Card(
                     onClick = { onSelectProfile(profile) },
@@ -105,22 +109,18 @@ fun ProfilesScreen(
             }
 
             if (archivedProfiles.isNotEmpty()) {
-                item {
-                    TextButton(onClick = { showArchived = !showArchived }) {
-                        Text(
-                            stringResource(
-                                if (showArchived) R.string.hide_archived
-                                else R.string.show_archived,
-                                archivedProfiles.size,
-                            ),
-                        )
-                    }
+                TextButton(onClick = { showArchived = !showArchived }) {
+                    Text(
+                        stringResource(
+                            if (showArchived) R.string.hide_archived
+                            else R.string.show_archived,
+                            archivedProfiles.size,
+                        ),
+                    )
                 }
                 if (showArchived) {
-                    item {
-                        Text(stringResource(R.string.archive_note), style = MaterialTheme.typography.bodySmall)
-                    }
-                    items(archivedProfiles, key = { it.id }) { profile ->
+                    Text(stringResource(R.string.archive_note), style = MaterialTheme.typography.bodySmall)
+                    archivedProfiles.forEach { profile ->
                         Card(modifier = Modifier.fillMaxWidth()) {
                             ProfileCardBody(
                                 profile = profile,

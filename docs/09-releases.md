@@ -74,7 +74,7 @@ The next cycle is the first one run under the rules: `1.0.6` needs `v1.0.6p1` on
 land on `main`. The version numbers live in `app/build.gradle.kts` (`versionName`, `versionCode`); a pre-release
 keeps the release's `versionName` and only the tag says which build it was.
 
-Where the branches stand today: `main` and `dev` both start at `a610bcc` (the `1.0.5` tree, tag pair above), and
-this document plus `tools/check_release.py` were committed to `dev` — `main` stays at the released tree until
-`v1.0.6` is ready, which is the whole point of rule 3. Checkout `dev` to work; checkout `main` only to look at
-what was released.
+Where the branches stand today (2026-11-20): `main` is the `1.0.5` tree (`a610bcc`, tags `v1.0.5p1`/`v1.0.5`);
+`dev` carries that plus the release rules, the profile-list and empty-state fixes, and `1.0.6` / `versionCode 8`,
+tagged **`v1.0.6p1`** — the first pre-release cut under these rules. `v1.0.6` and the merge to `main` wait for the
+owner. Checkout `dev` to work; checkout `main` only to look at what was released.

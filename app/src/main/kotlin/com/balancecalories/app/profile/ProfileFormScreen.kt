@@ -89,6 +89,8 @@ fun ProfileFormScreen(
     existing: Profile?,
     onSaved: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Set only by the empty state: the only other way into the app's data when there is none. */
+    onRestore: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val today = remember { LocalDate.now() }
@@ -376,6 +378,16 @@ fun ProfileFormScreen(
 
         Button(onClick = ::save, enabled = !saving, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(if (saving) R.string.saving else R.string.action_save))
+        }
+
+        // The moment this appears is the moment it matters most: an app with no profile is an app that just lost
+        // its data, and until this button existed the restore screen was behind the tab bar, which needs a profile
+        // (question M, diary item 60). It is a TextButton, not a Button: creating a profile is still what this
+        // screen is for, and restoring is the other way to get one.
+        if (!isEditing && onRestore != null) {
+            TextButton(onClick = onRestore, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.backup_import_json))
+            }
         }
     }
 

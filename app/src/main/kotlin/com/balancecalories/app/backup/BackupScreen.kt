@@ -53,7 +53,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun BackupScreen(
     container: AppContainer,
-    profile: Profile,
+    profile: Profile?,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -84,7 +84,8 @@ fun BackupScreen(
     val exportCsv = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("text/csv"),
     ) { uri ->
-        if (uri == null) return@rememberLauncherForActivityResult
+        // No profile means the button is not drawn either; the guard is here so the type stays honest.
+        if (uri == null || profile == null) return@rememberLauncherForActivityResult
         busy = true
         scope.launch {
             status = runCatching {
@@ -121,16 +122,20 @@ fun BackupScreen(
             Text(stringResource(R.string.backup_export_json))
         }
 
-        HorizontalDivider()
+        // The spreadsheet is per profile, so an app with no profile (the empty state that can reach this screen)
+        // shows the backup and the restore only: those are the two things a person with no data can do with a file.
+        if (profile != null) {
+            HorizontalDivider()
 
-        Text(stringResource(R.string.backup_csv_title), style = MaterialTheme.typography.titleMedium)
-        Text(stringResource(R.string.backup_csv_note), style = MaterialTheme.typography.bodySmall)
-        OutlinedButton(
-            onClick = { exportCsv.launch("balancecalories-days-${System.currentTimeMillis()}.csv") },
-            enabled = !busy,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.backup_export_csv))
+            Text(stringResource(R.string.backup_csv_title), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.backup_csv_note), style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(
+                onClick = { exportCsv.launch("balancecalories-days-${System.currentTimeMillis()}.csv") },
+                enabled = !busy,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.backup_export_csv))
+            }
         }
 
         HorizontalDivider()

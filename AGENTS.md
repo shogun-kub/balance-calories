@@ -16,7 +16,7 @@ Two outputs, everything else supports them:
 
 ## Current state
 
-**M1–M5 and M7 complete; M6 nearly done.** `versionName 1.0.5` / `versionCode 7`, R8 on, Apache-2.0, shipping
+**M1–M5 and M7 complete; M6 nearly done.** `versionName 1.0.6` / `versionCode 8` (pre-release, `v1.0.6p1`), R8 on, Apache-2.0, shipping
 through the household's own F-Droid repository. `:core` (176 JVM tests) and `:data` (schema **v7**, 11 DAOs,
 13 repositories) build green, and `:app` has the whole loop: Today, which walks back a day at a time with `‹`/`›`
 or a sideways swipe, and logs a forgotten meal on the day it belongs to, with the macro gauge, one card per meal
@@ -48,7 +48,7 @@ repository on the home LAN** — `http://KATANA:8080/repo`, served by `tools/ser
 — because uploads above about a megabyte do not leave this machine (**P-45**), which is what killed the GitHub
 Pages attempt. **The phones are on that key since 2026-11-13, so a new build installs over the current one**; no
 F-Droid client is installed, so for now a release is `adb install -r`, and the LAN repository is ready but
-unread. The **Honor is on `1.0.5` / `versionCode 7`** since 2026-11-20 (day browsing by arrows **and** a
+unread. The **Honor is on `1.0.6` / `versionCode 8`** since 2026-11-20 (pre-release) (day browsing by arrows **and** a
 sideways swipe, past-day logging, the barcode dead ends, recipe copying, ±10 g, and a backup that finally
 carries the meal set — file format 2, ADR-045) and the **Redmi is still on `1.0.2` / `versionCode 4`**. On 2026-11-20
 `:app:connectedDebugAndroidTest` **uninstalled the app and its data** on the Honor and failed to install its
@@ -109,7 +109,7 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | **P-49** | `remember { LocalDate.now() }` is a snapshot of the clock, not a date: re-read the day on `ON_RESUME` and hold an **offset**, or the screen quietly shows yesterday |
 | **P-50** | `:app:connectedDebugAndroidTest` **uninstalls the app first**, then cannot install its debug APK over a household-signed one, and still reports BUILD SUCCESSFUL — never run it on a phone with real data |
 | **P-51** | `uiautomator dump` can omit visible Compose nodes (chips, buttons); confirm with `screencap` before calling a control missing |
-| **P-52** | a `LazyColumn(weight(1f))` inside a fixed-height `Column` shows one row in landscape: the second profile is composed below the clip, so a dump or a screenshot looks like deleted data |
+| **P-52** | a `LazyColumn(weight(1f))` inside a fixed-height `Column` shows one row in landscape: the second profile is composed below the clip, so a dump or a screenshot looks like deleted data (fixed in `1.0.6`: one scrolling column) |
 | **P-53** | `input swipe` uses the **current rotation's** frame: after `install -r` the Honor is landscape, so a swipe at portrait coordinates produces no event and looks like a broken gesture |
 
 ## Naming and the visible language

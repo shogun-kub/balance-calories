@@ -669,11 +669,22 @@ migrates the database cannot be reviewed or rolled back cleanly.
       its dialog. ADR-046.
 - [x] **The bottom bar keeps starting at today** (question N, answered by the owner): a past day is reached by
       that day's `+` on a meal card, and the bar is the "now" path. No code change; the rule is now written down.
-- [ ] **The profiles list in landscape hides its second card (P-52, not fixed).** Switching back to the
-      owner's profile at the end of the run showed one card where two exist: `LazyColumn(weight(1f))` gets
-      140 px in landscape, the second card is composed below the clip, and neither the dump nor a screenshot
-      can see it. The fix is a single scrolling column (or `heightIn(min = 320.dp)`), and it should land
-      before anything else is added to that screen.
+- [x] **The profiles list in landscape hid its second card (P-52, fixed in `1.0.6`).** The screen is one
+      scrolling column with plain `forEach` cards instead of `LazyColumn(weight(1f))`; in landscape both «Test»
+      and «Михаил» are composed and the second is visible at the bottom of the viewport, where before only the
+      first card existed at all. Verified on the Honor in portrait and in landscape.
+- [x] **An empty app can reach its own restore screen (question M, fixed in `1.0.6`).** `BackupScreen` takes a
+      nullable profile and hides the spreadsheet when there is none; the profile form — the screen an app with no
+      profile shows — has a «Восстановить из копии» button under save, and back from the restore returns to the
+      form rather than to a settings screen that needs a profile. ADR-047. The end-to-end walk needs an app with
+      no profiles, so it waits for the Redmi's clean install.
+- [x] `1.0.6` / `versionCode 8` as a **pre-release** (`v1.0.6p1` on `dev`, the first tag pair under the release
+      rules of `docs/09-releases.md`). Re-checked on the Honor: swipe right → «Вчера», swipe left → «Сегодня»,
+      a banana logged on «Вчера» («Запись на 19 нояб. 2026 г.», day total 446 → 535 ккал), ±10 g twice
+      (100 → 120 г, 89 → 107 ккал, meal 159 ккал), then deleted again (back to 446). The backup check ran before
+      the install (exit 0, today's copy), the phone went portrait first and auto-rotate was restored after.
+      TalkBack itself was not re-run; the accessible names of the day arrows are on the nodes
+      («Предыдущий день», «Следующий день»).
 
 ## M8 — Optional v1.1 (post-release)
 

@@ -950,3 +950,30 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     event never reached the app and the gesture looked broken (**P-53**), so the handler was rewritten for
     nothing before the orientation was checked; and the profiles list in landscape shows one card of two
     (**P-52**, still open).
+
+62. **1.0.6 pre-release: the two holes the incident left** - 2026-11-20. The first release cut under the new tag
+    rules (`v1.0.5p1`/`v1.0.5` tagged retroactively, `v1.0.6p1` properly). Two fixes, both about the day the data
+    was lost:
+
+    **P-52** — the profiles screen was `Column → LazyColumn(weight(1f)) → buttons`, and in landscape the list got
+    about 140 px: the second card was composed below the clip, invisible to both `uiautomator` and a screenshot,
+    and looked like a deleted profile. It is now one `verticalScroll` column with plain `forEach` cards. Verified
+    on the Honor: portrait shows both cards, landscape shows «Test» and «Михаил», the second at the bottom of the
+    viewport.
+
+    **Question M** — an app with no profile could not reach its own restore screen, because the restore lives
+    behind the tab bar and the tab bar needs a profile; the recovery of diary item 60 had to invent a throwaway
+    profile to get in. `BackupScreen` now takes `Profile?` (the spreadsheet is hidden without one), the profile
+    form carries «Восстановить из копии» under the save button, and back from the restore returns to the form
+    instead of a settings screen that needs a profile (ADR-047). The end-to-end walk needs an app with no
+    profiles — that is the Redmi's clean install, not something to do to a phone with data.
+
+    Device pass on `1.0.6` / `versionCode 8`, in portrait, after `check_backup.py` exited 0 with a copy from that
+    morning: swipe right → «Вчера», swipe left → «Сегодня», a banana logged on «Вчера» («Запись на 19 нояб.
+    2026 г.», 446 → 535 ккал), ±10 g twice (100 → 120 г, 89 → 107 ккал, meal 159 ккал), then deleted (back to
+    446). Auto-rotate was restored to `1` afterwards, the profile to «Михаил» and the day to «Сегодня».
+
+    Not done, and deliberately: TalkBack was not re-run (the day arrows do carry «Предыдущий день»/«Следующий
+    день» as accessible names); the barcode branch for a product OpenFoodFacts has without energy is still
+    unexercised, and OpenFoodFacts answered timeouts again this afternoon; the Redmi stays on `1.0.2` until the
+    owner says otherwise. Tagged `v1.0.6p1` on `dev`; `main` and `v1.0.6` wait for the owner's approval.
