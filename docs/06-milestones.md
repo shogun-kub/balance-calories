@@ -935,3 +935,18 @@ milestone produced a lesson worth re-reading, the lesson lives in `docs/07-pitfa
     The same afternoon closed the gaps the plan had listed as unverified. **The band days the data loss had taken came back on their own**: with Health Connect granted again, the 30-day backfill wrote 2026-11-09…11-19 as `complete` days with steps and burn (11-15: 12 111 steps, 2335,6 kcal), 2026-11-20 as `partial` (516,9 kcal, 13 steps), and Today reads «Сожжено 517 ккал» with «последняя синхронизация: 20.11.2026, 10:39 AM». A recipe logs onto a past day («Запись на 19 нояб. 2026 г.», 446 ккал on «Вчера»); «Повторить предыдущий день (1)» copies an apple from 18 November into an empty 19 November; a copy can be **edited** (chicken 200 → 250 г) and stays independent of its original (848 / 424 against 788 / 394 ккал); ±10 г works on today and on a past day (100 → 120 г, 89 → 107 ккал). At a 200 % font scale the day header and the portion dialog hold, with «Убрать 10 г» and «Добавить 10 г» stacking onto their own lines.
 
     Two notes for later: the bottom bar deliberately starts at today (a `+` on a day's meal card is what carries the date — **question N**), and the barcode branch for a product OpenFoodFacts knows but cannot log is still the one thing not exercised, because OpenFoodFacts answered timeouts from this host again at 10:58. `tools/check_backup.py` learned to read format 2 and was tried against a truncated file («not a backup») and a `formatVersion 9` one («unreadable»); its row count now sums every array, 249 as the app reports.
+
+    **The swipe, same afternoon.** The owner asked for day navigation by a sideways drag as well, and it is now
+    there in `1.0.5` / `versionCode 7`: a drag to the right goes back a day, to the left comes forward, a drag
+    under 64 dp is ignored, and a left drag on today stays on today. `draggable(orientation = Horizontal)` sits
+    outside the scroll, so a vertical drag still scrolls and a horizontal one becomes a day; the decision is the
+    tested function `swipeDayStep`, not a line inside a lambda. Verified on the Honor: right → «Вчера», left →
+    «Сегодня», left again → still «Сегодня», two right swipes → «18 нояб. 2026 г.», the page still scrolls and a
+    tap on a portion still opens its dialog. The owner also settled the bar question (**N**): the bottom bar
+    keeps starting at today, and a past day is reached by its own meal card. ADR-046.
+
+    Two traps from that hour, both recorded: the first four swipe attempts moved nothing because the phone was in
+    **landscape after `install -r`** and the probe dragged at `y = 800` on a 720-pixel-tall coordinate space — the
+    event never reached the app and the gesture looked broken (**P-53**), so the handler was rewritten for
+    nothing before the orientation was checked; and the profiles list in landscape shows one card of two
+    (**P-52**, still open).

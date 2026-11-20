@@ -282,17 +282,14 @@ empty state has none. Either the screen splits into "restore only" (no profile n
 `Восстановить из копии` button on the empty profile screen that opens the restore half only, because that is
 the whole of what a person with no data can do with a backup.
 
-### N. The bottom bar starts at today, and that can hide the day the person was reading — open since 2026-11-20
+### N. The bottom bar starts at today — **answered 2026-11-20: keep it that way**
 
 Measured while exercising M7.9. From a past day on Today, a portion logged through the meal card's `+`
 carries the day (the screen says «Запись на 19 нояб. 2026 г.»), which is the feature as asked for. A trip
 through the bottom bar instead — Today at 19 November, tap «Еда», pick a product — logs to **today**, with no
-date line, because `onSelectTab` clears `pendingLogDate`: "a tap on the bar starts at today" (MainActivity,
-and ADR-043 does not say which rule it should be). The person who was looking at yesterday and then opens the
-food list is the *same* person who forgot a meal; landing it in the wrong day silently is the shape of the
-original bug (**P-49**), only caused by a tap rather than by midnight.
+date line, because `onSelectTab` clears `pendingLogDate`: "a tap on the bar starts at today" (MainActivity).
 
-Both rules are defensible. Recommended: let the bar inherit the day the screen was showing — i.e. drop the
-reset and pass `dayOffset`'s date every time — and keep the "today" default only for a fresh launch. What
-needs deciding is whether a person who browses 19 November and then taps the bar expects yesterday or "now";
-the owner's answer settles it.
+The owner's answer, 2026-11-20: *"It's fine that food added from «Еда» goes to today, the scenario for previous
+days is a secondary one, a primary one is working with today."* So the rule stands as implemented, and it is now
+written down instead of living in a comment: the bar is the "now" path, and a past day is reached by its own
+card. ADR-046 records it.

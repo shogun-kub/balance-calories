@@ -660,6 +660,15 @@ migrates the database cannot be reviewed or rolled back cleanly.
       with the app's own row count.
 - [x] `1.0.4` / `versionCode 6`, installed over `1.0.3` with `adb install -r`. The unusable-barcode branch is
       still the one thing not exercised: OpenFoodFacts answered timeouts from this host again at 10:58.
+- [x] **Today moves by swipe too.** A drag to the right goes back a day, to the left comes forward, shorter
+      than 64 dp does nothing, and a left drag on today stays on today; the arrows remain for TalkBack and for
+      one-handed use. `draggable` (horizontal) rather than a raw pointer handler, because the screen is already a
+      vertical scroll and the two have to negotiate; the decision itself is `swipeDayStep`, with three JVM cases.
+      Verified on the Honor with `1.0.5`: right → «Вчера», left → «Сегодня», left again → still «Сегодня», two
+      right swipes → «18 нояб. 2026 г.», the page still scrolls vertically, and a tap on a portion still opens
+      its dialog. ADR-046.
+- [x] **The bottom bar keeps starting at today** (question N, answered by the owner): a past day is reached by
+      that day's `+` on a meal card, and the bar is the "now" path. No code change; the rule is now written down.
 - [ ] **The profiles list in landscape hides its second card (P-52, not fixed).** Switching back to the
       owner's profile at the end of the run showed one card where two exist: `LazyColumn(weight(1f))` gets
       140 px in landscape, the second card is composed below the clip, and neither the dump nor a screenshot

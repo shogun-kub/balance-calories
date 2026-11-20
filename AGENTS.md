@@ -16,10 +16,11 @@ Two outputs, everything else supports them:
 
 ## Current state
 
-**M1–M5 and M7 complete; M6 nearly done.** `versionName 1.0.4` / `versionCode 6`, R8 on, Apache-2.0, shipping
+**M1–M5 and M7 complete; M6 nearly done.** `versionName 1.0.5` / `versionCode 7`, R8 on, Apache-2.0, shipping
 through the household's own F-Droid repository. `:core` (176 JVM tests) and `:data` (schema **v7**, 11 DAOs,
 13 repositories) build green, and `:app` has the whole loop: Today, which walks back a day at a time with `‹`/`›`
-and logs a forgotten meal on the day it belongs to, with the macro gauge, one card per meal (the set is the person's), burned and balance;
+or a sideways swipe, and logs a forgotten meal on the day it belongs to, with the macro gauge, one card per meal
+(the set is the person's), burned and balance;
 the food side (two tabs: products and recipes, search that falls back to Open Food Facts by itself, scanning, logging, recipes); History with the adaptive TDEE, the recap,
 the intake/burn chart, a weight trend and a projection; a weight tab with entry and chart; settings with
 units, day start, language and macro norms (four presets or one's own grams) and the meal editor; and backup / restore / CSV.
@@ -47,9 +48,9 @@ repository on the home LAN** — `http://KATANA:8080/repo`, served by `tools/ser
 — because uploads above about a megabyte do not leave this machine (**P-45**), which is what killed the GitHub
 Pages attempt. **The phones are on that key since 2026-11-13, so a new build installs over the current one**; no
 F-Droid client is installed, so for now a release is `adb install -r`, and the LAN repository is ready but
-unread. The **Honor is on `1.0.4` / `versionCode 6`** since 2026-11-20 (day browsing, past-day logging, the
-barcode dead ends, recipe copying, ±10 g, and a backup that finally carries the meal set — file format 2,
-ADR-045) and the **Redmi is still on `1.0.2` / `versionCode 4`**. On 2026-11-20
+unread. The **Honor is on `1.0.5` / `versionCode 7`** since 2026-11-20 (day browsing by arrows **and** a
+sideways swipe, past-day logging, the barcode dead ends, recipe copying, ±10 g, and a backup that finally
+carries the meal set — file format 2, ADR-045) and the **Redmi is still on `1.0.2` / `versionCode 4`**. On 2026-11-20
 `:app:connectedDebugAndroidTest` **uninstalled the app and its data** on the Honor and failed to install its
 debug APK (**P-50**); the Honor's database came back from a backup the app had written to its **SD card** on
 2026-11-13 — 233 rows, everything except the food entries of 14–20 November. The Health Connect grants were
@@ -107,6 +108,8 @@ One line each; the detail, the symptom and the fix are in `docs/07-pitfalls.md`.
 | **P-49** | `remember { LocalDate.now() }` is a snapshot of the clock, not a date: re-read the day on `ON_RESUME` and hold an **offset**, or the screen quietly shows yesterday |
 | **P-50** | `:app:connectedDebugAndroidTest` **uninstalls the app first**, then cannot install its debug APK over a household-signed one, and still reports BUILD SUCCESSFUL — never run it on a phone with real data |
 | **P-51** | `uiautomator dump` can omit visible Compose nodes (chips, buttons); confirm with `screencap` before calling a control missing |
+| **P-52** | a `LazyColumn(weight(1f))` inside a fixed-height `Column` shows one row in landscape: the second profile is composed below the clip, so a dump or a screenshot looks like deleted data |
+| **P-53** | `input swipe` uses the **current rotation's** frame: after `install -r` the Honor is landscape, so a swipe at portrait coordinates produces no event and looks like a broken gesture |
 
 ## Naming and the visible language
 

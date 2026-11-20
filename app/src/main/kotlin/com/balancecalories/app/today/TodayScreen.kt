@@ -14,6 +14,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -37,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -193,9 +197,28 @@ fun TodayScreen(
         }
     }
 
+    // A sideways drag moves a day (see DaySwipe). `draggable` rather than a raw pointer handler because this screen
+    // is already a vertical scroll: draggable negotiates with the scroll instead of competing for the same gesture.
+    val travelled = remember { mutableStateOf(0f) }
+    val swipeThreshold = with(LocalDensity.current) { DaySwipeThreshold.toPx() }
+    val dayDrag = rememberDraggableState { delta -> travelled.value += delta }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            // A sideways drag moves a day, the way a calendar's earlier pages sit to the left. The arrows stay,
+            // because a gesture is invisible to TalkBack and unusable with one hand full; this is an addition,
+            // not a replacement.
+            .draggable(
+                state = dayDrag,
+                orientation = Orientation.Horizontal,
+                onDragStarted = { travelled.value = 0f },
+                onDragStopped = {
+                    val step = swipeDayStep(travelled.value, swipeThreshold)
+                    if (step != 0) onDayOffsetChange((dayOffset + step).coerceAtLeast(0))
+                    travelled.value = 0f
+                },
+            )
             .verticalScroll(rememberScrollState())
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
